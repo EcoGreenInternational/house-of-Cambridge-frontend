@@ -5,7 +5,7 @@ import { fetchOrder } from '../../redux/slices/orderSlice';
 import Layout from '../../components/common/Layout';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import { PageSpinner } from '../../components/ui/Spinner';
-import { FiCheck, FiCamera, FiX, FiAlertCircle, FiMinus, FiPlus } from 'react-icons/fi';
+import { FiCheck, FiCamera, FiX, FiAlertCircle, FiMinus, FiPlus, FiArrowLeft } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 const ORDER_ID_RE        = /^[A-Za-z0-9]+$/;
