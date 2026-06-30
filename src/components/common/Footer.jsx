@@ -17,8 +17,8 @@ export default function Footer() {
   return (
     <footer className="bg-[#171C26] text-gray-400">
 
-      <div className="relative overflow-hidden min-h-[170px] py-8 md:h-[170px] md:py-0" style={{ background: '#758688' }}>
-        <div className="max-w-[1280px] mx-auto px-4 md:px-14 h-full flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0 text-center md:text-left relative">
+      <div className="relative overflow-hidden h-[170px]" style={{ background: '#758688' }}>
+        <div className="max-w-[1280px] mx-auto px-14 h-full flex items-center justify-between relative">
 
           <div className="flex-shrink-0">
             <p className="text-white font-black text-[14px] tracking-wide mb-0.5">Stay Updated with Us</p>
@@ -28,8 +28,8 @@ export default function Footer() {
             <p className="text-white font-black text-[14px]">by Subscribe our Newsletter</p>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-6 flex-shrink-0 w-full md:w-auto">
-            <form onSubmit={handleNewsletter} className="flex flex-col sm:flex-row items-center w-full sm:w-auto gap-2 sm:gap-0" aria-label="Newsletter signup">
+          <div className="hidden md:flex items-center gap-6 flex-shrink-0">
+            <form onSubmit={handleNewsletter} className="flex items-center" aria-label="Newsletter signup">
               <input
                 type="email"
                 value={email}
@@ -37,17 +37,17 @@ export default function Footer() {
                 placeholder="Enter your email"
                 required
                 aria-label="Email address"
-                className="w-full sm:w-44 px-3 py-2 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none border-0 rounded-sm sm:rounded-l-sm sm:rounded-r-none"
+                className="w-44 px-3 py-2 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none border-0 rounded-l-sm"
               />
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-[#FFB700] text-black text-[12px] font-bold px-4 py-2 rounded-sm sm:rounded-r-sm sm:rounded-l-none hover:bg-amber-500 transition-colors whitespace-nowrap"
+                className="bg-[#FFB700] text-black text-[12px] font-bold px-4 py-2 rounded-r-sm hover:bg-amber-500 transition-colors whitespace-nowrap"
               >
                 Subscribe Now
               </button>
             </form>
 
-            <div className="hidden md:block relative h-[159px] w-[140px] flex-shrink-0 pointer-events-none select-none" aria-hidden="true">
+            <div className="relative h-[159px] w-[140px] flex-shrink-0 pointer-events-none select-none" aria-hidden="true">
               <img src="/images/newsletter-product.png" alt="" className="absolute bottom-0 w-full object-contain object-bottom" />
               <img src="/images/newsletter-headphones.png" alt="" className="absolute top-[10px] right-0 w-[45px] h-[50px] object-contain" />
             </div>

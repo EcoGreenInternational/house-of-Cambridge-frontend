@@ -99,21 +99,11 @@ export default function AboutUs() {
             </Link>
           </div>
 
-          <div className="hidden lg:flex relative flex-1 h-[340px] items-center justify-end" aria-hidden="true">
+          <div className="hidden lg:flex flex-1 items-center justify-center" aria-hidden="true">
             <img
-              src="/images/register-product-1-462d52.png"
+              src="/images/aboutusmain.png"
               alt=""
-              className="absolute right-16 top-4 w-[220px] object-contain drop-shadow-xl rotate-3 rounded-xl"
-            />
-            <img
-              src="/images/register-product-2-59786b.png"
-              alt=""
-              className="absolute right-[280px] bottom-4 w-[180px] object-contain drop-shadow-xl -rotate-2 rounded-xl"
-            />
-            <img
-              src="/images/newsletter-product.png"
-              alt=""
-              className="absolute right-[60px] bottom-0 w-[140px] object-contain drop-shadow-lg rotate-1 rounded-xl opacity-90"
+              className="w-full max-w-[500px] h-auto object-contain"
             />
           </div>
         </div>

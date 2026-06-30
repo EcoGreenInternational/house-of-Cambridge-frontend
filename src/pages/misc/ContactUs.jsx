@@ -1,16 +1,15 @@
 import { useState, useCallback, useRef } from 'react';
 import Layout from '../../components/common/Layout';
 import Breadcrumb from '../../components/ui/Breadcrumb';
-import { FiTruck, FiShield, FiCheck, FiHeadphones, FiRefreshCw, FiSend } from 'react-icons/fi';
-import { FaWhatsapp, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
+import { Icon } from '@iconify/react';
 import toast from 'react-hot-toast';
 
 const SERVICES = [
-  { icon: FiTruck, title: 'Fast Delivery', desc: 'Islandwide delivery to your doorstep' },
-  { icon: FiShield, title: 'Secure Payments', desc: '100% secure online payments' },
-  { icon: FiCheck, title: 'Genuine Products', desc: 'Original products from trusted brands' },
-  { icon: FiRefreshCw, title: 'Easy Returns', desc: 'Hassle-free returns within 30 days' },
-  { icon: FiHeadphones, title: 'Customer Support', desc: 'Friendly support 24/7' },
+  { icon: 'mdi:truck', title: 'Fast Delivery', desc: 'Islandwide delivery to your doorstep' },
+  { icon: 'mdi:shield-check', title: 'Secure Payments', desc: '100% secure online payments' },
+  { icon: 'mdi:check-circle', title: 'Genuine Products', desc: 'Original products from trusted brands' },
+  { icon: 'mdi:refresh', title: 'Easy Returns', desc: 'Hassle-free returns within 30 days' },
+  { icon: 'mdi:headphones', title: 'Customer Support', desc: 'Friendly support 24/7' },
 ];
 
 const BRAND_LOGOS = [
@@ -134,29 +133,29 @@ export default function ContactUs() {
       <div className="max-w-[1280px] mx-auto px-6 pb-10">
         <div className="bg-white border border-[#E9E9E9] rounded-[14px] overflow-hidden shadow-[2px_4px_16px_rgba(0,0,0,0.06)] grid grid-cols-1 md:grid-cols-2">
 
-          <div className="bg-[#1A1A1A] p-8 flex flex-col gap-7">
+          <div className="bg-white p-8 flex flex-col gap-7">
             <div>
               <h1 className="text-[26px] font-black mb-1">
                 <span className="text-[#FFB700]">Get</span>
-                <span className="text-white"> In Touch</span>
+                <span className="text-[#1A1A1A]"> In Touch</span>
               </h1>
-              <p className="text-[13px] text-gray-400 leading-relaxed">
+              <p className="text-[13px] text-[#60717B] leading-relaxed">
                 Questions, comments, or suggestions? Simply fill in the form and we'll be in touch shortly.
               </p>
             </div>
 
             <ul className="space-y-5" aria-label="Contact details">
               <li className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-[#25D366]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
-                  <FaWhatsapp size={16} className="text-[#25D366]" />
+                <div className="w-9 h-9 bg-[#FFB700]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
+                  <Icon icon="mdi:whatsapp" width={16} className="text-[#FFB700]" />
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wide mb-0.5">WhatsApp</p>
+                  <p className="text-[11px] text-[#60717B] uppercase tracking-wide mb-0.5">WhatsApp</p>
                   <a
                     href={CONTACT_INFO.whatsappHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[14px] text-white font-medium hover:text-[#25D366] transition-colors"
+                    className="text-[14px] text-[#1A1A1A] font-medium hover:text-[#FFB700] transition-colors"
                   >
                     {CONTACT_INFO.whatsapp}
                   </a>
@@ -165,13 +164,13 @@ export default function ContactUs() {
 
               <li className="flex items-start gap-3">
                 <div className="w-9 h-9 bg-[#FFB700]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
-                  <FaPhone size={14} className="text-[#FFB700]" />
+                  <Icon icon="mdi:phone" width={16} className="text-[#FFB700]" />
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wide mb-0.5">Landline</p>
+                  <p className="text-[11px] text-[#60717B] uppercase tracking-wide mb-0.5">Landline</p>
                   <a
                     href={CONTACT_INFO.phoneHref}
-                    className="text-[14px] text-white font-medium hover:text-[#FFB700] transition-colors"
+                    className="text-[14px] text-[#1A1A1A] font-medium hover:text-[#FFB700] transition-colors"
                   >
                     {CONTACT_INFO.phone}
                   </a>
@@ -179,14 +178,14 @@ export default function ContactUs() {
               </li>
 
               <li className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
-                  <FaEnvelope size={14} className="text-blue-400" />
+                <div className="w-9 h-9 bg-[#FFB700]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
+                  <Icon icon="mdi:email" width={16} className="text-[#FFB700]" />
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wide mb-0.5">Email</p>
+                  <p className="text-[11px] text-[#60717B] uppercase tracking-wide mb-0.5">Email</p>
                   <a
                     href={CONTACT_INFO.emailHref}
-                    className="text-[14px] text-white font-medium hover:text-blue-400 transition-colors"
+                    className="text-[14px] text-[#1A1A1A] font-medium hover:text-[#FFB700] transition-colors"
                   >
                     {CONTACT_INFO.email}
                   </a>
@@ -194,25 +193,19 @@ export default function ContactUs() {
               </li>
 
               <li className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-red-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
-                  <FaMapMarkerAlt size={14} className="text-red-400" />
+                <div className="w-9 h-9 bg-[#FFB700]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" aria-hidden="true">
+                  <Icon icon="mdi:map-marker" width={16} className="text-[#FFB700]" />
                 </div>
                 <div>
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wide mb-0.5">Address</p>
+                  <p className="text-[11px] text-[#60717B] uppercase tracking-wide mb-0.5">Address</p>
                   <address className="not-italic">
-                    <p className="text-[14px] text-white font-medium">{CONTACT_INFO.address}</p>
-                    <p className="text-[12px] text-gray-400">{CONTACT_INFO.country}</p>
+                    <p className="text-[14px] text-[#1A1A1A] font-medium">{CONTACT_INFO.address}</p>
+                    <p className="text-[12px] text-[#60717B]">{CONTACT_INFO.country}</p>
                   </address>
                 </div>
               </li>
             </ul>
 
-            <div className="mt-auto pt-4 border-t border-white/10">
-              <p className="text-[11px] text-gray-500 uppercase tracking-wide mb-1">Business Hours</p>
-              <p className="text-[12px] text-gray-400">Mon – Fri: 9:00 AM – 6:00 PM</p>
-              <p className="text-[12px] text-gray-400">Saturday: 10:00 AM – 4:00 PM</p>
-              <p className="text-[12px] text-gray-400">Sunday: Closed</p>
-            </div>
           </div>
 
           <div className="p-8">
@@ -325,7 +318,7 @@ export default function ContactUs() {
     <span>Sending…</span>
   ) : (
     <>
-      <FiSend size={14} aria-hidden="true" /> Send Message
+      <Icon icon="mdi:send" width={14} aria-hidden="true" /> Send Message
     </>
   )}
 </button>
@@ -346,7 +339,7 @@ export default function ContactUs() {
                 className="bg-white border border-[#E9E9E9] rounded-[14px] shadow-[2px_3px_6px_rgba(0,0,0,0.07)] p-5 text-center hover:shadow-md transition-shadow"
               >
                 <div className="w-11 h-11 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <s.icon size={18} className="text-[#FFB700]" aria-hidden="true" />
+                  <Icon icon={s.icon} width={18} className="text-[#FFB700]" aria-hidden="true" />
                 </div>
                 <p className="text-[12px] font-bold text-[#FFB700] mb-1">{s.title}</p>
                 <p className="text-[11px] text-[#60717B] leading-snug">{s.desc}</p>
