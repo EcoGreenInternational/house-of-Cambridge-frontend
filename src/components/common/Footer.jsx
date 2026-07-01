@@ -144,13 +144,8 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-gray-500">
+      <div className="max-w-[1280px] mx-auto px-4 py-4 text-center text-xs text-gray-500">
         <span>©2026 Developed by Lee Harvey. All rights reserved.</span>
-        <div className="flex items-center gap-4">
-          <Link to="/privacy-policy" className="hover:text-[#FFB700] transition-colors">Privacy</Link>
-          <Link to="/terms"          className="hover:text-[#FFB700] transition-colors">Terms</Link>
-          <Link to="/faq"            className="hover:text-[#FFB700] transition-colors">FAQ</Link>
-        </div>
       </div>
     </footer>
   );
