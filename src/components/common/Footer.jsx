@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiMail, FiPhone, FiMapPin, FiInstagram, FiFacebook } from 'react-icons/fi';
-import { FaWhatsapp, FaTwitter, FaTiktok } from 'react-icons/fa6';
+import { Icon } from '@iconify/react';
 import toast from 'react-hot-toast';
 
 export default function Footer() {
@@ -56,93 +55,96 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8 border-b border-white/5">
+      <div className="max-w-[1280px] mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 border-b border-white/5">
 
         <div>
-          <div className="mb-4">
-            <img src="/images/logo.png" alt="House of Cambridge" className="h-10 w-auto object-contain" />
+          <div className="flex items-center gap-3 mb-4">
+            <img src="/images/logo.png" alt="House of Cambridge" className="h-8 lg:h-10 w-auto object-contain" />
+            <span className="text-white font-bold text-[14px] lg:text-[18px]">House Of Cambridge</span>
           </div>
-          <p className="text-sm leading-relaxed text-gray-400 mb-4">
+          <p className="text-[12px] lg:text-[14px] leading-relaxed text-white mb-2">
             We are more than just an online store; we are a platform built to deliver quality, convenience, and trust.
           </p>
-          <p className="text-[#FFB700] text-sm font-semibold mb-4">Shop with confidence!</p>
-          <div className="flex items-center gap-2" aria-label="Social media links">
+          <p className="text-[#FFB700] text-[12px] lg:text-[14px] font-semibold mb-4">Shop with confidence!</p>
+        </div>
+
+        <div>
+          <h4 className="text-[#FFB700] text-[13px] lg:text-[14px] font-bold mb-3">ABOUT</h4>
+          <ul className="space-y-2 text-[12px] lg:text-[13px]">
+            <li><Link to="/about"          className="text-white hover:text-[#FFB700] transition-colors">About Us</Link></li>
+            <li><Link to="/privacy-policy" className="text-white hover:text-[#FFB700] transition-colors">Privacy Policy</Link></li>
+            <li><Link to="/return-policy"  className="text-white hover:text-[#FFB700] transition-colors">Return and Refund Policy</Link></li>
+            <li><Link to="/terms"          className="text-white hover:text-[#FFB700] transition-colors">Terms and Conditions</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[#FFB700] text-[13px] lg:text-[14px] font-bold mb-3">HELP</h4>
+          <ul className="space-y-2 text-[12px] lg:text-[13px]">
+            <li><Link to="/faq" className="text-white hover:text-[#FFB700] transition-colors">Frequently Asked Questions</Link></li>
+            <li><Link to="/how-to-buy" className="text-white hover:text-[#FFB700] transition-colors">How To Buy</Link></li>
+            <li><Link to="/shipping" className="text-white hover:text-[#FFB700] transition-colors">Shipping & Delivery</Link></li>
+            <li><Link to="/warranty" className="text-white hover:text-[#FFB700] transition-colors">Warranty Information</Link></li>
+            <li><Link to="/return-products" className="text-white hover:text-[#FFB700] transition-colors">Return Products</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-[#FFB700] text-[13px] lg:text-[14px] font-bold mb-3">CONTACT US</h4>
+          <ul className="space-y-2 text-[12px] lg:text-[13px]">
+            <li className="flex items-center gap-2">
+              <Icon icon="mdi:whatsapp" width={14} className="text-green-500 shrink-0" aria-hidden="true" />
+              <a href="https://wa.me/94764604227" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#FFB700] transition-colors">076 460 4227</a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Icon icon="mdi:phone" width={14} className="text-red-500 shrink-0" aria-hidden="true" />
+              <a href="tel:+94112847846" className="text-white hover:text-[#FFB700] transition-colors">0112 847 846</a>
+            </li>
+            <li className="flex items-center gap-2">
+              <Icon icon="mdi:email" width={14} className="text-yellow-500 shrink-0" aria-hidden="true" />
+              <a href="mailto:info@houseofcambridge.co.uk" className="text-white hover:text-[#FFB700] transition-colors break-all">
+                info@houseofcambridge.co.uk
+              </a>
+            </li>
+            <li className="flex items-start gap-2">
+              <Icon icon="mdi:map-marker" width={14} className="text-green-500 shrink-0 mt-0.5" aria-hidden="true" />
+              <span className="text-white">No 63 Old Road, Pannipitiya</span>
+            </li>
+          </ul>
+          <div className="flex items-center gap-3 mt-4" aria-label="Social media links">
             <a
               href="https://www.facebook.com/share/1EvLTYix5L/?mibextid=wwXIfr"
               aria-label="Facebook"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#FFB700] hover:text-black text-gray-400 transition-all"
+              className="w-7 h-7 bg-[#1877F2] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <FiFacebook size={14} />
+              <Icon icon="mdi:facebook" width={14} className="text-white" />
             </a>
             <a
               href="https://www.instagram.com/houseofcambridge"
               aria-label="Instagram"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#FFB700] hover:text-black text-gray-400 transition-all"
+              className="w-7 h-7 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+              style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
             >
-              <FiInstagram size={14} />
+              <Icon icon="mdi:instagram" width={14} className="text-white" />
             </a>
             <a
               href="https://www.tiktok.com/@houseofcambridge1"
               aria-label="TikTok"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center hover:bg-[#010101] hover:text-white text-gray-400 transition-all"
+              className="w-7 h-7 bg-black rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <FaTiktok size={14} />
+              <Icon icon="logos:tiktok-icon" width={14} />
             </a>
           </div>
         </div>
-
-        <div>
-          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Company</h4>
-          <ul className="space-y-2.5 text-sm">
-            <li><Link to="/about"          className="hover:text-[#FFB700] transition-colors">About Us</Link></li>
-            <li><Link to="/privacy-policy" className="hover:text-[#FFB700] transition-colors">Privacy Policy</Link></li>
-            <li><Link to="/terms"          className="hover:text-[#FFB700] transition-colors">Terms and Conditions</Link></li>
-            <li><Link to="/contact"        className="hover:text-[#FFB700] transition-colors">Contact Us</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Quick Links</h4>
-          <ul className="space-y-2.5 text-sm">
-            <li><Link to="/faq"         className="hover:text-[#FFB700] transition-colors">FAQ</Link></li>
-            <li><Link to="/flash-sale"  className="hover:text-[#FFB700] transition-colors">Flash Sale</Link></li>
-            <li><Link to="/track-order" className="hover:text-[#FFB700] transition-colors">Track My Order</Link></li>
-            <li><Link to="/orders"      className="hover:text-[#FFB700] transition-colors">My Orders</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-white text-sm font-bold uppercase tracking-wider mb-4">Contact Us</h4>
-          <ul className="space-y-3 text-sm">
-            <li className="flex items-center gap-2.5">
-              <FiPhone size={13} className="text-[#FFB700] shrink-0" aria-hidden="true" />
-              <a href="tel:0764604227" className="hover:text-[#FFB700] transition-colors">076 460 4227</a>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <FiPhone size={13} className="text-[#FFB700] shrink-0" aria-hidden="true" />
-              <a href="tel:0112847846" className="hover:text-[#FFB700] transition-colors">0112 847 846</a>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <FiMail size={13} className="text-[#FFB700] shrink-0" aria-hidden="true" />
-              <a href="mailto:info@houseofcambridge.co.uk" className="hover:text-[#FFB700] transition-colors break-all">
-                info@houseofcambridge.co.uk
-              </a>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <FiMapPin size={13} className="text-[#FFB700] shrink-0 mt-0.5" aria-hidden="true" />
-              <span>No 63 Old Road, Pannipitiya</span>
-            </li>
-          </ul>
-        </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-gray-600">
+      <div className="max-w-[1280px] mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-gray-500">
         <span>©2026 Developed by Lee Harvey. All rights reserved.</span>
         <div className="flex items-center gap-4">
           <Link to="/privacy-policy" className="hover:text-[#FFB700] transition-colors">Privacy</Link>
