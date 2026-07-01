@@ -46,9 +46,10 @@ export default function Footer() {
               </button>
             </form>
 
-            <div className="relative h-[159px] w-[140px] flex-shrink-0 pointer-events-none select-none" aria-hidden="true">
-              <img src="/images/newsletter-product.png" alt="" className="absolute bottom-0 w-full object-contain object-bottom" />
-              <img src="/images/newsletter-headphones.png" alt="" className="absolute top-[10px] right-0 w-[45px] h-[50px] object-contain" />
+            <div className="flex items-center flex-shrink-0 pointer-events-none select-none" aria-hidden="true">
+              <img src="/images/arrow.png" alt="" className="w-[100px] h-[100px] object-contain -mr-4 z-10 flex-shrink-0" />
+              <img src="/images/headphone.png" alt="" className="h-[200px] w-auto object-contain flex-shrink-0" />
+              <img src="/images/newsletter-email.png" alt="" className="w-[70px] h-[70px] object-contain ml-2 flex-shrink-0" />
             </div>
           </div>
 
