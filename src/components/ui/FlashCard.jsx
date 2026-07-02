@@ -45,15 +45,6 @@ export default function FlashCard({ product }) {
             -{pct}%
           </span>
         )}
-        <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 z-10">
-          <button
-            onClick={handleAddToCart}
-            className="w-7 h-7 sm:w-10 sm:h-10 bg-[#FFB700] rounded-full flex items-center justify-center hover:bg-[#e6a600] transition-colors shadow-md cursor-pointer"
-            aria-label="Add to cart"
-          >
-            <Icon icon="mdi:cart" width={14} className="sm:w-[18px] text-white" />
-          </button>
-        </div>
       </div>
 
       <div className="p-2 sm:p-3 flex flex-col flex-1">
@@ -75,12 +66,21 @@ export default function FlashCard({ product }) {
             </span>
           )}
         </div>
-        <button
-          onClick={handleAddToCart}
-          className="w-full bg-[#E70D0D] text-white text-[10px] sm:text-[13px] font-bold py-1.5 sm:py-2 rounded-[5px] sm:rounded-[6px] hover:bg-[#cc0000] transition-colors cursor-pointer"
-        >
-          Buy Now
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAddToCart}
+            className="flex-1 bg-[#E70D0D] text-white text-[10px] sm:text-[13px] font-bold py-1.5 sm:py-2 rounded-[5px] sm:rounded-[6px] hover:bg-[#cc0000] transition-colors cursor-pointer"
+          >
+            Buy Now
+          </button>
+          <button
+            onClick={handleAddToCart}
+            className="w-7 h-7 sm:w-10 sm:h-10 bg-[#FFB700] rounded-full flex items-center justify-center hover:bg-[#e6a600] transition-colors shadow-md cursor-pointer flex-shrink-0"
+            aria-label="Add to cart"
+          >
+            <Icon icon="mdi:cart" width={14} className="sm:w-[18px] text-white" />
+          </button>
+        </div>
       </div>
     </Link>
   );

@@ -16,19 +16,19 @@ export default function Footer() {
   return (
     <footer className="bg-[#171C26] text-gray-400">
 
-      <div className="relative overflow-hidden h-[170px]" style={{ background: '#758688' }}>
-        <div className="max-w-[1280px] mx-auto px-14 h-full flex items-center justify-between relative">
+      <div className="relative overflow-hidden md:h-[170px] py-6 md:py-0" style={{ background: '#758688' }}>
+        <div className="max-w-[1280px] mx-auto px-4 md:px-14 h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-0 text-center md:text-left relative">
 
           <div className="flex-shrink-0">
-            <p className="text-white font-black text-[14px] tracking-wide mb-0.5">Stay Updated with Us</p>
-            <h3 className="text-white font-black leading-tight mb-0.5" style={{ fontSize: '34px' }}>
+            <p className="text-white font-black text-[13px] md:text-[14px] tracking-wide mb-0.5">Stay Updated with Us</p>
+            <h3 className="text-white font-black leading-tight mb-0.5 text-[24px] md:text-[34px]">
               Get <span className="text-[#FFB700]">20% Off</span> Discount Coupon
             </h3>
-            <p className="text-white font-black text-[14px]">by Subscribe our Newsletter</p>
+            <p className="text-white font-black text-[13px] md:text-[14px]">by Subscribe our Newsletter</p>
           </div>
 
-          <div className="hidden md:flex items-center gap-6 flex-shrink-0">
-            <form onSubmit={handleNewsletter} className="flex items-center" aria-label="Newsletter signup">
+          <div className="w-full md:w-auto md:flex items-center gap-6 flex-shrink-0">
+            <form onSubmit={handleNewsletter} className="flex items-center max-w-[340px] mx-auto md:mx-0" aria-label="Newsletter signup">
               <input
                 type="email"
                 value={email}
@@ -36,7 +36,7 @@ export default function Footer() {
                 placeholder="Enter your email"
                 required
                 aria-label="Email address"
-                className="w-44 px-3 py-2 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none border-0 rounded-l-sm"
+                className="flex-1 md:w-44 px-3 py-2 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none border-0 rounded-l-sm"
               />
               <button
                 type="submit"
@@ -46,7 +46,7 @@ export default function Footer() {
               </button>
             </form>
 
-            <div className="flex items-center flex-shrink-0 pointer-events-none select-none" aria-hidden="true">
+            <div className="hidden md:flex items-center flex-shrink-0 pointer-events-none select-none" aria-hidden="true">
               <img src="/images/arrow.png" alt="" className="w-[100px] h-[100px] object-contain -mr-4 z-10 flex-shrink-0" />
               <img src="/images/headphone.png" alt="" className="h-[200px] w-auto object-contain flex-shrink-0" />
               <img src="/images/newsletter-email.png" alt="" className="w-[70px] h-[70px] object-contain ml-2 flex-shrink-0" />
@@ -56,22 +56,22 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 border-b border-white/5">
+      <div className="max-w-[1280px] mx-auto px-4 py-8 md:py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 border-b border-white/5">
 
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <img src="/images/logo.png" alt="House of Cambridge" className="h-8 lg:h-10 w-auto object-contain" />
-            <span className="text-white font-bold text-[14px] lg:text-[18px]">House Of Cambridge</span>
+        <div className="sm:col-span-2 lg:col-span-1">
+          <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+            <img src="/images/logo.png" alt="House of Cambridge" className="h-7 md:h-10 w-auto object-contain" />
+            <span className="text-white font-bold text-[13px] md:text-[18px]">House Of Cambridge</span>
           </div>
-          <p className="text-[12px] lg:text-[14px] leading-relaxed text-white mb-2">
+          <p className="text-[11px] md:text-[14px] leading-relaxed text-white mb-2">
             We are more than just an online store; we are a platform built to deliver quality, convenience, and trust.
           </p>
-          <p className="text-[#FFB700] text-[12px] lg:text-[14px] font-semibold mb-4">Shop with confidence!</p>
+          <p className="text-[#FFB700] text-[11px] md:text-[14px] font-semibold mb-3 md:mb-4">Shop with confidence!</p>
         </div>
 
         <div>
-          <h4 className="text-[#FFB700] text-[13px] lg:text-[14px] font-bold mb-3">ABOUT</h4>
-          <ul className="space-y-2 text-[12px] lg:text-[13px]">
+          <h4 className="text-[#FFB700] text-[12px] md:text-[14px] font-bold mb-2 md:mb-3">ABOUT</h4>
+          <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-[13px]">
             <li><Link to="/about"          className="text-white hover:text-[#FFB700] transition-colors">About Us</Link></li>
             <li><Link to="/privacy-policy" className="text-white hover:text-[#FFB700] transition-colors">Privacy Policy</Link></li>
             <li><Link to="/return-policy"  className="text-white hover:text-[#FFB700] transition-colors">Return and Refund Policy</Link></li>
@@ -80,8 +80,8 @@ export default function Footer() {
         </div>
 
         <div>
-          <h4 className="text-[#FFB700] text-[13px] lg:text-[14px] font-bold mb-3">HELP</h4>
-          <ul className="space-y-2 text-[12px] lg:text-[13px]">
+          <h4 className="text-[#FFB700] text-[12px] md:text-[14px] font-bold mb-2 md:mb-3">HELP</h4>
+          <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-[13px]">
             <li><Link to="/faq" className="text-white hover:text-[#FFB700] transition-colors">Frequently Asked Questions</Link></li>
             <li><Link to="/how-to-buy" className="text-white hover:text-[#FFB700] transition-colors">How To Buy</Link></li>
             <li><Link to="/shipping" className="text-white hover:text-[#FFB700] transition-colors">Shipping & Delivery</Link></li>
@@ -91,55 +91,55 @@ export default function Footer() {
         </div>
 
         <div>
-          <h4 className="text-[#FFB700] text-[13px] lg:text-[14px] font-bold mb-3">CONTACT US</h4>
-          <ul className="space-y-2 text-[12px] lg:text-[13px]">
-            <li className="flex items-center gap-2">
-              <Icon icon="mdi:whatsapp" width={14} className="text-green-500 shrink-0" aria-hidden="true" />
+          <h4 className="text-[#FFB700] text-[12px] md:text-[14px] font-bold mb-2 md:mb-3">CONTACT US</h4>
+          <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-[13px]">
+            <li className="flex items-center gap-1.5 md:gap-2">
+              <Icon icon="mdi:whatsapp" width={12} className="md:w-[14px] text-green-500 shrink-0" aria-hidden="true" />
               <a href="https://wa.me/94764604227" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#FFB700] transition-colors">076 460 4227</a>
             </li>
-            <li className="flex items-center gap-2">
-              <Icon icon="mdi:phone" width={14} className="text-red-500 shrink-0" aria-hidden="true" />
+            <li className="flex items-center gap-1.5 md:gap-2">
+              <Icon icon="mdi:phone" width={12} className="md:w-[14px] text-red-500 shrink-0" aria-hidden="true" />
               <a href="tel:+94112847846" className="text-white hover:text-[#FFB700] transition-colors">0112 847 846</a>
             </li>
-            <li className="flex items-center gap-2">
-              <Icon icon="mdi:email" width={14} className="text-yellow-500 shrink-0" aria-hidden="true" />
+            <li className="flex items-center gap-1.5 md:gap-2">
+              <Icon icon="mdi:email" width={12} className="md:w-[14px] text-yellow-500 shrink-0" aria-hidden="true" />
               <a href="mailto:info@houseofcambridge.co.uk" className="text-white hover:text-[#FFB700] transition-colors break-all">
                 info@houseofcambridge.co.uk
               </a>
             </li>
-            <li className="flex items-start gap-2">
-              <Icon icon="mdi:map-marker" width={14} className="text-green-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <li className="flex items-start gap-1.5 md:gap-2">
+              <Icon icon="mdi:map-marker" width={12} className="md:w-[14px] text-green-500 shrink-0 mt-0.5" aria-hidden="true" />
               <span className="text-white">No 63 Old Road, Pannipitiya</span>
             </li>
           </ul>
-          <div className="flex items-center gap-3 mt-4" aria-label="Social media links">
+          <div className="flex items-center gap-2 md:gap-3 mt-3 md:mt-4" aria-label="Social media links">
             <a
               href="https://www.facebook.com/share/1EvLTYix5L/?mibextid=wwXIfr"
               aria-label="Facebook"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-7 h-7 bg-[#1877F2] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="w-6 h-6 md:w-7 md:h-7 bg-[#1877F2] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <Icon icon="mdi:facebook" width={14} className="text-white" />
+              <Icon icon="mdi:facebook" width={12} className="md:w-[14px] text-white" />
             </a>
             <a
               href="https://www.instagram.com/houseofcambridge"
               aria-label="Instagram"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-7 h-7 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
               style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
             >
-              <Icon icon="mdi:instagram" width={14} className="text-white" />
+              <Icon icon="mdi:instagram" width={12} className="md:w-[14px] text-white" />
             </a>
             <a
               href="https://www.tiktok.com/@houseofcambridge1"
               aria-label="TikTok"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-7 h-7 bg-black rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="w-6 h-6 md:w-7 md:h-7 bg-black rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <Icon icon="logos:tiktok-icon" width={14} />
+              <Icon icon="logos:tiktok-icon" width={12} className="md:w-[14px]" />
             </a>
           </div>
         </div>

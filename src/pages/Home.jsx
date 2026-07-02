@@ -101,7 +101,7 @@ function FlashCountdown({ endsAt }) {
       >
         {pad(value)}
       </div>
-      <span className="font-['Poppins'] font-semibold text-[9px] text-black mt-0.5">{label}</span>
+      <span className="font-['Poppins'] font-semibold text-[9px] text-white mt-0.5">{label}</span>
     </div>
   );
 

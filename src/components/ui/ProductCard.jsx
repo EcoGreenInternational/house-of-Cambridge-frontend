@@ -2,29 +2,9 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../redux/slices/cartSlice.js';
 import { toggleWishlist } from '../../redux/slices/userSlice.js';
+import { Icon } from '@iconify/react';
 import { FaStar } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-
-function HeartIcon({ filled }) {
-  return (
-    <svg
-      width="16" height="16" viewBox="0 0 24 24"
-      fill={filled ? '#e53535' : 'none'}
-      stroke={filled ? '#e53535' : '#999'}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{
-        display: 'block',
-        transition: 'fill 0.2s, stroke 0.2s, transform 0.15s',
-        transform: filled ? 'scale(1.15)' : 'scale(1)',
-      }}
-    >
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  );
-}
 
 export default function ProductCard({ product }) {
   const dispatch = useDispatch();
@@ -90,11 +70,14 @@ export default function ProductCard({ product }) {
 
         <button
           onClick={handleWishlist}
-          className={`absolute top-2 right-2 z-20 w-[34px] h-[34px] rounded-full flex items-center justify-center shadow-[0_1px_4px_rgba(0,0,0,0.14)] transition-all duration-150 active:scale-90 ${
-            isWishlisted ? 'bg-red-50 hover:bg-red-100' : 'bg-white/90 hover:bg-red-50'
-          }`}
+          className="absolute top-2 right-2 z-20 transition-all duration-150 active:scale-90"
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-          <HeartIcon filled={isWishlisted} />
+          <Icon 
+            icon={isWishlisted ? 'mdi:heart' : 'mdi:heart-outline'} 
+            width={20} 
+            className={isWishlisted ? 'text-[#FFB700]' : 'text-[#FFB700]'} 
+          />
         </button>
 
         <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1 z-20">
@@ -153,11 +136,7 @@ export default function ProductCard({ product }) {
               className="w-[27px] h-[27px] bg-[#FFB700] rounded-full flex items-center justify-center hover:bg-[#e6a600] transition-colors cursor-pointer shadow-sm flex-shrink-0"
               aria-label="Add to cart"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-              </svg>
+              <Icon icon="mdi:cart" width={14} className="text-white" />
             </button>
           )}
         </div>
