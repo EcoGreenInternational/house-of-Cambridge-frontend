@@ -38,14 +38,14 @@ export default function ForgotPassword() {
           <div className="bg-white border border-[#C5C5C5] rounded-sm overflow-hidden">
 
             <div className="p-8 pb-6">
-              <Link to="/"><img src="/images/logo.png" alt="House of Cambridge" className="h-9 w-auto object-contain mb-6" /></Link>
+              <Link to="/"><img src="/images/logo.png" alt="House of Cambridge" className="h-15 w-auto object-contain mb-6" /></Link>
               <h1 className="text-[20px] font-bold text-[#1A1A1A] mb-1">Forgot Your Password?</h1>
               <p className="text-[13px] text-[#60717B] mb-5">Enter your email and we'll send a reset link.</p>
 
               <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-[6px] p-3 mb-5" role="note">
                 <FiAlertTriangle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-[12px] text-amber-700 leading-relaxed">
-                  If you signed up with Google or Facebook, please use those to sign in instead — password reset only works for email accounts.
+                  If you signed up with Google or Facebook, please use those to sign in instead - password reset only works for email accounts.
                 </p>
               </div>
 

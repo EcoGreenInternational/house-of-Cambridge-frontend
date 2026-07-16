@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword } from '../../redux/slices/authSlice.js';
@@ -11,10 +11,12 @@ const INPUT_CLS =
 const PAGE_BG = { background: 'linear-gradient(135deg, rgba(254,242,228,1) 22%, rgba(255,255,255,1) 64%)' };
 
 const POST_RESET_ITEMS = [
-  'Be automatically signed in to your account',
+  'Be redirected to the login page',
   'Receive a confirmation email',
-  'Have full access to all features',
+  'Sign in with your new password',
 ];
+
+const REDIRECT_DELAY_MS = 3000;
 
 function Req({ met, label }) {
   return (
@@ -32,7 +34,7 @@ export default function ResetPassword() {
   const { token } = useParams();
   const dispatch  = useDispatch();
   const navigate  = useNavigate();
-  const { loading, isAuthenticated } = useSelector((s) => s.auth);
+  const { loading } = useSelector((s) => s.auth);
 
   const [form,        setForm]        = useState({ password: '', confirm: '' });
   const [showPass,    setShowPass]    = useState(false);
@@ -48,20 +50,14 @@ export default function ResetPassword() {
     match:   p.length > 0 && p === form.confirm,
   };
 
-  useEffect(() => {
-    if (isAuthenticated && !success) {
-      setSuccess(true);
-      const t = setTimeout(() => navigate('/'), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [isAuthenticated, navigate, success]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirm) { toast.error('Passwords do not match'); return; }
     if (form.password.length < 8)       { toast.error('Password must be at least 8 characters'); return; }
     try {
       await dispatch(resetPassword({ token, password: form.password })).unwrap();
+      setSuccess(true);
+      setTimeout(() => navigate('/login'), REDIRECT_DELAY_MS);
     } catch (err) {
       toast.error(typeof err === 'string' ? err : err?.message || 'Failed to reset password');
     }
@@ -168,7 +164,7 @@ export default function ResetPassword() {
                     <FiCheck size={22} className="text-green-500" />
                   </div>
                   <p className="text-[14px] font-bold text-[#1A1A1A]">Password Updated!</p>
-                  <p className="text-[12px] text-[#60717B] mt-1">Redirecting you to the homepage…</p>
+                  <p className="text-[12px] text-[#60717B] mt-1">Redirecting you to the login page…</p>
                 </div>
               ) : (
                 <ul className="space-y-1.5 opacity-60" aria-hidden="true">

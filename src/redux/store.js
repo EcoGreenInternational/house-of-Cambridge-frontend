@@ -7,6 +7,7 @@ import userReducer    from './slices/userSlice';
 import adminReducer   from './slices/adminSlice';
 import paymentReducer from './slices/paymentSlice';
 import brandReducer   from './slices/brandSlice';
+import invoiceReducer from './slices/invoiceSlice';
 
 const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ const store = configureStore({
     user:     userReducer,
     admin:    adminReducer,
     brands:   brandReducer,
+    invoice: invoiceReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

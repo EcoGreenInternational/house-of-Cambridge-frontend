@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const SESSION_ID_KEY = 'sessionId';
-const TOKEN_KEY = 'token';
 
 const generateSessionId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -28,22 +27,6 @@ const getSessionId = () => {
   }
 };
 
-const getToken = () => {
-  try {
-    return localStorage.getItem(TOKEN_KEY) || null;
-  } catch {
-    return null;
-  }
-};
-
-const removeToken = () => {
-  try {
-    localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* storage unavailable */
-  }
-};
-
 const BASE_URL = import.meta.env.VITE_API_URL;
 if (!BASE_URL) {
   console.error('[api] VITE_API_URL is not defined. Requests will fail.');
@@ -59,21 +42,51 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     config.headers['x-session-id'] = getSessionId();
     return config;
   },
   (err) => Promise.reject(err)
 );
 
+let isRefreshing = false;
+let refreshQueue = [];
+
+const processQueue = (error) => {
+  refreshQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve()));
+  refreshQueue = [];
+};
+
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      removeToken();
+  async (err) => {
+    const originalRequest = err.config;
+
+    if (
+      err.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/refresh') &&
+      !originalRequest.url?.includes('/auth/login')
+    ) {
+      if (isRefreshing) {
+        // queue this request until the in-flight refresh finishes
+        return new Promise((resolve, reject) => {
+          refreshQueue.push({ resolve, reject });
+        }).then(() => api(originalRequest));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await api.post('/auth/refresh');
+        processQueue(null);
+        return api(originalRequest); // retry the original request now that the cookie is refreshed
+      } catch (refreshErr) {
+        processQueue(refreshErr);
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     const data = err.response?.data;

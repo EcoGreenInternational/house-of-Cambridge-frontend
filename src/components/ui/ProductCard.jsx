@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../redux/slices/cartSlice.js';
 import { toggleWishlist } from '../../redux/slices/userSlice.js';
@@ -6,8 +6,11 @@ import { Icon } from '@iconify/react';
 import { FaStar } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
+const CART_TOAST_ID = 'add-to-cart-toast';
+
 export default function ProductCard({ product }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { isAuthenticated } = useSelector((s) => s.auth);
   const { wishlist } = useSelector((s) => s.user);
 
@@ -20,18 +23,29 @@ export default function ProductCard({ product }) {
   const logoSrc = product.seller?.logo || product.shop?.logo || product.seller?.avatar?.url || product.shop?.avatar?.url || null;
   const sellerName = product.seller?.name || product.shop?.name || null;
 
-  const handleAddToCart = (e) => {
+ const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const toastId = toast.loading('Adding to cart...');
-    
     dispatch(addToCart({ productId: product._id, quantity: 1 }))
       .then(() => {
-        toast.success('Added to cart!', { id: toastId });
+        toast.success('Added to cart!', {
+          id: CART_TOAST_ID,
+          position: 'top-center',
+          style: { background: '#FFB700', color: '#1A1A1A', fontWeight: 600 },
+          iconTheme: { primary: '#1A1A1A', secondary: '#FFB700' },
+        });
       })
       .catch(() => {
-        toast.error('Failed to add to cart', { id: toastId });
+        toast.error('Failed to add to cart', { id: CART_TOAST_ID, position: 'top-center' });
+      });
+  };
+
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(addToCart({ productId: product._id, quantity: 1 }))
+      .then(() => {
+        navigate('/checkout', { state: { buyNowProductId: product._id } });
       });
   };
 

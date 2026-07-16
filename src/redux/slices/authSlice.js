@@ -158,6 +158,7 @@ const authSlice = createSlice({
     user: null,
     token: readToken(),
     loading: false,
+    authChecked: false,
     error: null,
     message: null,
     isAuthenticated: false,
@@ -200,11 +201,13 @@ const authSlice = createSlice({
       .addCase(loadUser.pending, (state) => { state.loading = true; })
       .addCase(loadUser.fulfilled, (state, action) => {
         state.loading = false;
+        state.authChecked = true;
         state.user = deepDecode(action.payload.user) ?? null;
         state.isAuthenticated = !!action.payload.user;
       })
       .addCase(loadUser.rejected, (state) => {
         state.loading = false;
+        state.authChecked = true;
         state.isAuthenticated = false;
         state.user = null;
       })

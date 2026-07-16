@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 const VERIFIED_CHECKLIST = [
   'Account created successfully',
   'Welcome email sent to your inbox',
-  '50 loyalty points credited',
+
   'Bronze Member status unlocked',
 ];
 

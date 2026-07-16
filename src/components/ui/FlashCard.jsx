@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import toast from 'react-hot-toast';
 import { addToCart } from '../../redux/slices/cartSlice';
 
 const safeNum = (v) => Number(v) || 0;
+const CART_TOAST_ID = 'add-to-cart-toast';
 
 export default function FlashCard({ product }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [isAdding, setIsAdding] = useState(false);
 
   const price    = safeNum(product.flashSalePrice || product.discountPrice || product.price);
   const original = safeNum(product.price);
@@ -16,15 +20,30 @@ export default function FlashCard({ product }) {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const toastId = toast.loading('Adding to cart...');
+    if (isAdding) return;
+    setIsAdding(true);
 
     dispatch(addToCart({ productId: product._id, quantity: 1 }))
       .then(() => {
-        toast.success('Added to cart!', { id: toastId });
+        toast.success('Added to cart!', {
+          id: CART_TOAST_ID,
+          position: 'top-center',
+          style: { background: '#FFB700', color: '#1A1A1A', fontWeight: 600 },
+          iconTheme: { primary: '#1A1A1A', secondary: '#FFB700' },
+        });
       })
       .catch(() => {
-        toast.error('Failed to add to cart', { id: toastId });
+        toast.error('Failed to add to cart', { id: CART_TOAST_ID, position: 'top-center' });
+      })
+      .finally(() => setIsAdding(false));
+  };
+
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(addToCart({ productId: product._id, quantity: 1 }))
+      .then(() => {
+        navigate('/checkout', { state: { buyNowProductId: product._id } });
       });
   };
 
@@ -68,14 +87,15 @@ export default function FlashCard({ product }) {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleAddToCart}
+            onClick={handleBuyNow}
             className="flex-1 bg-[#E70D0D] text-white text-[10px] sm:text-[13px] font-bold py-1.5 sm:py-2 rounded-[5px] sm:rounded-[6px] hover:bg-[#cc0000] transition-colors cursor-pointer"
           >
             Buy Now
           </button>
           <button
             onClick={handleAddToCart}
-            className="w-7 h-7 sm:w-10 sm:h-10 bg-[#FFB700] rounded-full flex items-center justify-center hover:bg-[#e6a600] transition-colors shadow-md cursor-pointer flex-shrink-0"
+            disabled={isAdding}
+            className="w-7 h-7 sm:w-10 sm:h-10 bg-[#FFB700] rounded-full flex items-center justify-center hover:bg-[#e6a600] transition-colors shadow-md cursor-pointer flex-shrink-0 disabled:opacity-60"
             aria-label="Add to cart"
           >
             <Icon icon="mdi:cart" width={14} className="sm:w-[18px] text-white" />

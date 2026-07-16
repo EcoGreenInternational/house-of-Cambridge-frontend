@@ -5,11 +5,11 @@ import { logout } from '../../redux/slices/authSlice.js';
 import {
   FiGrid, FiPackage, FiUsers, FiTag, FiPercent,
   FiMessageSquare, FiRepeat, FiLogOut, FiBell, FiMenu,
-  FiShoppingBag, FiZap, FiAward,
+  FiShoppingBag, FiZap, FiAward, FiFileText,
 } from 'react-icons/fi';
 
 const NAV = [
-  { icon: FiGrid,          label: 'Dashboard',  href: '/admin' },
+  { icon: FiGrid,          label: 'Dashboard',   href: '/admin' },
   { icon: FiPackage,       label: 'Orders',      href: '/admin/orders' },
   { icon: FiShoppingBag,   label: 'Products',    href: '/admin/products' },
   { icon: FiZap,           label: 'Flash Sales', href: '/admin/flash-sales' },
@@ -20,6 +20,7 @@ const NAV = [
   { icon: FiMessageSquare, label: 'Reviews',      href: '/admin/reviews' },
   { icon: FiRepeat,        label: 'Returns',      href: '/admin/returns' },
   { icon: FiBell,          label: 'Broadcast',   href: '/admin/broadcast' },
+  { icon: FiFileText,      label: 'Invoices',    href: '/admin/invoices' }, 
 ];
 
 function isNavActive(href, pathname) {

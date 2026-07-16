@@ -55,22 +55,6 @@ function AllCategoriesDropdown({ tree }) {
                 className="flex items-center gap-2 px-4 py-2 text-[12px] text-gray-700 font-medium hover:bg-gray-100 transition-colors"
                 onClick={() => setOpen(false)}
               >
-                <span>
-                  {
-                    [
-                      "🌸",
-                      "👶",
-                      "🏠",
-                      "💻",
-                      "📱",
-                      "🧴",
-                      "🎮",
-                      "📚",
-                      "🎁",
-                      "🛒",
-                    ][idx % 10]
-                  }
-                </span>
                 {parent.name}
               </Link>
               {parent.children.map((child) => (

@@ -108,6 +108,7 @@ export default function AdminProducts() {
   const fileRef = useRef(null);
 
   const [attributes, setAttributes] = useState({});
+  const productCodeLabel = editing?.productCode;
 
   const pages = Math.ceil((productsTotal ?? 0) / PAGE_SIZE);
 
@@ -313,7 +314,7 @@ const currentCategoryName = useMemo(() => {
             <table className="w-full text-[13px]">
               <thead className="bg-[#FAFAFA] border-b border-[#E9E9E9]">
                 <tr>
-                  {['Image', 'Name', 'SKU', 'Category', 'Brand', 'Price', 'Weight', 'Stock', 'Status', 'Actions'].map((h) => (
+                  {['Image', 'Name', 'SKU', 'Product Code', 'Category', 'Brand', 'Price', 'Weight', 'Stock', 'Status', 'Actions'].map((h) => (
                     <th key={h} className="px-4 py-3 text-left font-semibold text-[#60717B] whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -321,7 +322,7 @@ const currentCategoryName = useMemo(() => {
               <tbody>
                 {loading && !products.length ? (
                   <tr>
-                    <td colSpan={10} className="text-center py-12 text-[#60717B]">
+                    <td colSpan={11} className="text-center py-12 text-[#60717B]">
                       <div className="flex items-center justify-center gap-2">
                         <span className="w-4 h-4 border-2 border-[#FFB700] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                         Loading…
@@ -329,7 +330,7 @@ const currentCategoryName = useMemo(() => {
                     </td>
                   </tr>
                 ) : products.length === 0 ? (
-                  <tr><td colSpan={10} className="text-center py-12 text-[#60717B]">No products found</td></tr>
+                  <tr><td colSpan={11} className="text-center py-12 text-[#60717B]">No products found</td></tr>
                 ) : products.map((p) => (
                   <tr key={p._id} className="border-b border-[#F4F5F7] hover:bg-[#FAFAFA] transition-colors">
                     <td className="px-4 py-3">
@@ -347,12 +348,29 @@ const currentCategoryName = useMemo(() => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-[#60717B] font-mono text-[12px]">{p.sku || '—'}</td>
+                    <td className="px-4 py-3 text-[#1A1A1A] font-mono text-[12px] font-semibold whitespace-nowrap">
+                      {p.productCode || '—'}
+                    </td>
                     <td className="px-4 py-3 text-[#60717B]">{p.category?.name || '—'}</td>
                     <td className="px-4 py-3">
-                      {p.brand?.name
-                        ? <span className="px-2 py-0.5 bg-[#F4F5F7] text-[#1A1A1A] rounded-full text-[11px] font-semibold">{p.brand.name}</span>
-                        : <span className="text-[#C5C5C5]">—</span>
-                      }
+                      {p.brand ? (
+                        typeof p.brand === 'object' && p.brand.name ? (
+                          //populated brand object from the server
+                          <span className="px-2 py-0.5 bg-[#F4F5F7] text-[#1A1A1A] rounded-full text-[11px] font-semibold">
+                            {p.brand.name}
+                          </span>
+                        ) : typeof p.brand === 'string' && !p.brand.match(/^[0-9a-fA-F]{24}$/) ? (
+                          //  old text string name (like "Johnson's")
+                          <span className="px-2 py-0.5 bg-[#F4F5F7] text-[#1A1A1A] rounded-full text-[11px] font-semibold">
+                            {p.brand}
+                          </span>
+                        ) : (
+                          // Fallback display for brand ID or unrecognized format
+                          <span className="text-[#C5C5C5]">Saved (Refresh Page)</span>
+                        )
+                      ) : (
+                        <span className="text-[#C5C5C5]">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 font-bold text-[#1A1A1A]">
                       Rs.{p.price?.toLocaleString()}
@@ -438,6 +456,11 @@ const currentCategoryName = useMemo(() => {
               <div>
                 <label htmlFor="prod-sku" className="text-[13px] font-semibold text-[#1A1A1A] block mb-1">SKU</label>
                 <input id="prod-sku" value={form.sku} onChange={setField('sku')} maxLength={100} className={INPUT_CLS} />
+              </div>
+
+              <div className="rounded-[8px] border border-dashed border-[#E9E9E9] bg-[#FAFAFA] px-3 py-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#60717B] mb-0.5">Product Code</p>
+                <p className="text-[13px] font-mono font-semibold text-[#1A1A1A]">{productCodeLabel}</p>
               </div>
 
               <div>

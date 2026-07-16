@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { Icon } from '@iconify/react';
 import { fetchFlashSaleProducts } from '../../redux/slices/productSlice';
 import Layout from '../../components/common/Layout';
@@ -23,9 +24,13 @@ function safePrice(value) {
 }
 
 function Countdown({ endsAt }) {
+  const fallbackEndRef = useRef(null);
+  if (fallbackEndRef.current === null) {
+    fallbackEndRef.current = new Date(Date.now() + 3 * 3_600_000);
+  }
+
   const calcRemaining = useCallback(() => {
-    const fallbackEnd = new Date(Date.now() + 3 * 3_600_000);
-    const end = endsAt ? new Date(endsAt) : fallbackEnd;
+    const end = endsAt ? new Date(endsAt) : fallbackEndRef.current;
     if (isNaN(end.getTime())) return { h: 0, m: 0, s: 0 };
     const diff = Math.max(0, end - Date.now());
     return {
@@ -38,6 +43,7 @@ function Countdown({ endsAt }) {
   const [t, setT] = useState(calcRemaining);
 
   useEffect(() => {
+    setT(calcRemaining());
     const id = setInterval(() => setT(calcRemaining()), 1000);
     return () => clearInterval(id);
   }, [calcRemaining]);
