@@ -55,7 +55,6 @@ function AllCategoriesDropdown({ tree }) {
                 className="flex items-center gap-2 px-4 py-2 text-[12px] text-gray-700 font-medium hover:bg-gray-100 transition-colors"
                 onClick={() => setOpen(false)}
               >
-               
                 {parent.name}
               </Link>
               {parent.children.map((child) => (
@@ -255,17 +254,19 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-[9999] w-full">
       {/* Top bar - Black */}
-      <div className="w-full bg-black px-3 sm:px-4 md:px-[52px] py-1.5 md:py-1.5">
-  <div className="flex items-center gap-2 sm:gap-3">
-    <div className="hidden md:flex flex-1 justify-start">
-      <Link to="/" className="flex-shrink-0">
-        <img
-          src="/images/logo.png"
-          alt="House of Cambridge"
-          className="h-9 sm:h-10 md:h-[52px] w-auto object-contain"
-        />
-      </Link>
-    </div>
+      <div className="w-full bg-black px-3 sm:px-4 md:px-[52px] py-2.5 md:py-2.5">
+        {/* Row 1: Logo + Search (centered) + Icons */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Left spacer - equal to right icons width to keep search centered */}
+          <div className="hidden md:flex flex-1 justify-start">
+            <Link to="/" className="flex-shrink-0">
+              <img
+                src="/images/logo.png"
+                alt="House of Cambridge"
+                className="h-9 sm:h-10 md:h-[73px] w-auto object-contain"
+              />
+            </Link>
+          </div>
           {/* Mobile logo */}
           <Link to="/" className="flex-shrink-0 md:hidden">
             <img
@@ -286,33 +287,36 @@ export default function Navbar() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search for Products, Categories and More"
               aria-label="Search"
-              className="flex-1 bg-white text-[#1A1A1A] placeholder-gray-400 px-4 py-0 text-[13px] outline-none rounded-l h-9"
+              className="flex-1 bg-white text-[#1A1A1A] placeholder-gray-400 px-4 py-0 text-[14px] outline-none rounded-l h-10"
             />
             <button
               type="submit"
               aria-label="Submit search"
-              className="bg-[#FFB700] w-[40px] h-9 rounded-r flex items-center justify-center hover:bg-amber-500 transition-colors"
+              className="bg-[#FFB700] w-[45px] h-10 rounded-r flex items-center justify-center hover:bg-amber-500 transition-colors"
             >
               <Icon icon="mdi:magnify" width={18} className="text-black" />
             </button>
           </form>
 
           {/* Desktop icons */}
-       <div className="hidden md:flex flex-1 justify-end items-center gap-6">
-  <div className="flex items-center gap-4">
-    <Link to="/cart" className="text-[#FFB700] hover:text-amber-400 transition-colors relative">
-      <Icon icon="mdi:cart" width={22} />
+          <div className="hidden md:flex flex-1 justify-end items-center gap-9">
+            <div className="flex items-center gap-6">
+              <Link
+                to="/cart"
+                className="text-[#FFB700] hover:text-amber-400 transition-colors relative"
+              >
+                <Icon icon="mdi:cart" width={28} />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-[#FFB700] text-black text-[10px] font-black min-w-[18px] h-[18px] rounded-full flex items-center justify-center">
                     {cartCount}
                   </span>
                 )}
               </Link>
-             <Link
+              <Link
                 to="/wishlist"
                 className="text-[#FFB700] hover:text-amber-400 transition-colors relative"
               >
-                <Icon icon="mdi:heart-outline" width={28} />
+                <Icon icon="mdi:heart" width={28} />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black min-w-[18px] h-[18px] rounded-full flex items-center justify-center">
                     {wishlistCount}
@@ -321,37 +325,38 @@ export default function Navbar() {
               </Link>
             </div>
 
-   <div className="flex items-center gap-1.5 text-[#FFB700] font-black text-[15px]">
-              <Icon icon="tabler:world" width={18} />
+            <div className="flex items-center gap-1.5 text-[#FFB700] font-black text-[15px]">
+              <Icon icon="mdi:earth" width={18} />
               <span>EN / LKR</span>
             </div>
-           <div ref={userRef} className="relative">
+
+            <Link
+              to={isAuthenticated ? '/profile' : '/login'}
+              className="text-[#FFB700] hover:text-amber-400 transition-colors"
+              aria-label="Account"
+            >
+              {isAuthenticated && user?.avatar?.url ? (
+                <img src={user.avatar.url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-[#FFB700]" />
+              ) : (
+                <Icon icon="mdi:account" width={28} />
+              )}
+            </Link>
+
+            <div ref={userRef} className="relative">
               {isAuthenticated ? (
                 <button
                   onClick={() => setUserOpen((v) => !v)}
-                  className="flex items-center gap-2 text-[#FFB700] hover:text-amber-400 transition-colors"
+                  className="flex items-center justify-center bg-[#FFB700] text-black text-[14px] font-bold px-4 h-10 rounded-md hover:bg-amber-500 transition-colors whitespace-nowrap"
                   aria-expanded={userOpen}
                   aria-haspopup="true"
                 >
-                  {user?.avatar?.url ? (
-                    <img
-                      src={user.avatar.url}
-                      alt={user?.name || "Profile"}
-                      className="w-6 h-6 rounded-full object-cover border border-[#FFB700]"
-                    />
-                  ) : (
-                    <Icon icon="mdi:account-circle" width={24} />
-                  )}
-                  <span className="max-w-[80px] truncate text-[14px] font-semibold text-white">
-                    {user?.name?.split(" ")[0]}
-                  </span>
+                  <span className="max-w-[55px] truncate">{user?.name?.split(" ")[0]}</span>
                 </button>
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center justify-center gap-1.5 bg-[#FFB700] text-black text-[13px] font-bold w-[100px] h-9 rounded-md hover:bg-amber-500 transition-colors whitespace-nowrap"
+                  className="flex items-center justify-center bg-[#FFB700] text-black text-[14px] font-bold w-[114px] h-10 rounded-md hover:bg-amber-500 transition-colors whitespace-nowrap"
                 >
-                  <Icon icon="mdi:account" width={16} />
                   Login
                 </Link>
               )}
@@ -399,8 +404,8 @@ export default function Navbar() {
 
           {/* Mobile hamburger + cart/wishlist */}
           <div className="flex md:hidden items-center gap-2 ml-auto">
-           <Link to="/cart" className="text-[#FFB700] hover:text-amber-400 transition-colors relative">
-      <Icon icon="mdi:cart-outline" width={22} />
+            <Link to="/cart" className="text-[#FFB700] relative">
+              <Icon icon="mdi:cart" width={22} />
               {cartCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-[#FFB700] text-black text-[8px] font-black min-w-[14px] h-[14px] rounded-full flex items-center justify-center">
                   {cartCount}
@@ -432,7 +437,7 @@ export default function Navbar() {
         {/* Row 2: Search bar - mobile only */}
         <form
           onSubmit={handleSearch}
-          className="flex md:hidden mt-2"
+          className="flex md:hidden mt-2.5"
           role="search"
         >
           <input

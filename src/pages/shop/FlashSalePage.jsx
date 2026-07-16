@@ -257,7 +257,7 @@ export default function FlashSalePage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-16 pb-8">
             <div className="flex items-start gap-2 sm:gap-3">
-            <Icon icon="mdi:flash" width={36} className="sm:w-[44px] text-[#FFB700]" aria-hidden="true" />
+              <Icon icon="mdi:flash" width={40} className="sm:w-[60px] text-[#FFB700] mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
                 <div
                   className="font-black italic leading-none select-none"
