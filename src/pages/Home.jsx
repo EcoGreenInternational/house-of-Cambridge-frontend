@@ -18,14 +18,17 @@ const HERO_SLIDES = [
   {
     title:        'House Of Cambridge',
     image:        '/images/hero-slide-1-7a4bbd.png',
+    mobileImage:  '/images/hero-slide-1-mobile.png',
   },
   {
     title:        'Beauty Deals — Glow More, Save More!',
     image:        '/images/hero-slide-2.png',
+    mobileImage:  '/images/hero-slide-2-mobile.png',
   },
   {
     title:        'Self Care Starts Here',
     image:        '/images/hero-slide-3-6a4322.png',
+    mobileImage:  '/images/hero-slide-3-mobile.png',
   },
 ];
 
@@ -268,7 +271,15 @@ export default function Home() {
         aria-roledescription="carousel"
       >
         <div
-          className="relative min-h-[437px] bg-cover bg-center transition-all duration-700"
+        className="block md:hidden relative w-full">
+          <img
+            src={cur.mobileImage || cur.image}
+            alt={cur.title}
+            className="w-full h-auto object-cover"
+          />
+        </div>
+        <div
+          className="hidden md:block relative min-h-[437px] bg-cover bg-center transition-all duration-700"
           style={{ backgroundImage: `url(${cur.image})` }}
           role="img"
           aria-label={cur.title}
