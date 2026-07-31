@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import toast from 'react-hot-toast';
+import { FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -118,28 +119,28 @@ export default function Footer() {
               aria-label="Facebook"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-6 h-6 md:w-7 md:h-7 bg-[#1877F2] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="w-7 h-7 bg-[#1877F2] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <Icon icon="mdi:facebook" width={12} className="md:w-[14px] text-white" />
+              <FaFacebookF size={14} className="text-white" />
             </a>
             <a
-              href="https://www.instagram.com/houseofcambridge"
+              href="https://www.instagram.com/houseofcambridge.lk?igsh=MXIzcjV5anhtMGYyMA=="
               aria-label="Instagram"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="w-7 h-7 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
               style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
             >
-              <Icon icon="mdi:instagram" width={12} className="md:w-[14px] text-white" />
+              <FaInstagram size={14} className="text-white" />
             </a>
             <a
               href="https://www.tiktok.com/@houseofcambridge1"
               aria-label="TikTok"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-6 h-6 md:w-7 md:h-7 bg-black rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="w-7 h-7 bg-black rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <Icon icon="logos:tiktok-icon" width={12} className="md:w-[14px]" />
+              <FaTiktok size={14} className="text-white" />
             </a>
           </div>
         </div>

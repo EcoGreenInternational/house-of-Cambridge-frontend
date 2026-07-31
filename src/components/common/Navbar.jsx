@@ -323,14 +323,7 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-[#FFB700] font-black text-[15px]">
-              <Icon icon="mdi:earth" width={18} />
-              <span>EN / LKR</span>
-            </div>
-
-            <Link
+              <Link
               to={isAuthenticated ? '/profile' : '/login'}
               className="text-[#FFB700] hover:text-amber-400 transition-colors"
               aria-label="Account"
@@ -341,6 +334,9 @@ export default function Navbar() {
                 <Icon icon="mdi:account" width={28} />
               )}
             </Link>
+            </div>
+
+
 
             <div ref={userRef} className="relative">
               {isAuthenticated ? (
@@ -404,6 +400,9 @@ export default function Navbar() {
 
           {/* Mobile hamburger + cart/wishlist */}
           <div className="flex md:hidden items-center gap-2 ml-auto">
+            <div className="flex items-center gap-1 text-[#FFB700] text-[11px] font-extrabold uppercase tracking-wide">
+             <Icon icon="mdi:earth" width={13} /> EN
+            </div>
             <Link to="/cart" className="text-[#FFB700] relative">
               <Icon icon="mdi:cart" width={22} />
               {cartCount > 0 && (
@@ -519,6 +518,10 @@ export default function Navbar() {
             <Icon icon="mdi:phone" width={16} />
             0112 847 846
           </a>
+          <div className="flex items-center gap-1 bg-black/10 text-black px-2 py-0.5 rounded text-[12px] font-extrabold uppercase tracking-wider select-none">
+           <Icon icon="mdi:earth" width={14} />
+            EN
+         </div>
         </div>
       </nav>
 
@@ -545,11 +548,6 @@ export default function Navbar() {
                   <Icon icon="mdi:account" width={15} /> Login
                 </Link>
               )}
-              <span className="text-white/30 text-[11px] mx-1">|</span>
-              <div className="flex items-center gap-1 text-[#FFB700] text-[12px] font-bold">
-                <Icon icon="mdi:earth" width={14} />
-                EN / LKR
-              </div>
             </div>
           </div>
 

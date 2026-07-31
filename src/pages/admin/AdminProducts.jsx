@@ -45,7 +45,7 @@ const CATEGORY_SPECIFIC_FIELDS = {
   'Beauty & Cosmetics': [
     { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'e.g. France' },
     { name: 'suitableFor', label: 'Suitable For', type: 'text', placeholder: 'e.g. Adults, Unisex' },
-    { name: 'skinHairType', label: 'Hair / Skin Type Compatibility', type: 'text', placeholder: 'e.g. Oily Skin, Dry Hair' },
+    { name: 'skinHairType', label: 'Skin Hair Type', type: 'text', placeholder: 'e.g. Oily Skin, Dry Hair' },
     { name: 'keyIngredients', label: 'Key Ingredients', type: 'text', placeholder: 'e.g. Retinol, Vitamin C' },
   ],
   'Baby Care': [
@@ -189,7 +189,26 @@ const currentCategoryName = useMemo(() => {
       isFlashSale:       p.isFlashSale   || false,
       flashSalePrice:    p.flashSalePrice || '',
     });
-    setAttributes(p.attributes || {}); 
+
+    const loadedAttributes = {};
+    if (Array.isArray(p.specifications)) {
+      p.specifications.forEach((spec) => {
+        if (spec.key && spec.value) {
+          const camelKey = spec.key
+            .replace(/[^a-zA-Z0-9\s]/g, '') // remove special chars like slashes
+            .split(' ')
+            .map((word, index) =>
+              index === 0
+                ? word.toLowerCase()
+                : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join('');
+
+          loadedAttributes[camelKey] = spec.value;
+        }
+      });
+    }
+    setAttributes(loadedAttributes);
     setFiles([]);
     setPreviews(p.images?.map((i) => i.url) || []);
     setInstrInput('');
