@@ -238,7 +238,6 @@ const handleWishlist = () => {
     product.volume && { label: 'Volume', value: sanitizeText(String(product.volume)) },
     product.model  && { label: 'Model',  value: sanitizeText(String(product.model)) },
     product.origin && { label: 'Origin', value: sanitizeText(String(product.origin)) },
-    product.sku    && { label: 'SKU',    value: sanitizeText(String(product.sku)) },
   ].filter(Boolean);
 
   const reviews = Array.isArray(product.reviews) ? product.reviews : [];
