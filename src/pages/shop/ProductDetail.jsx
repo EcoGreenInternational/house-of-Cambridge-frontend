@@ -15,7 +15,7 @@ import {
 import { FaHeart, FaStar } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
-const TABS = ['Description', 'Reviews & Ratings', 'Usage Instructions'];
+const TABS = ['Description', 'Product Specifications', 'Reviews & Ratings', 'Usage Instructions'];
 const MAX_REVIEW_LENGTH = 1000;
 const MAX_QTY = 99;
 const SCROLL_AMOUNT = 220;
@@ -525,6 +525,30 @@ const handleWishlist = () => {
                 id="tabpanel-1"
                 role="tabpanel"
                 aria-labelledby="tab-1"
+                className="max-w-2xl"
+              >
+                {Array.isArray(product.specifications) && product.specifications.length > 0 ? (
+                  <div className="border border-[#E9E9E9] rounded-[6px] overflow-hidden">
+                    {product.specifications.map((spec, i) => (
+                      <div key={i} className={`flex text-[13px] ${i % 2 === 0 ? 'bg-[#F8F8F8]' : 'bg-white'}`}>
+                        <span className="w-40 px-4 py-2.5 font-medium text-[#60717B] border-r border-[#E9E9E9] flex-shrink-0">
+                          {sanitizeText(spec.key)}
+                        </span>
+                        <span className="px-4 py-2.5 text-[#1A1A1A]">{sanitizeText(spec.value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400">No specifications available for this product.</p>
+                )}
+              </div>
+            )}
+
+            {tab === 2 && (
+              <div
+                id="tabpanel-1"
+                role="tabpanel"
+                aria-labelledby="tab-1"
                 className="flex flex-col lg:flex-row gap-8"
               >
                 {productNumReviews > 0 && (
@@ -687,7 +711,7 @@ const handleWishlist = () => {
               </div>
             )}
 
-            {tab === 2 && (
+            {tab === 3 && (
               <div
                 id="tabpanel-2"
                 role="tabpanel"
