@@ -95,19 +95,25 @@ export default function ShopPage() {
   }, [dispatch, keyword, category, sort, page, minPrice, maxPrice, preowned, newArrival]);
 
   const updateParam = useCallback((key, value) => {
-    const params = Object.fromEntries(searchParams);
-    if (value) {
-      params[key] = value;
-    } else {
-      delete params[key];
-    }
-    if (key === 'category') {
-    delete params.keyword;
-      delete params.search;
-  }
-    params.page = '1';
-    setSearchParams(params);
-  }, [searchParams, setSearchParams]);
+    setSearchParams((prevParams) => {
+      const params = new URLSearchParams(prevParams);
+
+      if (value !== undefined && value !== null && value !== '') {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+      if (key === 'category') {
+        params.delete('keyword');
+        params.delete('search');
+      }
+      if (key !== 'page') {
+        params.set('page', '1');
+      }
+
+      return params;
+    });
+  }, [setSearchParams]);
 
   const clearFilters = useCallback(() => {
     setPriceMin('');
