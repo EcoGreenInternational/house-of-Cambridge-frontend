@@ -97,6 +97,11 @@ export const fetchAdminCategories = createAsyncThunk('admin/fetchCategories', as
   catch (err) { return rejectWithValue(handle(err)); }
 });
 
+export const fetchAdminCategory = createAsyncThunk('admin/fetchCategory', async (id, { rejectWithValue }) => {
+  try { return (await api.get(`/admin/categories/${encodeURIComponent(id)}`)).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
 export const createAdminCategory = createAsyncThunk('admin/createCategory', async (formData, { rejectWithValue }) => {
   try { return (await api.post('/admin/categories', formData)).data; }
   catch (err) { return rejectWithValue(handle(err)); }

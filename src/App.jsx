@@ -35,6 +35,7 @@ import PaymentMethods from './pages/profile/PaymentMethods';
 import AboutUs from './pages/misc/AboutUs';
 import ContactUs from './pages/misc/ContactUs';
 import FAQ from './pages/misc/FAQ';
+import HowToBuy from './pages/misc/HowToBuy';
 import DataPrivacy from './pages/misc/DataPrivacy';
 import TermsAndConditions from './pages/misc/TermsAndConditions';
 import Error404 from './pages/misc/Error404';
@@ -155,6 +156,7 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/how-to-buy" element={<HowToBuy />} />
         <Route path="/privacy-policy" element={<DataPrivacy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
 

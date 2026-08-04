@@ -36,7 +36,7 @@ const STATIC_CATS = [
   { label: 'Beauty and\nCosmetics', bg: '#ABFFDF',              img: '/images/categories/cat-beauty-1627cd.png',          slug: 'beauty'           },
   { label: 'Computers &\nPrinters', bg: '#CBFAFF',              img: '/images/categories/cat-computers-3b5a07.png',       slug: 'computers'        },
   { label: 'Electronics',           bg: '#FFD4F0',              img: '/images/categories/cat-electronics-4ce300.png',     slug: 'electronics'      },
-  { label: 'Home\nAppliances',      bg: '#DDDFFF',              img: '/images/categories/cat-home-appliances-1ae981.png', slug: 'home-appliances'  },
+  { label: 'Home & Kitchen\nAppliances', bg: '#DDDFFF',              img: '/images/categories/cat-home-appliances-1ae981.png', slug: 'home-appliances'  },
   { label: 'Baby Care',             bg: 'rgba(255,146,118,0.53)', img: '/images/categories/cat-baby-care-211669.png',     slug: 'baby-care'        },
 ];
 

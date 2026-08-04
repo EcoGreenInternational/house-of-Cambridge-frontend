@@ -43,49 +43,81 @@ const FLAG_FIELDS = [
 
 const CATEGORY_SPECIFIC_FIELDS = {
   'Beauty & Cosmetics': [
-    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'e.g. France' },
-    { name: 'suitableFor', label: 'Suitable For', type: 'text', placeholder: 'e.g. Adults, Unisex' },
-    { name: 'skinHairType', label: 'Skin Hair Type', type: 'text', placeholder: 'e.g. Oily Skin, Dry Hair' },
-    { name: 'keyIngredients', label: 'Key Ingredients', type: 'text', placeholder: 'e.g. Retinol, Vitamin C' },
+    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'France' },
+    { name: 'suitableFor', label: 'Suitable For', type: 'text', placeholder: 'Adults, Unisex' },
+    { name: 'skinHairType', label: 'Skin Hair Type', type: 'text', placeholder: 'Oily Skin, Dry Hair' },
+    { name: 'keyIngredients', label: 'Key Ingredients', type: 'text', placeholder: 'Retinol, Vitamin C' },
   ],
   'Baby Care': [
-    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'e.g. United Kingdom' },
-    { name: 'ageRange', label: 'Age Range', type: 'text', placeholder: 'e.g. 0-6 Months' },
-    { name: 'suitableFor', label: 'Suitable For', type: 'text', placeholder: 'e.g. Newborns' },
-    { name: 'skinTypeCompatibility', label: 'Skin Type Compatibility', type: 'text', placeholder: 'e.g. Hypoallergenic' },
-    { name: 'keyIngredients', label: 'Key Ingredients', type: 'text', placeholder: 'e.g. Aloe Vera, Chamomile' },
+    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'United Kingdom' },
+    { name: 'ageRange', label: 'Age Range', type: 'text', placeholder: '0-6 Months' },
+    { name: 'suitableFor', label: 'Suitable For', type: 'text', placeholder: 'Newborns' },
+    { name: 'skinTypeCompatibility', label: 'Skin Type Compatibility', type: 'text', placeholder: 'Hypoallergenic' },
+    { name: 'keyIngredients', label: 'Key Ingredients', type: 'text', placeholder: 'Aloe Vera, Chamomile' },
   ],
   'Home Appliances': [
-    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'e.g. Germany' },
-    { name: 'model', label: 'Model', type: 'text', placeholder: 'e.g. H-200' },
-    { name: 'material', label: 'Material', type: 'text', placeholder: 'e.g. Stainless Steel, Plastic' },
-    { name: 'dimensions', label: 'Dimensions (L × W × H)', type: 'text', placeholder: 'e.g. 30x20x15 cm' },
-    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'e.g. Silver, White' },
-    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'e.g. Standard Sink' },
-    { name: 'packaging', label: 'Packaging', type: 'text', placeholder: 'e.g. Eco-friendly box' },
-    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: 'e.g. 1 Year' },
+    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'Germany' },
+    { name: 'model', label: 'Model', type: 'text', placeholder: 'H-200' },
+    { name: 'material', label: 'Material', type: 'text', placeholder: 'Stainless Steel, Plastic' },
+    { name: 'dimensions', label: 'Dimensions (L × W × H)', type: 'text', placeholder: '30x20x15 cm' },
+    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'Silver, White' },
+    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'Standard Sink' },
+    { name: 'packaging', label: 'Packaging', type: 'text', placeholder: 'Eco-friendly box' },
+    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: '1 Year' },
   ],
   'Electronics': [
-    { name: 'model', label: 'Model', type: 'text', placeholder: 'e.g. E-X70' },
-    { name: 'powerSupply', label: 'Power Supply', type: 'text', placeholder: 'e.g. 220V / Battery' },
-    { name: 'material', label: 'Material', type: 'text', placeholder: 'e.g. Polycarbonate' },
-    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'e.g. Charcoal Black' },
-    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'e.g. Bluetooth 5.0 Devices' },
-    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: 'e.g. 2 Years' },
+    { name: 'model', label: 'Model', type: 'text', placeholder: 'E-X70' },
+    { name: 'powerSupply', label: 'Power Supply', type: 'text', placeholder: '220V / Battery' },
+    { name: 'material', label: 'Material', type: 'text', placeholder: 'Polycarbonate' },
+    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'Charcoal Black' },
+    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'Bluetooth 5.0 Devices' },
+    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: '2 Years' },
   ],
   'Computer & Printers': [
-    { name: 'model', label: 'Model', type: 'text', placeholder: 'e.g. LaserJet Pro' },
-    { name: 'processor', label: 'Processor / Chipset', type: 'text', placeholder: 'e.g. Intel i5 / Quad-Core' },
-    { name: 'ram', label: 'RAM', type: 'text', placeholder: 'e.g. 8GB DDR4' },
-    { name: 'storage', label: 'Storage (SSD / HDD)', type: 'text', placeholder: 'e.g. 512GB NVMe SSD' },
-    { name: 'display', label: 'Display Size & Resolution', type: 'text', placeholder: 'e.g. 15.6" FHD' },
-    { name: 'os', label: 'Operating System', type: 'text', placeholder: 'e.g. Windows 11' },
-    { name: 'connectivity', label: 'Connectivity (USB, Bluetooth, Wi-Fi)', type: 'text', placeholder: 'e.g. USB 3.0, Wi-Fi 6' },
-    { name: 'powerSupply', label: 'Power Supply', type: 'text', placeholder: 'e.g. 65W AC Adapter' },
-    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'e.g. Platinum Silver' },
-    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'e.g. Universal macOS & Windows' },
-    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: 'e.g. 3 Years' },
+    { name: 'model', label: 'Model', type: 'text', placeholder: 'LaserJet Pro' },
+    { name: 'processor', label: 'Processor / Chipset', type: 'text', placeholder: 'Intel i5 / Quad-Core' },
+    { name: 'ram', label: 'RAM', type: 'text', placeholder: '8GB DDR4' },
+    { name: 'storage', label: 'Storage (SSD / HDD)', type: 'text', placeholder: '512GB NVMe SSD' },
+    { name: 'display', label: 'Display Size & Resolution', type: 'text', placeholder: '15.6" FHD' },
+    { name: 'os', label: 'Operating System', type: 'text', placeholder: 'Windows 11' },
+    { name: 'connectivity', label: 'Connectivity (USB, Bluetooth, Wi-Fi)', type: 'text', placeholder: 'USB 3.0, Wi-Fi 6' },
+    { name: 'powerSupply', label: 'Power Supply', type: 'text', placeholder: '65W AC Adapter' },
+    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'Platinum Silver' },
+    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'Universal macOS & Windows' },
+    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: '3 Years' },
   ]
+};
+
+const toSpecFieldName = (key) =>
+  key
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word, index) => (
+      index === 0
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ))
+    .join('');
+
+const normalizeCategorySpecs = (specs) => {
+  if (!Array.isArray(specs)) return [];
+
+  return specs
+    .map((spec) => {
+      const label = spec?.key ?? spec?.name ?? '';
+      const fieldName = toSpecFieldName(label);
+      if (!fieldName) return null;
+
+      return {
+        name: fieldName,
+        label,
+        type: 'text',
+        placeholder: spec?.value ?? spec?.text ?? '',
+      };
+    })
+    .filter(Boolean);
 };
 
 export default function AdminProducts() {
@@ -119,20 +151,29 @@ export default function AdminProducts() {
   [brands, form.category]);
 
 
-const currentCategoryName = useMemo(() => {
-    if (!form.category) return '';
-    const match = categories.find((c) => c._id === form.category);
-    if (!match) return '';
-    
-    const name = match.name.trim().toLowerCase();
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c._id === form.category) || null,
+    [categories, form.category],
+  );
+
+  const currentCategoryName = useMemo(() => {
+    if (!selectedCategory) return '';
+
+    const name = selectedCategory.name.trim().toLowerCase();
     if (name.includes('computer')) return 'Computer & Printers';
     if (name.includes('appliance') || name.includes('house')) return 'Home Appliances';
     if (name.includes('beauty')) return 'Beauty & Cosmetics';
     if (name.includes('baby')) return 'Baby Care';
     if (name.includes('elect')) return 'Electronics';
-    
-    return match.name;
-  }, [form.category, categories]);
+
+    return selectedCategory.name;
+  }, [selectedCategory]);
+
+  const categorySpecificFields = useMemo(() => {
+    const templateFields = normalizeCategorySpecs(selectedCategory?.specifications);
+    if (templateFields.length) return templateFields;
+    return CATEGORY_SPECIFIC_FIELDS[currentCategoryName] || [];
+  }, [currentCategoryName, selectedCategory]);
 
   useEffect(() => {
     dispatch(fetchAdminCategories());
@@ -156,6 +197,18 @@ const currentCategoryName = useMemo(() => {
   const handleCategorySelection = (e) => {
     const categoryId = e.target.value;
     setForm((f) => ({ ...f, category: categoryId, brand: '' }));
+
+    const chosenCategory = categories.find((c) => c._id === categoryId);
+    const templateFields = normalizeCategorySpecs(chosenCategory?.specifications);
+    if (templateFields.length) {
+      const nextAttributes = templateFields.reduce((acc, field) => {
+        acc[field.name] = field.placeholder || '';
+        return acc;
+      }, {});
+      setAttributes(nextAttributes);
+      return;
+    }
+
     setAttributes({}); 
   };
 
@@ -558,13 +611,13 @@ const currentCategoryName = useMemo(() => {
                 </div>
               </div>
 
-              {CATEGORY_SPECIFIC_FIELDS[currentCategoryName] && (
+              {categorySpecificFields.length > 0 && (
                 <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-[8px] space-y-3">
                   <h4 className="text-[12px] font-bold text-[#FFB700] uppercase tracking-wider border-b border-amber-200/40 pb-1">
                      {currentCategoryName}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {CATEGORY_SPECIFIC_FIELDS[currentCategoryName].map((field) => (
+                    {categorySpecificFields.map((field) => (
                       <div key={field.name} className="flex flex-col">
                         <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-1">
                           {field.label}

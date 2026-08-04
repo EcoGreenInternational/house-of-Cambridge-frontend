@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  fetchAdminCategories, createAdminCategory, updateAdminCategory, deleteAdminCategory,
+  fetchAdminCategories, fetchAdminCategory, createAdminCategory, updateAdminCategory, deleteAdminCategory,
   fetchAdminBrands,
 } from '../../redux/slices/adminSlice.js';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
@@ -10,7 +10,8 @@ import { ToastContainer } from '../../components/ui/Toast.jsx';
 import useToast from '../../hooks/useToast.js';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiImage } from 'react-icons/fi';
 
-const EMPTY = { name: '', slug: '', description: '', isActive: true, order: 0, brand: '' };
+const EMPTY = { name: '', slug: '', description: '', isActive: true, order: 0, brand: '', specifications: [] };
+const EMPTY_SPEC = { key: '', value: '' };
 
 const INPUT_CLS =
   'w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]';
@@ -20,6 +21,26 @@ const TEXT_FIELDS = [
   { key: 'slug',        label: 'Slug (auto if empty)' },
   { key: 'description', label: 'Description',         textarea: true },
 ];
+
+const normalizeSpecs = (specs) => {
+  if (Array.isArray(specs)) {
+    return specs.map((spec) => ({
+      key: spec?.key ?? spec?.name ?? '',
+      value: spec?.value ?? spec?.text ?? '',
+    }));
+  }
+
+  if (typeof specs === 'string' && specs.trim()) {
+    try {
+      const parsed = JSON.parse(specs);
+      return Array.isArray(parsed) ? normalizeSpecs(parsed) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+};
 
 export default function AdminCategories() {
   const dispatch = useDispatch();
@@ -34,6 +55,7 @@ export default function AdminCategories() {
   const [file,         setFile]         = useState(null);
   const [preview,      setPreview]      = useState('');
   const [saving,       setSaving]       = useState(false);
+  const [specs,        setSpecs]        = useState([]);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -44,12 +66,14 @@ export default function AdminCategories() {
   const openCreate = useCallback(() => {
     setEditing(null);
     setForm(EMPTY);
+    setSpecs([]);
     setFile(null);
     setPreview('');
     setShowForm(true);
   }, []);
 
-  const openEdit = useCallback((c) => {
+  const openEditCategory = useCallback(async (c) => {
+    setShowForm(true);
     setEditing(c);
     setForm({
       name:        c.name,
@@ -59,14 +83,38 @@ export default function AdminCategories() {
       order:       c.order ?? 0,
       brand:       c.brand?._id || c.brand || '',
     });
+    setSpecs(normalizeSpecs(c.specifications));
     setFile(null);
     setPreview(c.image?.url || '');
-    setShowForm(true);
-  }, []);
+
+    try {
+      const result = await dispatch(fetchAdminCategory(c._id)).unwrap();
+      const category = result?.category ?? result;
+      if (!category) return;
+
+      setEditing(category);
+      setForm({
+        name:        category.name ?? '',
+        slug:        category.slug || '',
+        description: category.description || '',
+        isActive:    category.isActive ?? true,
+        order:       category.order ?? 0,
+        brand:       category.brand?._id || category.brand || '',
+      });
+      setSpecs(normalizeSpecs(category.specifications ?? category.specs ?? category.specification));
+      setPreview(category.image?.url || c.image?.url || '');
+    } catch {
+      setSpecs(normalizeSpecs(c.specifications));
+    }
+  }, [dispatch]);
 
   const closeForm = useCallback(() => { setShowForm(false); setEditing(null); }, []);
 
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const addSpec = useCallback(() => setSpecs((s) => [...s, { ...EMPTY_SPEC }]), []);
+  const removeSpec = useCallback((i) => setSpecs((s) => s.filter((_, idx) => idx !== i)), []);
+  const setSpecField = (i, field) => (e) =>
+    setSpecs((s) => s.map((row, idx) => (idx === i ? { ...row, [field]: e.target.value } : row)));
 
   const handleFileChange = (e) => {
     const f = e.target.files?.[0];
@@ -80,6 +128,8 @@ export default function AdminCategories() {
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => { if (v !== '') fd.append(k, String(v)); });
+      const cleanSpecs = specs.filter((s) => s.key.trim() && s.value.trim());
+      if (cleanSpecs.length) fd.append('specifications', JSON.stringify(cleanSpecs));
       if (file) fd.append('image', file);
 
       if (editing) {
@@ -164,7 +214,7 @@ export default function AdminCategories() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => openEdit(c)} aria-label={`Edit ${c.name}`} className="text-[#60717B] hover:text-[#1A1A1A] transition-colors"><FiEdit2 size={15} /></button>
+                      <button onClick={() => openEditCategory(c)} aria-label={`Edit ${c.name}`} className="text-[#60717B] hover:text-[#1A1A1A] transition-colors"><FiEdit2 size={15} /></button>
                       <button onClick={() => setDeleteTarget(c)} aria-label={`Delete ${c.name}`} className="text-[#60717B] hover:text-red-600 transition-colors"><FiTrash2 size={15} /></button>
                     </div>
                   </td>
@@ -219,6 +269,52 @@ export default function AdminCategories() {
                     <option key={b._id} value={b._id}>{b.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[13px] font-semibold text-[#1A1A1A]">Specifications</label>
+                  <button
+                    type="button"
+                    onClick={addSpec}
+                    className="text-[12px] font-medium text-[#FFB700] hover:underline"
+                  >
+                    + Add row
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {specs.map((row, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        placeholder="Key"
+                        value={row.key}
+                        onChange={setSpecField(i, 'key')}
+                        maxLength={100}
+                        className={INPUT_CLS}
+                        aria-label={`Specification ${i + 1} key`}
+                      />
+                      <input
+                        placeholder="Value"
+                        value={row.value}
+                        onChange={setSpecField(i, 'value')}
+                        maxLength={300}
+                        className={INPUT_CLS}
+                        aria-label={`Specification ${i + 1} value`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSpec(i)}
+                        aria-label={`Remove specification ${i + 1}`}
+                        className="text-[#60717B] hover:text-red-600 flex-shrink-0"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  {specs.length === 0 && (
+                    <p className="text-[12px] text-[#60717B]">No specifications added.</p>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

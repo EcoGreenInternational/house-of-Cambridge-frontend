@@ -28,7 +28,7 @@ export default function Footer() {
             <p className="text-white font-black text-[13px] md:text-[14px]">by Subscribe our Newsletter</p>
           </div>
 
-          <div className="w-full md:w-auto md:flex items-center gap-6 flex-shrink-0">
+          <div className="w-full md:w-auto md:flex items-center gap-6 flex-shrink-0 md:ml-12 lg:ml-20">
             <form onSubmit={handleNewsletter} className="flex items-center max-w-[340px] mx-auto md:mx-0" aria-label="Newsletter signup">
               <input
                 type="email"
@@ -85,9 +85,9 @@ export default function Footer() {
           <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-[13px]">
             <li><Link to="/faq" className="text-white hover:text-[#FFB700] transition-colors">Frequently Asked Questions</Link></li>
             <li><Link to="/how-to-buy" className="text-white hover:text-[#FFB700] transition-colors">How To Buy</Link></li>
-            <li><Link to="/shipping" className="text-white hover:text-[#FFB700] transition-colors">Shipping & Delivery</Link></li>
-            <li><Link to="/warranty" className="text-white hover:text-[#FFB700] transition-colors">Warranty Information</Link></li>
-            <li><Link to="/return-products" className="text-white hover:text-[#FFB700] transition-colors">Return Products</Link></li>
+            <li><Link to="/terms#delivery" className="text-white hover:text-[#FFB700] transition-colors">Shipping & Delivery</Link></li>
+            <li><Link to="/terms#delivery" className="text-white hover:text-[#FFB700] transition-colors">Warranty Information</Link></li>
+            <li><Link to="/faq" className="text-white hover:text-[#FFB700] transition-colors">Return Products</Link></li>
           </ul>
         </div>
 
