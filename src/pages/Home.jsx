@@ -62,7 +62,7 @@ const FEATURES = [
 
 const SKELETON_COUNT  = 6;
 const HERO_INTERVAL   = 5000;
-const SCROLL_STEP     = 220;
+const SCROLL_STEP     = 180;
 const MAX_FLASH_CARDS = 6;
 const MAX_CATEGORY_PRODUCTS = 8;
 const FLASH_SALE_FALLBACK_HOURS = 3;
@@ -96,29 +96,29 @@ function FlashCountdown({ endsAt }) {
   const TimeBox = ({ value, label }) => (
     <div className="flex flex-col items-center">
       <div
-        className="bg-white text-[#202020] font-['Poppins'] font-bold text-[32px] w-[62px] h-[59px] flex items-center justify-center rounded-[10px]"
+        className="bg-white text-[#202020] font-['Poppins'] font-bold text-[24px] sm:text-[32px] w-[48px] sm:w-[62px] h-[45px] sm:h-[59px] flex items-center justify-center rounded-[8px] sm:rounded-[10px]"
         aria-label={`${value} ${label}`}
       >
         {pad(value)}
       </div>
-      <span className="font-['Poppins'] font-semibold text-[9px] text-white mt-0.5">{label}</span>
+      <span className="font-['Poppins'] font-semibold text-[8px] sm:text-[9px] text-white mt-0.5">{label}</span>
     </div>
   );
 
   return (
     <div
-      className="flex items-center gap-2"
+      className="flex items-center gap-1.5 sm:gap-2"
       role="timer"
       aria-label="Flash sale ends in"
       aria-live="off"
     >
       <TimeBox value={t.h} label="Hours" />
-      <span className="flex flex-col items-center gap-1 self-center mb-4" aria-hidden="true">
+      <span className="flex flex-col items-center gap-1 self-center mb-3 sm:mb-4" aria-hidden="true">
         <span className="w-1 h-1 bg-white rounded-full" />
         <span className="w-1 h-1 bg-white rounded-full" />
       </span>
       <TimeBox value={t.m} label="Mins" />
-      <span className="flex flex-col items-center gap-1 self-center mb-4" aria-hidden="true">
+      <span className="flex flex-col items-center gap-1 self-center mb-3 sm:mb-4" aria-hidden="true">
         <span className="w-1 h-1 bg-white rounded-full" />
         <span className="w-1 h-1 bg-white rounded-full" />
       </span>
@@ -129,9 +129,9 @@ function FlashCountdown({ endsAt }) {
 
 function FlashCardSkeleton() {
   return (
-    <div className="flex gap-3" aria-busy="true" aria-label="Loading flash sale products">
+    <div className="flex gap-3 overflow-x-auto" aria-busy="true" aria-label="Loading flash sale products">
       {Array.from({ length: MAX_FLASH_CARDS }).map((_, i) => (
-        <div key={i} className="bg-white/10 rounded-lg h-64 w-full animate-pulse flex-1" />
+        <div key={i} className="bg-white/10 rounded-lg h-64 w-[140px] sm:w-full flex-shrink-0 animate-pulse" />
       ))}
     </div>
   );
@@ -145,35 +145,40 @@ function ProductRow({ products, label }) {
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative group px-1 sm:px-0">
+      {/* Left Navigation Arrow */}
       <button
         type="button"
         onClick={() => scroll(-1)}
         aria-label={`Scroll ${label || 'products'} left`}
-        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-9 h-9 bg-white border border-gray-200 rounded-full shadow items-center justify-center hover:border-[#FFB700] hover:text-[#FFB700] transition-colors"
+        className="flex absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-full shadow-md items-center justify-center hover:border-[#FFB700] hover:text-[#FFB700] transition-colors"
       >
-        <Icon icon="mdi:chevron-left" width={18} aria-hidden="true" />
+        <Icon icon="mdi:chevron-left" className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
       </button>
+
+      {/* Scrollable Container */}
       <div
         ref={rowRef}
-        className="flex gap-4 overflow-x-auto pb-1 scroll-smooth"
+        className="flex gap-2.5 sm:gap-4 overflow-x-auto px-4 sm:px-6 pb-2 scroll-smooth"
         style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
         aria-label={label}
         role="list"
       >
         {products.map((p) => (
-          <div key={p._id} className="w-[185px] flex-shrink-0" role="listitem">
+          <div key={p._id} className="w-[135px] sm:w-[165px] md:w-[185px] flex-shrink-0" role="listitem">
             <ProductCard product={p} />
           </div>
         ))}
       </div>
+
+      {/* Right Navigation Arrow */}
       <button
         type="button"
         onClick={() => scroll(1)}
         aria-label={`Scroll ${label || 'products'} right`}
-        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-9 h-9 bg-white border border-gray-200 rounded-full shadow items-center justify-center hover:border-[#FFB700] hover:text-[#FFB700] transition-colors"
+        className="flex absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-7 h-7 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-full shadow-md items-center justify-center hover:border-[#FFB700] hover:text-[#FFB700] transition-colors"
       >
-        <Icon icon="mdi:chevron-right" width={18} aria-hidden="true" />
+        <Icon icon="mdi:chevron-right" className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
       </button>
     </div>
   );
@@ -181,9 +186,9 @@ function ProductRow({ products, label }) {
 
 function ProductRowSkeleton() {
   return (
-    <div className="flex gap-4" aria-busy="true" aria-label="Loading products">
+    <div className="flex gap-3 sm:gap-4 overflow-x-auto" aria-busy="true" aria-label="Loading products">
       {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-        <div key={i} className="w-[185px] h-[280px] flex-shrink-0 bg-gray-100 rounded-lg animate-pulse" />
+        <div key={i} className="w-[135px] sm:w-[165px] md:w-[185px] h-[240px] sm:h-[280px] flex-shrink-0 bg-gray-100 rounded-lg animate-pulse" />
       ))}
     </div>
   );
@@ -191,11 +196,11 @@ function ProductRowSkeleton() {
 
 function SectionHeader({ title, to }) {
   return (
-    <div className="flex items-center justify-between mb-4 md:mb-5">
-      <h2 className="text-[16px] font-black text-black uppercase">{title}</h2>
+    <div className="flex items-center justify-between mb-3 sm:mb-5 px-1 sm:px-0">
+      <h2 className="text-[14px] sm:text-[16px] font-black text-black uppercase tracking-tight">{title}</h2>
       <Link
         to={to || '/shop'}
-        className="text-[16px] font-semibold text-black underline hover:text-[#FFB700] transition-colors"
+        className="text-[13px] sm:text-[16px] font-semibold text-black underline hover:text-[#FFB700] transition-colors"
       >
         View All
       </Link>
@@ -270,8 +275,7 @@ export default function Home() {
         aria-label="Promotional hero carousel"
         aria-roledescription="carousel"
       >
-        <div
-        className="block md:hidden relative w-full">
+        <div className="block md:hidden relative w-full">
           <img
             src={cur.mobileImage || cur.image}
             alt={cur.title}
@@ -307,7 +311,7 @@ export default function Home() {
           type="button"
           onClick={() => goSlide((slide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
           aria-label="Previous slide"
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors z-10"
         >
           <Icon icon="mdi:chevron-left" width={20} aria-hidden="true" />
         </button>
@@ -315,13 +319,13 @@ export default function Home() {
           type="button"
           onClick={() => goSlide((slide + 1) % HERO_SLIDES.length)}
           aria-label="Next slide"
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors z-10"
         >
           <Icon icon="mdi:chevron-right" width={20} aria-hidden="true" />
         </button>
 
         <div
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"
+          className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10"
           role="tablist"
           aria-label="Slide indicators"
         >
@@ -333,7 +337,7 @@ export default function Home() {
               aria-selected={i === slide}
               aria-label={`Go to slide ${i + 1}: ${s.title}`}
               onClick={() => goSlide(i)}
-              className={`w-3.5 h-3.5 rounded-full transition-all ${
+              className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full transition-all ${
                 i === slide ? 'bg-black' : 'bg-white/60'
               }`}
             />
@@ -363,19 +367,19 @@ export default function Home() {
       </section>
 
       <section
-        className="py-8 bg-white"
+        className="py-6 sm:py-8 bg-white"
         aria-labelledby="flash-sale-heading"
       >
-        <div className="max-w-[1280px] mx-auto px-4">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4">
             <div className="bg-[linear-gradient(90deg,#C20404_60.25%,#FF5312_100%)] rounded-[10px] p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5">
                 <div className="flex items-center gap-2">
                   <Icon icon="mdi:flash" width={28} className="sm:w-[32px] text-[#FFB700]" aria-hidden="true" />
                   <div>
-                    <h2 id="flash-sale-heading" className="font-['Poppins'] font-bold text-white text-[24px] sm:text-[32px]">
+                    <h2 id="flash-sale-heading" className="font-['Poppins'] font-bold text-white text-[20px] sm:text-[32px]">
                       FLASH SALE
                     </h2>
-                    <p className="font-['Poppins'] font-semibold text-white text-[12px] sm:text-[14px]">Limited Time Offer</p>
+                    <p className="font-['Poppins'] font-semibold text-white text-[11px] sm:text-[14px]">Limited Time Offer</p>
                   </div>
                 </div>
 
@@ -391,7 +395,7 @@ export default function Home() {
 
             {flashSale.length > 0 ? (
               <div
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"
                 role="list"
                 aria-label="Flash sale products"
               >
@@ -408,10 +412,10 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-8 bg-white" aria-labelledby="categories-heading">
+      <section className="py-6 sm:py-8 bg-white" aria-labelledby="categories-heading">
         <div className="max-w-[1280px] mx-auto px-4">
           <h2 id="categories-heading" className="sr-only">Shop by Category</h2>
-          <ul className="flex items-center justify-center gap-4 sm:gap-8 flex-wrap list-none m-0 p-0">
+          <ul className="flex items-center justify-center gap-3 sm:gap-8 flex-wrap list-none m-0 p-0">
             {STATIC_CATS.map((cat) => (
               <li key={cat.slug}>
                 <Link
@@ -419,7 +423,7 @@ export default function Home() {
                   className="flex flex-col items-center gap-2 sm:gap-3 group"
                 >
                   <div
-                    className="w-[80px] sm:w-[110px] h-[80px] sm:h-[110px] rounded-[14px] sm:rounded-[20px] flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-[#FFB700] transition-all shadow-sm"
+                    className="w-[70px] sm:w-[110px] h-[70px] sm:h-[110px] rounded-[14px] sm:rounded-[20px] flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-[#FFB700] transition-all shadow-sm"
                     style={{ background: cat.bg }}
                     aria-hidden="true"
                   >
@@ -430,7 +434,7 @@ export default function Home() {
                       loading="lazy"
                     />
                   </div>
-                  <p className="text-[12px] sm:text-[14px] font-medium text-black text-center whitespace-pre-line leading-tight group-hover:text-[#FFB700] transition-colors">
+                  <p className="text-[11px] sm:text-[14px] font-medium text-black text-center whitespace-pre-line leading-tight group-hover:text-[#FFB700] transition-colors">
                     {cat.label.replace('\n', ' ')}
                   </p>
                 </Link>
@@ -440,12 +444,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white py-6" aria-labelledby="promo-banners-1-heading">
+      <section className="bg-white py-4 sm:py-6" aria-labelledby="promo-banners-1-heading">
         <div className="max-w-[1280px] mx-auto px-4">
           <h2 id="promo-banners-1-heading" className="sr-only">Promotional offers</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[180px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #1a0533 0%, #4a148c 30%, #7c3aed 70%, #a855f7 100%)' }}>
-              <div className="relative p-4 sm:p-6 z-10 w-[45%] sm:w-[50%]">
+            <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #1a0533 0%, #4a148c 30%, #7c3aed 70%, #a855f7 100%)' }}>
+              <div className="relative p-4 sm:p-6 z-10 w-[50%]">
                 <h3 className="font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">
                   <span className="text-[#FFB700]">BEST</span>
                 </h3>
@@ -459,13 +463,13 @@ export default function Home() {
                 src="/images/best deals.png"
                 alt=""
                 aria-hidden="true"
-                className="absolute right-0 bottom-0 h-full w-[58%] sm:w-[55%] object-contain object-right-bottom"
+                className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
                 loading="lazy"
               />
             </Link>
 
-            <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[180px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #7c2d12 0%, #b45309 30%, #f59e0b 60%, #fbbf24 100%)' }}>
-              <div className="relative p-4 sm:p-6 z-10 w-[45%] sm:w-[50%]">
+            <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #7c2d12 0%, #b45309 30%, #f59e0b 60%, #fbbf24 100%)' }}>
+              <div className="relative p-4 sm:p-6 z-10 w-[50%]">
                 <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">SAVE MORE</h3>
                 <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">EVERYDAY</h3>
                 <p className="text-white/80 text-[11px] sm:text-[12px] mb-2 sm:mb-3">Great products at unbeatable prices</p>
@@ -477,13 +481,13 @@ export default function Home() {
                 src="/images/save more.png"
                 alt=""
                 aria-hidden="true"
-                className="absolute right-0 bottom-0 h-full w-[58%] sm:w-[55%] object-contain object-right-bottom"
+                className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
                 loading="lazy"
               />
             </Link>
 
-            <Link to="/shop?newArrival=true" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[180px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #831843 0%, #be185d 30%, #ec4899 60%, #f9a8d4 100%)' }}>
-              <div className="relative p-4 sm:p-6 z-10 w-[45%] sm:w-[50%]">
+            <Link to="/shop?newArrival=true" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #831843 0%, #be185d 30%, #ec4899 60%, #f9a8d4 100%)' }}>
+              <div className="relative p-4 sm:p-6 z-10 w-[50%]">
                 <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">BEAUTY</h3>
                 <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">DEALS</h3>
                 <p className="text-white/80 text-[11px] sm:text-[12px] mb-2 sm:mb-3">Glow more, save more!</p>
@@ -495,7 +499,7 @@ export default function Home() {
                 src="/images/beauty.png"
                 alt=""
                 aria-hidden="true"
-                className="absolute right-0 bottom-0 h-full w-[58%] sm:w-[55%] object-contain object-right-bottom"
+                className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
                 loading="lazy"
               />
             </Link>
@@ -503,8 +507,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-8 bg-white" aria-labelledby="popular-heading">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10">
+      <section className="py-6 sm:py-8 bg-white" aria-labelledby="popular-heading">
+        <div className="max-w-[1280px] mx-auto px-2 sm:px-10">
           <SectionHeader title="Popular Products" />
           <h2 id="popular-heading" className="sr-only">Popular Products</h2>
           {popular.length > 0
@@ -514,8 +518,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-8 bg-gray-50" aria-labelledby="new-arrivals-heading">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10">
+      <section className="py-6 sm:py-8 bg-gray-50" aria-labelledby="new-arrivals-heading">
+        <div className="max-w-[1280px] mx-auto px-2 sm:px-10">
           <SectionHeader title="New Arrivals" />
           <h2 id="new-arrivals-heading" className="sr-only">New Arrivals</h2>
           {homeNewArrivals.length > 0
@@ -525,8 +529,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white py-6" aria-labelledby="sub-banners-heading">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10">
+      <section className="bg-white py-4 sm:py-6" aria-labelledby="sub-banners-heading">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-10">
           <h2 id="sub-banners-heading" className="sr-only">Shop by department</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link to="/shop?category=home-appliances" className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card%201.png')", backgroundColor: '#1E2A3A' }}>
@@ -566,8 +570,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-8 bg-gray-50" aria-labelledby="beauty-heading">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10">
+      <section className="py-6 sm:py-8 bg-gray-50" aria-labelledby="beauty-heading">
+        <div className="max-w-[1280px] mx-auto px-2 sm:px-10">
           <SectionHeader title="Beauty and Cosmetics" to="/shop?category=beauty" />
           <h2 id="beauty-heading" className="sr-only">Beauty and Cosmetics</h2>
           {beautyProducts.length > 0
@@ -577,8 +581,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-8 bg-white" aria-labelledby="electronics-heading">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10">
+      <section className="py-6 sm:py-8 bg-white" aria-labelledby="electronics-heading">
+        <div className="max-w-[1280px] mx-auto px-2 sm:px-10">
           <SectionHeader title="Electronic Appliances" to="/shop?category=electronics" />
           <h2 id="electronics-heading" className="sr-only">Electronic Appliances</h2>
           {electronicsProducts.length > 0
@@ -588,9 +592,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 bg-white border-t border-gray-100" aria-labelledby="brands-heading">
-        <div className="text-center mb-6 md:mb-8">
-          <h2 id="brands-heading" className="text-xl md:text-[28px] font-black">
+      <section className="py-8 sm:py-12 bg-white border-t border-gray-100" aria-labelledby="brands-heading">
+        <div className="text-center mb-4 sm:mb-8">
+          <h2 id="brands-heading" className="text-lg sm:text-[28px] font-black">
             <span className="text-black">Our Best </span>
             <span className="text-[#FFB700]">Sellers</span>
           </h2>

@@ -118,22 +118,28 @@ export default function Register() {
   }; **/
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'linear-gradient(136deg, rgba(254,242,228,1) 42%, rgba(255,255,255,1) 83%)' }}>
+    <div className="min-h-screen lg:h-screen flex flex-col lg:flex-row bg-[#fbf0e5] lg:overflow-hidden relative">
 
-      <div className="hidden lg:block lg:w-[40%] relative flex-shrink-0 overflow-hidden">
-        <img src="/images/auth/auth-login-bg.png" alt="" className="absolute bottom-0 right-0 h-[90%] w-full object-contain object-bottom pointer-events-none select-none" aria-hidden="true" />
-        <div className="relative z-10 p-10">
-          <Link to="/"><img src="/images/logo.png" alt="House of Cambridge" className="h-20 w-auto object-contain" /></Link>
-          <div className="mt-14">
-            <h2 className="font-black leading-tight text-[#1A1A1A]" style={{ fontSize: '36px' }}>
+      {/* HERO BANNER SECTION */}
+      <div className="w-full lg:w-[40%] relative overflow-hidden bg-[#fbf0e5] h-[380px] sm:h-[620px] lg:h-full flex flex-col justify-start">
+        <img
+          src="/images/auth/auth-login-bg.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-fill object-top pointer-events-none select-none z-0"
+          aria-hidden="true"
+        />
+        <div className="relative z-10 p-5 sm:p-8 lg:p-10 text-left">
+          {/* <Link to="/" className="hidden lg:inline-block"><img src="/images/logo-emblem-449bab.png" alt="House of Cambridge" className="h-10 sm:h-16 lg:h-20 w-auto object-contain" /></Link> */}
+          <div className="mt-1 lg:mt-14">
+            <h2 className="font-black leading-tight text-[#1A1A1A] text-[20px] sm:text-[26px] lg:text-[36px]">
               SIGN UP NOW!<br /><span className="text-[#FFB700]">UNLOCK DEALS,<br />REWARDS & MORE.</span>
             </h2>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 lg:flex-none lg:w-[34%] flex items-start justify-center py-10 px-4 overflow-y-auto">
-        <div className="w-full max-w-[420px] bg-white border border-[#C5C5C5] rounded-sm p-8">
+      <div className="w-full lg:w-[34%] flex items-start justify-center -mt-16 sm:-mt-20 lg:mt-0 py-0 sm:py-6 lg:py-10 px-3 sm:px-4 z-20 lg:h-full lg:overflow-y-auto no-scrollbar">
+        <div className="w-full max-w-[420px] bg-white border border-[#E0E0E0] lg:border-[#C5C5C5] rounded-[18px] lg:rounded-sm p-6 sm:p-9 shadow-lg lg:shadow-sm">
           <div className="lg:hidden mb-6">
             <Link to="/"><img src="/images/logo.png" alt="House of Cambridge" className="h-9 w-auto object-contain" /></Link>
           </div>
@@ -282,8 +288,8 @@ export default function Register() {
         </div>
       </div>
 
-      <div className="hidden xl:flex xl:w-[26%] flex-col gap-5 py-10 pr-8 pl-3 overflow-y-auto">
-        <div className="bg-white border border-[#C5C5C5] rounded-sm p-5">
+      <div className="w-full lg:w-[26%] flex flex-col gap-5 py-6 lg:py-10 px-4 lg:pr-8 lg:pl-3 lg:h-full lg:overflow-y-auto no-scrollbar">
+        <div className="max-w-[420px] lg:max-w-none mx-auto w-full bg-white border border-[#C5C5C5] rounded-sm p-5 shadow-sm">
           <h2 className="text-[11px] font-bold text-[#60717B] uppercase tracking-widest mb-4">What Happens Next?</h2>
           <ol className="space-y-3">
             {NEXT_STEPS.map(({ n, text }) => (
@@ -294,19 +300,26 @@ export default function Register() {
             ))}
           </ol>
         </div>
-        <div className="bg-white border border-[#C5C5C5] rounded-sm p-5">
+        <div className="max-w-[420px] lg:max-w-none mx-auto w-full bg-white border border-[#C5C5C5] rounded-sm p-5 shadow-sm">
           <h2 className="text-[11px] font-bold text-[#60717B] uppercase tracking-widest mb-3">Member Benefits</h2>
           <ul className="space-y-2">
             {MEMBER_BENEFITS.map((b) => <li key={b} className="text-[13px] text-[#1A1A1A]">{b}</li>)}
           </ul>
         </div>
-        <div className="bg-white border border-[#C5C5C5] rounded-sm p-5">
+        <div className="max-w-[420px] lg:max-w-none mx-auto w-full bg-white border border-[#C5C5C5] rounded-sm p-5 shadow-sm">
           <h2 className="text-[11px] font-bold text-[#60717B] uppercase tracking-widest mb-2">Your Data Is Safe</h2>
           <p className="text-[12px] text-[#60717B] leading-relaxed">
             We never share your personal information with third parties. Your data is encrypted and stored securely.
           </p>
         </div>
       </div>
+            {/* Decorative corner blob */}
+      <img
+        src="/images/auth/corner-blob.png"
+        alt=""
+        className="hidden lg:block absolute bottom-0 right-0 w-[110px] xl:w-[130px] h-auto pointer-events-none select-none z-0"
+        aria-hidden="true"
+      />
     </div>
   );
 }
