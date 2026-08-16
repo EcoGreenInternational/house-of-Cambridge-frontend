@@ -170,7 +170,7 @@ export default function EditProfile() {
             )}
             <div>
               <p className="text-[13px] font-bold text-[#1A1A1A] mb-0.5">{u?.name}</p>
-              <p className="text-[11px] text-[#60717B] mb-3">JPG, PNG, GIF, WebP · Max 2 MB</p>
+              <p className="text-[11px] text-[#60717B] mb-3">Accepted formats: JPG, PNG · Max size: 2MB</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
