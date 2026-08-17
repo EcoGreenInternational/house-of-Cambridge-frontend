@@ -18,7 +18,7 @@ export default function Footer() {
 
       {/* TOP NEWSLETTER BANNER */}
       <div className="relative overflow-hidden py-6 md:py-0 md:h-[150px]" style={{ background: '#758688' }}>
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10 h-full flex items-center justify-between relative">
+        <div className="max-w-[1280px] mx-auto px-4 md:px-10 h-full flex items-center justify-between relative gap-6">
 
           {/* Headline Text */}
           <div className="flex-shrink-0 text-left py-4 md:py-0">
@@ -33,6 +33,29 @@ export default function Footer() {
             </p>
           </div>
 
+          {/* Newsletter Form */}
+          <form
+            onSubmit={handleNewsletter}
+            className="hidden sm:flex items-center w-full max-w-[280px] lg:max-w-[320px] flex-shrink-0"
+            aria-label="Newsletter signup"
+          >
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+              aria-label="Email address"
+              className="flex-1 min-w-0 px-3.5 py-2.5 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none rounded-l-md border-0"
+            />
+            <button
+              type="submit"
+              className="bg-[#FFB700] text-black text-[12px] font-bold px-5 py-2.5 rounded-r-md hover:bg-amber-500 transition-colors whitespace-nowrap"
+            >
+              Subscribe Now
+            </button>
+          </form>
+
           {/* Decorative Images */}
           <div className="flex items-center flex-shrink-0 pointer-events-none select-none relative" aria-hidden="true">
             <img src="/images/arrow.png" alt="" className="hidden md:block w-[60px] lg:w-[90px] h-auto object-contain -mr-2 z-10" />
@@ -45,7 +68,7 @@ export default function Footer() {
 
       {/* MAIN FOOTER CONTENT - PRECISE HORIZONTAL & VERTICAL LAYOUT */}
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-10 py-10 md:py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-4 items-start">
 
           {/* COLUMN 1: BRAND INFO (4 Columns) */}
           <div className="lg:col-span-4 flex flex-col justify-between h-full">
@@ -88,29 +111,21 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* COLUMN 3: NEWSLETTER FORM / CENTER SPACE (3 Columns) */}
+          {/* COLUMN 3: HELP LINKS (3 Columns) */}
           <div className="lg:col-span-3 pt-2">
-            <form onSubmit={handleNewsletter} className="flex items-center w-full max-w-[280px] lg:max-w-[270px]" aria-label="Newsletter signup">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                aria-label="Email address"
-                className="flex-1 min-w-0 px-3.5 py-2 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none rounded-l-md border-0"
-              />
-              <button
-                type="submit"
-                className="bg-[#FFB700] text-black text-[12px] font-bold px-4 py-2 rounded-r-md hover:bg-amber-500 transition-colors whitespace-nowrap"
-              >
-                Subscribe Now
-              </button>
-            </form>
+            <h4 className="text-[#FFB700] text-[13px] md:text-[14px] font-bold mb-5 uppercase tracking-wider leading-none">
+              HELP
+            </h4>
+            <ul className="space-y-3 text-[12px] md:text-[13px]">
+              <li><Link to="/faq" className="text-white hover:text-[#FFB700] transition-colors">Frequently Asked Questions</Link></li>
+              <li><Link to="/how-to-buy" className="text-white hover:text-[#FFB700] transition-colors">How To Buy</Link></li>
+              <li><Link to="/contact" className="text-white hover:text-[#FFB700] transition-colors">Shipping & Delivery</Link></li>
+              <li><Link to="/orders" className="text-white hover:text-[#FFB700] transition-colors">Return Products</Link></li>
+            </ul>
           </div>
 
           {/* COLUMN 4: CONTACT US (3 Columns) */}
-          <div className="lg:col-span-3 flex flex-col justify-between h-full">
+          <div className="lg:col-span-3 flex flex-col justify-between h-full px-2 lg:px-0">
             <div>
               {/* Row 1 Top Baseline: CONTACT US Heading */}
               <h4 className="text-[#FFB700] text-[13px] md:text-[14px] font-bold mb-5 uppercase tracking-wider leading-none pt-2">
@@ -171,14 +186,15 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="hover:opacity-80 transition-opacity"
               >
-                <Icon icon="logos:tiktok-icon" width={18} />
+                <span className="flex items-center justify-center w-5 h-5 bg-white rounded-full">
+                  <Icon icon="logos:tiktok-icon" width={12} />
+                </span>
               </a>
             </div>
           </div>
 
         </div>
       </div>
-
       {/* COPYRIGHT BOTTOM BAR */}
       <div className="border-t border-white/10 max-w-[1280px] mx-auto px-4 py-4 text-center text-xs text-gray-400">
         <span>©2026 Developed by Lee Harvey. All rights reserved.</span>
