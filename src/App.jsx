@@ -1,3 +1,12 @@
+import ComingSoon from './ComingSoon';
+
+function App() {
+  return <ComingSoon />;
+}
+
+export default App;
+
+/*
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -75,7 +84,6 @@ function App() {
   const { isAuthenticated } = useSelector((s) => s.auth);
 
   useEffect(() => {
-   
     const init = async () => {
       await dispatch(loadUser());
       dispatch(fetchCart());
@@ -107,12 +115,10 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/verify-email/:token" element={<EmailVerification />} />
 
-      
         <Route path="/shop" element={<ShopPage />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/flash-sale" element={<FlashSalePage />} />
 
-     
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/guest-checkout" element={<GuestCheckoutPage />} />
@@ -124,7 +130,6 @@ function App() {
         <Route path="/orders/:orderId/return" element={<ProtectedRoute><ReturnRequest /></ProtectedRoute>} />
         <Route path="/return-status/:orderId" element={<ProtectedRoute><ReturnStatus /></ProtectedRoute>} />
 
-        
         <Route path="/orders" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
@@ -134,7 +139,6 @@ function App() {
         <Route path="/profile/loyalty" element={<ProtectedRoute><LoyaltyPoints /></ProtectedRoute>} />
         <Route path="/profile/payment" element={<ProtectedRoute><PaymentMethods /></ProtectedRoute>} />
 
-       
         <Route path="/add-review" element={<ProtectedRoute><WriteReview /></ProtectedRoute>} />
         <Route path="/add-review/:productId" element={<ProtectedRoute><WriteReview /></ProtectedRoute>} />
         <Route path="/review-submitted" element={<ProtectedRoute><ReviewSubmitted /></ProtectedRoute>} />
@@ -152,7 +156,7 @@ function App() {
         <Route path="/admin/flash-sales" element={<AdminRoute><AdminFlashSales /></AdminRoute>} />
         <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
         <Route path="/admin/invoices" element={<AdminRoute><AdminInvoices /></AdminRoute>} />
-       
+
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/faq" element={<FAQ />} />
@@ -167,3 +171,4 @@ function App() {
 }
 
 export default App;
+*/

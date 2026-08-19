@@ -165,7 +165,7 @@ function ProductRow({ products, label }) {
         role="list"
       >
         {products.map((p) => (
-          <div key={p._id} className="w-[135px] sm:w-[165px] md:w-[185px] flex-shrink-0" role="listitem">
+          <div key={p._id} className="w-[135px] sm:w-[165px] md:w-[185px] flex-shrink-0 transition-transform duration-300 hover:scale-105" role="listitem">
             <ProductCard product={p} />
           </div>
         ))}
@@ -345,24 +345,20 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white border-b border-gray-100" aria-label="Service highlights">
-        <div className="max-w-[1280px] mx-auto px-4">
-          <ul className="grid grid-cols-2 md:grid-cols-4 list-none m-0 p-0">
-            {FEATURES.map(({ icon, title, sub }, idx) => (
-              <li
-                key={title}
-                className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-4 sm:py-0 min-h-[70px] md:h-[83px] ${
-                  idx < 2 ? 'border-b border-gray-100' : ''
-                } md:border-b-0 md:border-r border-gray-100 last:md:border-r-0`}
-              >
-                <div className="flex-shrink-0">{icon}</div>
-                <div>
-                  <p className="text-[14px] sm:text-[16.5px] font-bold text-[#171C26]">{title}</p>
-                  <p className="text-[12px] sm:text-[15.6px] text-black/34">{sub}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+      <section className="bg-white border-b border-gray-100 py-2" aria-label="Service highlights">
+        <div className="max-w-[1280px] mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {FEATURES.map(({ icon, title, sub }, idx) => (
+            <div
+              key={title}
+              className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-4 rounded-lg transition-all duration-300 hover:bg-gray-50 hover:shadow-sm"
+            >
+              <div className="flex-shrink-0">{icon}</div>
+              <div>
+                <p className="text-[14px] sm:text-[16.5px] font-bold text-[#171C26]">{title}</p>
+                <p className="text-[12px] sm:text-[15.6px] text-black/50">{sub}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -430,8 +426,8 @@ export default function Home() {
                     <img
                       src={cat.img}
                       alt=""
-                      className="w-[75%] sm:w-[80%] h-[75%] sm:h-[80%] object-contain"
-                      loading="lazy"
+                      className="w-[75%] sm:w-[80%] h-[75%] sm:h-[80%] object-contain transition-transform duration-300 group-hover:scale-110"
+                      loading="lazy"a
                     />
                   </div>
                   <p className="text-[11px] sm:text-[14px] font-medium text-black text-center whitespace-pre-line leading-tight group-hover:text-[#FFB700] transition-colors">

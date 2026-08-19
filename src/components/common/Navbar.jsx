@@ -23,7 +23,9 @@ function AllCategoriesDropdown({ tree }) {
   useClickOutside(ref, () => setOpen(false));
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative"     
+    onMouseEnter={() => setOpen(true)}
+    onMouseLeave={() => setOpen(false)}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 bg-white text-black text-[13px] md:text-[14px] font-bold px-3 md:px-4 py-1.5 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
@@ -81,7 +83,9 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
   useClickOutside(ref, () => setOpen(false));
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative"
+          onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1 px-2.5 md:px-3 py-1 rounded-md text-white text-[12px] md:text-[13px] font-bold transition-all hover:opacity-90 cursor-pointer whitespace-nowrap"
@@ -199,7 +203,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-[9999] w-full">
+    <header className="fixed top-0 z-[9999] w-full">
       {/* Top bar - Black */}
       <div className="w-full bg-black px-3 sm:px-4 md:px-6 py-2.5">
         <div className="flex items-center justify-between gap-3 md:gap-6">
