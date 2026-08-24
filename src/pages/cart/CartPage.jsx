@@ -35,7 +35,7 @@ export default function CartPage() {
   const [couponApplied, setCouponApplied] = useState('');
   const scrollRef = useRef(null);
 
-  const VAT_RATE = Number(import.meta.env.VAT_RATE) || 0;
+  const VAT_RATE = Number(import.meta.env.VITE_VAT_RATE) || 0;
 
   useEffect(() => { dispatch(fetchCart()); }, [dispatch]);
 
