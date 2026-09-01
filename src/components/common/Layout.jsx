@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen bg-white">
       <Toaster 
         position="top-right" 
         toastOptions={{ 
@@ -19,7 +19,7 @@ export default function Layout({ children }) {
         }}
       />
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main className="pt-[96px] md:pt-[108px]">{children}</main>
       <Footer />
     </div>
   );

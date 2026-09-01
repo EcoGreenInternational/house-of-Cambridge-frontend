@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '@iconify/react';
 import toast from 'react-hot-toast';
-import { FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -15,138 +14,189 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[#171C26] text-gray-400">
+    <footer className="bg-[#171C26] text-gray-400 font-sans">
 
-      <div className="relative overflow-hidden md:h-[170px] py-6 md:py-0" style={{ background: '#758688' }}>
-        <div className="max-w-[1280px] mx-auto px-4 md:px-14 h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-0 text-center md:text-left relative">
+      {/* TOP NEWSLETTER BANNER */}
+      <div className="relative overflow-hidden py-6 md:py-0 md:h-[150px]" style={{ background: '#758688' }}>
+        <div className="max-w-[1280px] mx-auto px-4 md:px-10 h-full flex items-center justify-between relative gap-6">
 
-          <div className="flex-shrink-0">
-            <p className="text-white font-black text-[13px] md:text-[14px] tracking-wide mb-0.5">Stay Updated with Us</p>
-            <h3 className="text-white font-black leading-tight mb-0.5 text-[24px] md:text-[34px]">
+          {/* Headline Text */}
+          <div className="flex-shrink-0 text-left py-4 md:py-0">
+            <p className="text-white font-bold text-[12px] sm:text-[13px] md:text-[14px] tracking-wide mb-0.5">
+              Stay Updated with Us
+            </p>
+            <h3 className="text-white font-black leading-tight mb-0.5 text-[20px] sm:text-[26px] md:text-[32px]">
               Get <span className="text-[#FFB700]">20% Off</span> Discount Coupon
             </h3>
-            <p className="text-white font-black text-[13px] md:text-[14px]">by Subscribe our Newsletter</p>
+            <p className="text-white font-bold text-[11px] sm:text-[13px] md:text-[14px]">
+              by Subscribe our Newsletter
+            </p>
           </div>
 
-          <div className="w-full md:w-auto md:flex items-center gap-6 flex-shrink-0">
-            <form onSubmit={handleNewsletter} className="flex items-center max-w-[340px] mx-auto md:mx-0" aria-label="Newsletter signup">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                aria-label="Email address"
-                className="flex-1 md:w-44 px-3 py-2 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none border-0 rounded-l-sm"
-              />
-              <button
-                type="submit"
-                className="bg-[#FFB700] text-black text-[12px] font-bold px-4 py-2 rounded-r-sm hover:bg-amber-500 transition-colors whitespace-nowrap"
-              >
-                Subscribe Now
-              </button>
-            </form>
+          {/* Newsletter Form */}
+          <form
+            onSubmit={handleNewsletter}
+            className="hidden sm:flex items-center w-full max-w-[280px] lg:max-w-[320px] flex-shrink-0"
+            aria-label="Newsletter signup"
+          >
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+              aria-label="Email address"
+              className="flex-1 min-w-0 px-3.5 py-2.5 text-[12px] text-[#1A1A1A] placeholder-gray-400 bg-white outline-none rounded-l-md border-0"
+            />
+            <button
+              type="submit"
+              className="bg-[#FFB700] text-black text-[12px] font-bold px-5 py-2.5 rounded-r-md hover:bg-amber-500 transition-colors whitespace-nowrap"
+            >
+              Subscribe Now
+            </button>
+          </form>
 
-            <div className="hidden md:flex items-center flex-shrink-0 pointer-events-none select-none" aria-hidden="true">
-              <img src="/images/arrow.png" alt="" className="w-[100px] h-[100px] object-contain -mr-4 z-10 flex-shrink-0" />
-              <img src="/images/headphone.png" alt="" className="h-[200px] w-auto object-contain flex-shrink-0" />
-              <img src="/images/newsletter-email.png" alt="" className="w-[70px] h-[70px] object-contain ml-2 flex-shrink-0" />
+          {/* Decorative Images */}
+          <div className="flex items-center flex-shrink-0 pointer-events-none select-none relative" aria-hidden="true">
+            <img src="/images/arrow.png" alt="" className="hidden md:block w-[60px] lg:w-[90px] h-auto object-contain -mr-2 z-10" />
+            <img src="/images/headphone.png" alt="" className="h-[80px] sm:h-[110px] md:h-[165px] w-auto object-contain z-10 -mb-2 md:-mb-4" />
+            <img src="/images/newsletter-email.png" alt="" className="w-[30px] sm:w-[45px] md:w-[60px] h-auto object-contain ml-2 md:ml-4" />
+          </div>
+
+        </div>
+      </div>
+
+      {/* MAIN FOOTER CONTENT - PRECISE HORIZONTAL & VERTICAL LAYOUT */}
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-10 py-10 md:py-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-4 items-start">
+
+          {/* COLUMN 1: BRAND INFO (4 Columns) */}
+          <div className="lg:col-span-4 flex flex-col justify-between h-full">
+            <div>
+              {/* Row 1 Top Baseline: Logo Emblem & Title */}
+              <div className="flex items-center gap-3 mb-5">
+                <img src="/images/logo-emblem-449bab.png" alt="House of Cambridge" className="h-10 md:h-12 w-auto object-contain" />
+                <span className="font-serif text-[#d2aa50] text-[18px] md:text-[20px] font-semibold leading-tight">
+                  House Of Cambridge
+                </span>
+              </div>
+
+              {/* Rows 2-4: Paragraph Content */}
+              <p className="text-[12px] md:text-[13px] leading-[1.6] text-white/90 max-w-xs mb-6">
+                We are more than just an online store;<br />
+                we are a platform built to deliver quality,<br />
+                convenience, and trust.
+              </p>
+            </div>
+
+            {/* Row 6 Bottom Baseline: Shop with confidence */}
+            <p className="text-[#FFB700] text-[13px] md:text-[14px] font-semibold mt-auto pt-1">
+              Shop with confidence!
+            </p>
+          </div>
+
+          {/* COLUMN 2: ABOUT LINKS (2 Columns) */}
+          <div className="lg:col-span-2">
+            {/* Row 1 Top Baseline: ABOUT Heading */}
+            <h4 className="text-[#FFB700] text-[13px] md:text-[14px] font-bold mb-5 uppercase tracking-wider leading-none pt-2">
+              ABOUT
+            </h4>
+
+            {/* Rows 2-5: Nav Links */}
+            <ul className="space-y-3 text-[12px] md:text-[13px]">
+              <li><Link to="/about" className="text-white hover:text-[#FFB700] transition-colors">About Us</Link></li>
+              <li><Link to="/privacy-policy" className="text-white hover:text-[#FFB700] transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/return-policy" className="text-white hover:text-[#FFB700] transition-colors">Return and Refund Policy</Link></li>
+              <li><Link to="/terms" className="text-white hover:text-[#FFB700] transition-colors">Terms and Conditions</Link></li>
+            </ul>
+          </div>
+
+          {/* COLUMN 3: HELP LINKS (3 Columns) */}
+          <div className="lg:col-span-3 pt-2">
+            <h4 className="text-[#FFB700] text-[13px] md:text-[14px] font-bold mb-5 uppercase tracking-wider leading-none">
+              HELP
+            </h4>
+            <ul className="space-y-3 text-[12px] md:text-[13px]">
+              <li><Link to="/faq" className="text-white hover:text-[#FFB700] transition-colors">Frequently Asked Questions</Link></li>
+              <li><Link to="/how-to-buy" className="text-white hover:text-[#FFB700] transition-colors">How To Buy</Link></li>
+              <li><Link to="/contact" className="text-white hover:text-[#FFB700] transition-colors">Shipping & Delivery</Link></li>
+              <li><Link to="/orders" className="text-white hover:text-[#FFB700] transition-colors">Return Products</Link></li>
+            </ul>
+          </div>
+
+          {/* COLUMN 4: CONTACT US (3 Columns) */}
+          <div className="lg:col-span-3 flex flex-col justify-between h-full px-2 lg:px-0">
+            <div>
+              {/* Row 1 Top Baseline: CONTACT US Heading */}
+              <h4 className="text-[#FFB700] text-[13px] md:text-[14px] font-bold mb-5 uppercase tracking-wider leading-none pt-2">
+                CONTACT US
+              </h4>
+
+              {/* Rows 2-5: Contact details */}
+              <ul className="space-y-3 text-[12px] md:text-[13px]">
+                <li className="flex items-center gap-2.5">
+                  <Icon icon="mdi:whatsapp" width={16} className="text-green-500 shrink-0" aria-hidden="true" />
+                  <a href="https://wa.me/94764604227" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#FFB700] transition-colors">
+                    076 460 4227
+                  </a>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Icon icon="mdi:phone" width={16} className="text-amber-500 shrink-0" aria-hidden="true" />
+                  <a href="tel:+94112847846" className="text-white hover:text-[#FFB700] transition-colors">
+                    0112 847 846
+                  </a>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Icon icon="mdi:email" width={16} className="text-amber-500 shrink-0" aria-hidden="true" />
+                  <a href="mailto:info@houseofcambridge.co.uk" className="text-white hover:text-[#FFB700] transition-colors break-all">
+                    info@houseofcambridge.co.uk
+                  </a>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <Icon icon="mdi:map-marker" width={16} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
+                  <span className="text-white">No 63 Old Road, Pannipitiya</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Row 6 Bottom Baseline: Social Icons */}
+            <div className="flex items-center gap-3 mt-6 lg:mt-auto pt-1" aria-label="Social media links">
+              <a
+                href="https://www.facebook.com/share/1EvLTYix5L/?mibextid=wwXIfr"
+                aria-label="Facebook"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+              >
+                <Icon icon="logos:facebook" width={20} />
+              </a>
+              <a
+                href="https://www.instagram.com/houseofcambridge.lk?igsh=MXIzcjV5anhtMGYyMA=="
+                aria-label="Instagram"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+              >
+                <Icon icon="skill-icons:instagram" width={18} />
+              </a>
+              <a
+                href="https://www.tiktok.com/@houseofcambridge1"
+                aria-label="TikTok"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+              >
+                <span className="flex items-center justify-center w-5 h-5 bg-white rounded-full">
+                  <Icon icon="logos:tiktok-icon" width={12} />
+                </span>
+              </a>
             </div>
           </div>
 
         </div>
       </div>
-
-      <div className="max-w-[1280px] mx-auto px-4 py-8 md:py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 border-b border-white/5">
-
-        <div className="sm:col-span-2 lg:col-span-1">
-          <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-            <img src="/images/logo.png" alt="House of Cambridge" className="h-7 md:h-10 w-auto object-contain" />
-            <span className="text-white font-bold text-[13px] md:text-[18px]">House Of Cambridge</span>
-          </div>
-          <p className="text-[11px] md:text-[14px] leading-relaxed text-white mb-2">
-            We are more than just an online store; we are a platform built to deliver quality, convenience, and trust.
-          </p>
-          <p className="text-[#FFB700] text-[11px] md:text-[14px] font-semibold mb-3 md:mb-4">Shop with confidence!</p>
-        </div>
-
-        <div>
-          <h4 className="text-[#FFB700] text-[12px] md:text-[14px] font-bold mb-2 md:mb-3">ABOUT</h4>
-          <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-[13px]">
-            <li><Link to="/about"          className="text-white hover:text-[#FFB700] transition-colors">About Us</Link></li>
-            <li><Link to="/privacy-policy" className="text-white hover:text-[#FFB700] transition-colors">Privacy Policy</Link></li>
-            <li><Link to="/return-policy"  className="text-white hover:text-[#FFB700] transition-colors">Return and Refund Policy</Link></li>
-            <li><Link to="/terms"          className="text-white hover:text-[#FFB700] transition-colors">Terms and Conditions</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-[#FFB700] text-[12px] md:text-[14px] font-bold mb-2 md:mb-3">HELP</h4>
-          <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-[13px]">
-            <li><Link to="/faq" className="text-white hover:text-[#FFB700] transition-colors">Frequently Asked Questions</Link></li>
-            <li><Link to="/how-to-buy" className="text-white hover:text-[#FFB700] transition-colors">How To Buy</Link></li>
-            <li><Link to="/shipping" className="text-white hover:text-[#FFB700] transition-colors">Shipping & Delivery</Link></li>
-            <li><Link to="/warranty" className="text-white hover:text-[#FFB700] transition-colors">Warranty Information</Link></li>
-            <li><Link to="/return-products" className="text-white hover:text-[#FFB700] transition-colors">Return Products</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-[#FFB700] text-[12px] md:text-[14px] font-bold mb-2 md:mb-3">CONTACT US</h4>
-          <ul className="space-y-1.5 md:space-y-2 text-[11px] md:text-[13px]">
-            <li className="flex items-center gap-1.5 md:gap-2">
-              <Icon icon="mdi:whatsapp" width={12} className="md:w-[14px] text-green-500 shrink-0" aria-hidden="true" />
-              <a href="https://wa.me/94764604227" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#FFB700] transition-colors">076 460 4227</a>
-            </li>
-            <li className="flex items-center gap-1.5 md:gap-2">
-              <Icon icon="mdi:phone" width={12} className="md:w-[14px] text-red-500 shrink-0" aria-hidden="true" />
-              <a href="tel:+94112847846" className="text-white hover:text-[#FFB700] transition-colors">0112 847 846</a>
-            </li>
-            <li className="flex items-center gap-1.5 md:gap-2">
-              <Icon icon="mdi:email" width={12} className="md:w-[14px] text-yellow-500 shrink-0" aria-hidden="true" />
-              <a href="mailto:info@houseofcambridge.co.uk" className="text-white hover:text-[#FFB700] transition-colors break-all">
-                info@houseofcambridge.co.uk
-              </a>
-            </li>
-            <li className="flex items-start gap-1.5 md:gap-2">
-              <Icon icon="mdi:map-marker" width={12} className="md:w-[14px] text-green-500 shrink-0 mt-0.5" aria-hidden="true" />
-              <span className="text-white">No 63 Old Road, Pannipitiya</span>
-            </li>
-          </ul>
-          <div className="flex items-center gap-2 md:gap-3 mt-3 md:mt-4" aria-label="Social media links">
-            <a
-              href="https://www.facebook.com/share/1EvLTYix5L/?mibextid=wwXIfr"
-              aria-label="Facebook"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-7 h-7 bg-[#1877F2] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
-            >
-              <FaFacebookF size={14} className="text-white" />
-            </a>
-            <a
-              href="https://www.instagram.com/houseofcambridge.lk?igsh=MXIzcjV5anhtMGYyMA=="
-              aria-label="Instagram"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-7 h-7 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
-              style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
-            >
-              <FaInstagram size={14} className="text-white" />
-            </a>
-            <a
-              href="https://www.tiktok.com/@houseofcambridge1"
-              aria-label="TikTok"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-7 h-7 bg-black rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
-            >
-              <FaTiktok size={14} className="text-white" />
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-[1280px] mx-auto px-4 py-4 text-center text-xs text-gray-500">
+      {/* COPYRIGHT BOTTOM BAR */}
+      <div className="border-t border-white/10 max-w-[1280px] mx-auto px-4 py-4 text-center text-xs text-gray-400">
         <span>©2026 Developed by Lee Harvey. All rights reserved.</span>
       </div>
     </footer>

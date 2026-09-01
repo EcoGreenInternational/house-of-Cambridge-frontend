@@ -7,6 +7,22 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+/* Custom scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+
 /* ============================================================
    LOGIN PAGE — RESPONSIVE
    Tablet : max-width 768px

@@ -16,7 +16,7 @@ import {
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-const VAT_RATE = Number(import.meta.env.VAT_RATE) || 0;
+const VAT_RATE = Number(import.meta.env.VITE_VAT_RATE) || 0;
 
 const PAY_TABS = [
   { id: 'card',   label: 'Card' },

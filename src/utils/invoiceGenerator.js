@@ -1,5 +1,4 @@
 import html2pdf from 'html2pdf.js';
-
 async function imageToBase64(url) {
   try {
     const response = await fetch(url);
@@ -9,8 +8,7 @@ async function imageToBase64(url) {
     }
     const blob = await response.blob();
     return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
+      const reader = new FileReader();      reader.onloadend = () => resolve(reader.result);
       reader.readAsDataURL(blob);
     });
   } catch (err) {
@@ -18,10 +16,7 @@ async function imageToBase64(url) {
     return '';
   }
 }
-
 const MAX_FIELD_LEN = 200;
-const MAX_NOTES_LEN = 500;
-
 function escapeHtml(value) {
   if (value === null || value === undefined) return '';
   return String(value)
@@ -37,13 +32,11 @@ function sanitizeOrderId(id) {
   if (!id) return '';
   return String(id).replace(/[^A-Za-z0-9\-_]/g, '').slice(0, 32);
 }
-
 function fmtDate(d) {
   return new Date(d || Date.now()).toLocaleDateString('en-GB', {
     day: '2-digit', month: 'long', year: 'numeric',
   });
 }
-
 function fmtOrderNum(order) {
   if (order.invoiceNo) return escapeHtml(order.invoiceNo);
   if (order.orderNumber) {
@@ -54,15 +47,12 @@ function fmtOrderNum(order) {
   const safeId = sanitizeOrderId(order._id);
   return `O${safeId.slice(-4).toUpperCase()}`;
 }
-
 function safeNum(value, fallback = 0) {
   const n = Number(value);
   return isFinite(n) ? n : fallback;
 }
-
 export async function downloadInvoice(order, customerName, customerEmail) {
   if (!order) return;
-
   const items      = Array.isArray(order.items) ? order.items : [];
   const subtotal = safeNum(order.subtotal, items.reduce((s, i) => s + safeNum(i.price || i.unitPrice) * safeNum(i.quantity), 0));
   const discount = safeNum(order.discount);
@@ -97,14 +87,13 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       <td class="right total-cell">${(itemPrice * itemQty).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
     </tr>`;
   }).join('');
-
   const minRows = 4;
   let fillerRows = '';
   for (let i = items.length; i < minRows; i++) {
     fillerRows += `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
   }
-
   const cartDataUrl = await imageToBase64('/images/cart.png');
+  
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,7 +104,6 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   body { font-size: 10px; color: #000; background: #fff; line-height: 1.3; }
   
   .page { max-width: 800px; margin: 0 auto; padding: 20px 24px; position: relative; }
-
   /* HEADER BLOCK */
   .brand-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
   .logo-area { display: flex; align-items: center; gap: 12px; }
@@ -132,7 +120,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     width: 100%; 
     font-size: 11px; 
     border: 1px solid #d8d8d8; 
-    border-radius: 6px; 
+    border-radius: 4px; 
     padding: 8px 12px; 
     background: #ffffff;
     display: flex;
@@ -151,21 +139,16 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     text-align: left;
     font-size: 11px;
   } 
-
   /* OFFICE DETAILS BLOCK */
   .offices-row { 
-    display: flex; 
-    border-top: 1px solid #F4B41A; 
-    border-bottom: 1px solid #F4B41A;
-    border-left: 1px solid #F4B41A;
-    border-right: 1px solid #F4B41A;
+    display: flex;
+    border: 1px solid #F4B41A;
     margin-bottom: 12px;  
-    padding: 6px 0;       
     background: #fff;
   }
   .office-col { 
-    flex: 1; 
-    padding: 0 15px;
+    width: 50%; 
+    padding: 8px 12px;
     background: #ffffff;
   }
   .office-col.left-office { 
@@ -175,73 +158,107 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   
   .office-heading { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; color: #000; margin-bottom: 6px; }
   .office-heading .flag-icon { 
-    width: 26px; 
-    height: 26px; 
+    width: 24px; 
+    height: 24px; 
     object-fit: cover; 
-    border-radius: 40%; 
-    border: 2px solid #000; 
-    display: inline-block; 
+    border-radius: 50%; 
+    border: 1px solid #000; 
+    display: block; 
   }
-  .office-detail-wrapper { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; font-size: 9px; }
-  .office-address { flex: 1.1; display: flex; flex-direction: column; gap: 3px; }
-  .office-contacts { flex: 0.9; display: flex; flex-direction: column; gap: 3px; }
-  
-  .contact-item { display: flex; align-items: center; gap: 5px; }
-  .contact-icon { width: 11px; height: 11px; fill: #000; flex-shrink: 0; }
 
+  .office-detail-wrapper { 
+    display: flex; 
+    align-items: flex-start; 
+    justify-content: space-between; 
+    gap: 10px; 
+    font-size: 9px; 
+  }
+  
+  .office-address { 
+    width: 48%; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 2px;
+    line-height: 1.25;
+  }
+  
+  /* FLEX LAYOUT FOR CONTACT ICONS & TEXT */
+  .office-contacts-grid { 
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 8.5px;
+  }
+  
+  .contact-row {
+    display: flex;
+    align-items: flex-start; 
+    gap: 5px;
+    min-height: 14px;
+  }
+  .contact-icon { 
+    width: 10px; 
+    height: 13px; 
+    fill: #000; 
+    flex-shrink: 0;
+    display: block;
+    margin-top: 3px; 
+  }
+  .contact-text {
+    white-space: nowrap;
+    display: block;
+    line-height: 1.2;
+    padding-bottom: 2px;
+  }
   /* INVOICE TO AND WATERMARK GRID */
   .details-grid { 
     display: flex; 
     justify-content: space-between;
     margin-bottom: 15px;   
     align-items: flex-start;
-    min-height: 0;
   }
   .invoice-to-box { 
     width: 50%; 
     border: 1px solid #d8d8d8;
-    border-radius: 6px;
-    padding: 10px 12px;
+    border-radius: 4px;
     background: #fff;
+    padding-bottom: 10px;
   } 
   
   .box-header { 
-    background: #F4B41A; color: #000; font-weight: 400; font-size: 10px; 
+    background: #F4B41A; color: #000; font-weight: 700; font-size: 10px; 
     padding: 5px 12px; text-transform: uppercase; width: 110px; 
     clip-path: polygon(0 0, 85% 0, 100% 100%, 0 100%); margin-bottom: 10px;
+    border-top-left-radius: 4px;
   }
-  .box-content { display: flex; flex-direction: column; gap: 6px; }
+  .box-content { display: flex; flex-direction: column; gap: 6px; padding: 0 12px; }
   .info-line { display: flex; align-items: center; font-size: 10px; }
   .info-line .label { width: 95px; font-weight: 600; }
   .info-line .dots { width: 15px; color: #777; }
   .info-line .value-line { flex: 1; border-bottom: 1px solid #ccc; height: 16px; padding-left: 5px; font-weight: 500; }
-
   .invoice-cart-box { 
-  width: 45%; 
+  width: 50%; 
   height: 130px;      
-  overflow: visible;
   display: flex; 
   justify-content: center; 
   align-items: flex-start;
   }
   .cart-watermark { 
-  width: 170px; 
-  object-fit: contain;
-  margin-top: -8px; 
-}
+    width: 200px; 
+    object-fit: contain;
+    margin-top: -60px; 
+  }
 
   /* ITEMS TABLE */
   table { width: 100%; border-collapse: collapse; margin-bottom: 15px; } 
   thead tr { background: #F4B41A; }
-  thead th { padding: 6px 8px; font-size: 10px; font-weight: 400; color: #000; 
-  text-transform: uppercase; border: 1px solid #ccc; 
-  text-align: center;
-}
+  thead th { padding: 6px 8px; font-size: 10px; font-weight: 400; color: #000; text-transform: uppercase; border: 1px solid #ccc; text-align: center; }
   thead th.center { text-align: center; }
   thead th.right { text-align: right; }
   
   tbody tr { border-bottom: 1px solid #ccc; }
-  tbody td { padding: 6px 8px; font-size: 10px; vertical-align: middle; border: 1px solid #ccc; height: 26px; }
+  tbody td { padding: 6px 8px; font-size: 10px; vertical-align: middle; height: 26px; text-align: center; }
   td.center { text-align: center; }
   td.right { text-align: right; }
   td.total-cell { font-weight: 500; }
@@ -264,9 +281,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   .totals-row .dots { width: 20px; text-align: center; }
   .totals-row .value-line { flex: 1; border-bottom: 1px solid #ccc; height: 16px; text-align: right; padding-right: 5px; font-weight: 500; }
   
-  .totals-row.grand-due { background: #F4B41A; padding: 6px 8px; margin-top: 4px; 
-  justify-content: center; /* add this */
-}
+  .totals-row.grand-due { background: #F4B41A; padding: 6px 8px; margin-top: 4px; justify-content: center; }
   .totals-row.grand-due .label { width: 130px; font-weight: 400; }
   .totals-row.grand-due .dots { width: 15px; }
   .totals-row.grand-due .value-line { border-bottom: none; font-weight: 700; height: auto; padding-right: 0; }
@@ -282,24 +297,10 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   .info-boxes-row { display: flex; gap: 15px; margin-bottom: 12px; }
   .footer-info-card { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px; background: #fff; }
 
-  .card-header-container {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 8px;
-  }
+  .card-header-container { display: flex; align-items: center; gap: 0; margin-bottom: 8px; }
   .card-header-icon-badge {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: #F4B41A;
-    border: 2px solid #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
+    width: 26px; height: 26px; border-radius: 50%; background: #F4B41A; border: 2px solid #fff;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; z-index: 1;
   }
   .card-header-icon {
     width: 13px;
@@ -307,19 +308,9 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     fill: #fff;
   }
   .card-header-label {
-    background: linear-gradient(135deg, #F9C846, #F4B41A);
-    color: #000;
-    padding: 5px 16px 5px 16px;
-    font-weight: 400;
-    font-size: 9.5px;
-    font-type: times new roman;
-    text-transform: uppercase;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    text-align: center;
-    justify-content: center;
-    margin-left: -10px;
+    background: linear-gradient(135deg, #F9C846, #F4B41A); color: #000; padding: 5px 16px;
+    font-weight: 400; font-size: 9.5px; text-transform: uppercase; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; margin-left: -10px;
   }
   .card-body-text { font-size: 8.5px; color: #000; display: flex; flex-direction: column; gap: 3px; }
   .card-body-text ol { padding-left: 12px; }
@@ -347,14 +338,13 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     <div class="main-invoice-title">
       <h1>Invoice</h1>
       <div class="top-mini-meta">
-        <div><span class="label">Invoice No</span><span class="dots">:</span><span class="line-input">${orderNum}</span></div>
-        <div><span class="label">Invoice Date</span><span class="dots">:</span><span class="line-input">${invoiceDate}</span></div>
-        <div><span class="label">Due Date</span><span class="dots">:</span><span class="line-input">${dueDate}</span></div>
+        <div><span class="label">Invoice No</span><span class="dots">:</span>${orderNum}</div>
+        <div><span class="label">Invoice Date</span><span class="dots">:</span>${invoiceDate}</div>
+        <div><span class="label">Due Date</span><span class="dots">:</span>${dueDate}</div>
       </div>
     </div>
   </div>
-
-  <!-- OFFICE COLUMNS -->
+  <!-- FIXED OFFICE SECTION -->
   <div class="offices-row">
     <!-- SRI LANKA -->
     <div class="office-col left-office">
@@ -367,26 +357,26 @@ export async function downloadInvoice(order, customerName, customerEmail) {
           <strong>House of Cambridge (Pvt) Ltd</strong>
           <span>No 63, Old Road, Pannipitiya.</span>
         </div>
-        <div class="office-contacts">
-          <div class="contact-item">
+        <div class="office-contacts-grid">
+          <div class="contact-row">
             <svg class="contact-icon" viewBox="0 0 24 24"><path d="M22 4H2C.9 4 0 4.9 0 6v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-.4 3.51L12 13.59 2.4 7.51C2.15 7.36 2 7.1 2 6.8c0-.55.45-1 1-1 .17 0 .33.05.47.14L12 11.24l8.53-5.3c.14-.09.3-.14.47-.14.55 0 1 .45 1 1 0 .3-.15.56-.4.71z"/></svg>
-            <span>info@houseofcambridge.com</span>
+            <span class="contact-text">info@houseofcambridge.com</span>
           </div>
-          <div class="contact-item">
+          <div class="contact-row">
             <svg class="contact-icon" viewBox="0 0 20 20"><path d="M10 20a10 10 0 1 1 0-20a10 10 0 0 1 0 20m7.75-8a8 8 0 0 0 0-4h-3.82a29 29 0 0 1 0 4zm-.82 2h-3.22a14.4 14.4 0 0 1-.95 3.51A8.03 8.03 0 0 0 16.93 14m-8.85-2h3.84a24.6 24.6 0 0 0 0-4H8.08a24.6 24.6 0 0 0 0 4m.25 2c.41 2.4 1.13 4 1.67 4s1.26-1.6 1.67-4zm-6.08-2h3.82a29 29 0 0 1 0-4H2.25a8 8 0 0 0 0 4m.82 2a8.03 8.03 0 0 0 4.17 3.51c-.42-.96-.74-2.16-.95-3.51zm13.86-8a8.03 8.03 0 0 0-4.17-3.51c.42.96.74 2.16.95 3.51zm-8.6 0h3.34c-.41-2.4-1.13-4-1.67-4S8.74 3.6 8.33 6M3.07 6h3.22c.2-1.35.53-2.55.95-3.51A8.03 8.03 0 0 0 3.07 6"/></svg>
-            <span>https://houseofcambridge.co.uk/</span>
+            <span class="contact-text">https://houseofcambridge.co.uk/</span>
           </div>
-          <div class="contact-item">
+          <div class="contact-row">
             <svg class="contact-icon" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-            <span>011 2 847 847</span>
+            <span class="contact-text">011 2 847 847</span>
           </div>
-          <div class="contact-item" style="padding-left:16px;">
-            <span>076 4 604 227</span>
+          <div class="contact-row">
+            <div style="width: 10px; height: 10px; flex-shrink: 0;"></div>
+            <span class="contact-text">076 4 604 227</span>
           </div>
         </div>
       </div>
     </div>
-
     <!-- UK HO -->
     <div class="office-col">
       <div class="office-heading">
@@ -398,31 +388,31 @@ export async function downloadInvoice(order, customerName, customerEmail) {
           <strong>House of Cambridge Limited</strong>
           <span>Unit 2A, 2nd Floor, Cavendish House, 369 Burnt Oak Broadway, Edgware HA8 5AW, United Kingdom.</span>
         </div>
-        <div class="office-contacts">
-          <div class="contact-item">
+        <div class="office-contacts-grid">
+          <div class="contact-row">
             <svg class="contact-icon" viewBox="0 0 24 24"><path d="M22 4H2C.9 4 0 4.9 0 6v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-.4 3.51L12 13.59 2.4 7.51C2.15 7.36 2 7.1 2 6.8c0-.55.45-1 1-1 .17 0 .33.05.47.14L12 11.24l8.53-5.3c.14-.09.3-.14.47-.14.55 0 1 .45 1 1 0 .3-.15.56-.4.71z"/></svg>
-            <span>info@houseofcambridge.com</span>
+            <span class="contact-text">info@houseofcambridge.com</span>
           </div>
-          <div class="contact-item">
+          <div class="contact-row">
             <svg class="contact-icon" viewBox="0 0 20 20"><path d="M10 20a10 10 0 1 1 0-20a10 10 0 0 1 0 20m7.75-8a8 8 0 0 0 0-4h-3.82a29 29 0 0 1 0 4zm-.82 2h-3.22a14.4 14.4 0 0 1-.95 3.51A8.03 8.03 0 0 0 16.93 14m-8.85-2h3.84a24.6 24.6 0 0 0 0-4H8.08a24.6 24.6 0 0 0 0 4m.25 2c.41 2.4 1.13 4 1.67 4s1.26-1.6 1.67-4zm-6.08-2h3.82a29 29 0 0 1 0-4H2.25a8 8 0 0 0 0 4m.82 2a8.03 8.03 0 0 0 4.17 3.51c-.42-.96-.74-2.16-.95-3.51zm13.86-8a8.03 8.03 0 0 0-4.17-3.51c.42.96.74 2.16.95 3.51zm-8.6 0h3.34c-.41-2.4-1.13-4-1.67-4S8.74 3.6 8.33 6M3.07 6h3.22c.2-1.35.53-2.55.95-3.51A8.03 8.03 0 0 0 3.07 6"/></svg>
-            <span>https://houseofcambridge.co.uk/</span>
+            <span class="contact-text">https://houseofcambridge.co.uk/</span>
           </div>
-          <div class="contact-item">
+          <div class="contact-row">
             <svg class="contact-icon" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-            <span>44 (0)20 3371 178</span>
+            <span class="contact-text">+44 (0)20 3371 178</span>
           </div>
-          <div class="contact-item" style="padding-left:16px;">
-            <span>44 (0)73 8639 1286</span>
+          <div class="contact-row">
+            <div style="width: 10px; height: 10px; flex-shrink: 0;"></div>
+            <span class="contact-text">+44 (0)73 8639 1286</span>
           </div>
         </div>
       </div>
     </div>
   </div>
-
   <!-- INVOICE TO SECTION -->
   <div class="details-grid">
     <div class="invoice-to-box">
-      <div class="box-header">Invoice To</div>
+      <div class="box-header">INVOICE TO</div>
       <div class="box-content">
         <div class="info-line"><span class="label">Client Name</span><span class="dots">:</span><span class="value-line">${safeName}</span></div>
         <div class="info-line"><span class="label">Company Name</span><span class="dots">:</span><span class="value-line">${safeCompany}</span></div>
@@ -438,14 +428,13 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       ${cartDataUrl ? `<img src="${cartDataUrl}" alt="Shopping cart" class="cart-watermark" />` : ''}
     </div>
   </div>
-
   <!-- LINE ITEMS TABLE -->
   <table>
     <thead>
       <tr>
-        <th style="width: 60px; font-weight: 700;" class="center">NO.</th>
+        <th style="width: 60px;" class="center">NO.</th>
         <th>DESCRIPTION</th>
-        <th style="width: 70px;" class="center">Qty</th>
+        <th style="width: 70px;" class="center">QTY</th>
         <th style="width: 170px;" class="right">UNIT PRICE</th>
         <th style="width: 150px;" class="right">TOTAL</th>
       </tr>
@@ -455,34 +444,33 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       ${fillerRows}
     </tbody>
   </table>
-
   <!-- TOTALS AND SIGNATURES -->
   <div class="bottom-pricing-container">
     <div class="financial-totals-block">
-      <div class="totals-row">
-        <span class="label">SUBTOTAL</span><span class="dots">:</span><span class="value-line">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-      </div>
-      <div class="totals-row">
-        <span class="label">DISCOUNT</span><span class="dots">:</span><span class="value-line">${discount > 0 ? discount.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
-      </div>
-      <div class="totals-row">
-        <span class="label">TAX / VAT (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%)</span><span class="dots">:</span><span class="value-line">${tax > 0 ? tax.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
-      </div>
-      <div class="totals-row">
-        <span class="label">Delivery Charges</span><span class="dots">:</span><span class="value-line">${shipping > 0 ? shipping.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
+      <div class="totals-content">
+        <div class="totals-row">
+          <span class="label">SUBTOTAL</span><span class="dots">:</span><span class="value-line">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="totals-row">
+          <span class="label">DISCOUNT</span><span class="dots">:</span><span class="value-line">${discount > 0 ? discount.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
+        </div>
+        <div class="totals-row">
+          <span class="label">TAX / VAT (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%)</span><span class="dots">:</span><span class="value-line">${tax > 0 ? tax.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
+        </div>
+        <div class="totals-row">
+          <span class="label">Delivery Charges</span><span class="dots">:</span><span class="value-line">${shipping > 0 ? shipping.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
+        </div>
       </div>
       <div class="totals-row grand-due">
         <span class="label">TOTAL AMOUNT DUE</span><span class="dots">:</span><span class="value-line">${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
       </div>
     </div>
-
     <div class="signatures-row">
       <div class="sign-column">
         <div class="sign-title">Approved By</div>
         <div class="sign-field"><span class="lbl">Name</span><span class="ln"></span></div>
         <div class="sign-field"><span class="lbl">Date</span><span class="ln"></span></div>
       </div>
-      <div style="width: 1px; height: 40px; background-color: #F4B41A;"></div>
       <div class="sign-column">
         <div class="sign-title">Customer's Signature</div>
         <div class="sign-field"><span class="lbl">Name</span><span class="ln"></span></div>
@@ -490,7 +478,6 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       </div>
     </div>
   </div>
-
   <!-- BOTTOM INFOCARDS -->
   <div class="info-boxes-row">
     <!-- T&C -->
@@ -521,25 +508,22 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         <span class="card-header-label">BANK ACCOUNT DETAILS</span>
       </div>
       <div class="card-body-text" style="gap: 5px;">
-        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span>House of Cambridge Limited</span></div>
-        <div class="bank-row"><span class="bank-label">Bank Name</span><span class="bank-dots">:</span><span>HSBC UK Bank plc</span></div>
-        <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-dots">:</span><span>12345678</span></div>
-        <div class="bank-row"><span class="bank-label">Sort Code</span><span class="bank-dots">:</span><span>40-05-30</span></div>
-        <div class="bank-row"><span class="bank-label">IBAN</span><span class="bank-dots">:</span><span>GB12HBUK40053012345678</span></div>
-        <div class="bank-row"><span class="bank-label">SWIFT/BIC</span><span class="bank-dots">:</span><span>HBUKGB4B</span></div>
+        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span class="bank-value">House of Cambridge Limited</span></div>
+        <div class="bank-row"><span class="bank-label">Bank Name</span><span class="bank-dots">:</span><span class="bank-value">HSBC UK Bank plc</span></div>
+        <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-dots">:</span><span class="bank-value">12345678</span></div>
+        <div class="bank-row"><span class="bank-label">Sort Code</span><span class="bank-dots">:</span><span class="bank-value">40-05-30</span></div>
+        <div class="bank-row"><span class="bank-label">IBAN</span><span class="bank-dots">:</span><span class="bank-value">GB12HBUK40053012345678</span></div>
+        <div class="bank-row"><span class="bank-label">SWIFT/BIC</span><span class="bank-dots">:</span><span class="bank-value">HBUKGB4B</span></div>
       </div>
     </div>
   </div>
-
   <!-- FOOTER GRATITUDE BANNER -->
   <div class="bottom-yellow-banner">
     Thank you for your business. We truly appreciate the opportunity to work with you.
   </div>
-
 </div>
 </body>
 </html>`;
-
   const container = document.createElement('div');
   container.style.cssText = [
     'position:absolute',
@@ -550,9 +534,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   ].join(';');
   container.innerHTML = html;
   document.body.appendChild(container);
-
   const pageEl = container.querySelector('.page');
-
   html2pdf()
     .set({
       margin:      [4, 4, 4, 4],
@@ -576,7 +558,6 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       if (document.body.contains(container)) document.body.removeChild(container);
     });
 }
-
 export const generateInvoicePDF = (invoice) => {
   return downloadInvoice(invoice);
 };

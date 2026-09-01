@@ -23,10 +23,12 @@ function AllCategoriesDropdown({ tree }) {
   useClickOutside(ref, () => setOpen(false));
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative"     
+    onMouseEnter={() => setOpen(true)}
+    onMouseLeave={() => setOpen(false)}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 bg-white text-black text-[14px] font-bold px-5 py-1.5 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+        className="flex items-center gap-2 bg-white text-black text-[13px] md:text-[14px] font-bold px-3 md:px-4 py-1.5 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
         aria-expanded={open}
         aria-haspopup="true"
       >
@@ -40,7 +42,7 @@ function AllCategoriesDropdown({ tree }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full w-[180px] bg-white border border-gray-200 rounded shadow-lg py-1 z-50 max-h-[70vh] overflow-y-auto">
+        <div className="absolute left-0 top-full mt-1 w-[200px] bg-white border border-gray-200 rounded shadow-lg py-1 z-50 max-h-[70vh] overflow-y-auto">
           <Link
             to="/shop"
             className="flex items-center gap-2 px-4 py-2 text-[12px] text-black font-medium hover:bg-gray-100 border-b border-gray-100 mb-0.5"
@@ -48,7 +50,7 @@ function AllCategoriesDropdown({ tree }) {
           >
             <span>🛍️</span> All Products
           </Link>
-          {tree.map((parent, idx) => (
+          {tree.map((parent) => (
             <div key={parent._id}>
               <Link
                 to={`/shop?category=${parent._id}`}
@@ -61,7 +63,7 @@ function AllCategoriesDropdown({ tree }) {
                 <Link
                   key={child._id}
                   to={`/shop?category=${child._id}`}
-                  className="flex items-center gap-2 pl-9 pr-4 py-1.5 text-[11px] text-gray-500 hover:text-black hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-2 pl-8 pr-4 py-1.5 text-[11px] text-gray-500 hover:text-black hover:bg-gray-100 transition-colors"
                   onClick={() => setOpen(false)}
                 >
                   {child.name}
@@ -81,10 +83,12 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
   useClickOutside(ref, () => setOpen(false));
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative"
+          onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2 lg:px-3 py-1 rounded-md text-white text-[11px] lg:text-[13px] font-bold transition-all hover:opacity-90 cursor-pointer"
+        className="flex items-center gap-1 px-2.5 md:px-3 py-1 rounded-md text-white text-[12px] md:text-[13px] font-bold transition-all hover:opacity-90 cursor-pointer whitespace-nowrap"
         style={{ background: badgeColor || "#ef4444" }}
         aria-expanded={open}
         aria-haspopup="true"
@@ -104,16 +108,7 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
               Loading categories…
             </div>
           )}
-          {!loading && tree.length === 0 && (
-            <Link
-              to={`/shop?${baseParam}`}
-              className="block px-4 py-2.5 text-[13px] text-[#FFB700] font-semibold hover:bg-gray-100"
-              onClick={() => setOpen(false)}
-            >
-              View All
-            </Link>
-          )}
-          {!loading && tree.length > 0 && (
+          {!loading && (
             <>
               <Link
                 to={`/shop?${baseParam}`}
@@ -126,7 +121,7 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
                 <div key={parent._id}>
                   <Link
                     to={`/shop?${baseParam}&category=${parent._id}`}
-                    className="flex items-center justify-between px-4 py-2.5 text-[13px] text-gray-700 font-medium hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between px-4 py-2 text-[12px] text-gray-700 font-medium hover:bg-gray-100 transition-colors"
                     onClick={() => setOpen(false)}
                   >
                     {parent.name}
@@ -135,7 +130,7 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
                     <Link
                       key={child._id}
                       to={`/shop?${baseParam}&category=${child._id}`}
-                      className="flex items-center gap-2 pl-7 pr-4 py-2 text-[12px] text-gray-500 hover:text-black hover:bg-gray-100 transition-colors"
+                      className="flex items-center gap-2 pl-7 pr-4 py-1.5 text-[11px] text-gray-500 hover:text-black hover:bg-gray-100 transition-colors"
                       onClick={() => setOpen(false)}
                     >
                       <span className="text-gray-400 flex-shrink-0">└</span>
@@ -151,50 +146,6 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
     </div>
   );
 }
-
-function NavTextDropdown({ label, items }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  useClickOutside(ref, () => setOpen(false));
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2 py-1 text-black text-[14px] font-bold rounded-md transition-all hover:bg-white/30 cursor-pointer"
-        aria-expanded={open}
-        aria-haspopup="true"
-      >
-        {label}
-        <Icon
-          icon="mdi:chevron-down"
-          width={12}
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded shadow-lg py-1 z-50">
-          {items.map(({ label: l, to }) => (
-            <Link
-              key={to}
-              to={to}
-              className="block px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-100 transition-colors"
-              onClick={() => setOpen(false)}
-            >
-              {l}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-const PAGES_ITEMS = [
-  { label: "Privacy Policy", to: "/privacy-policy" },
-  { label: "Terms & Conditions", to: "/terms" },
-  { label: "FAQ", to: "/faq" },
-];
 
 export default function Navbar() {
   const dispatch = useDispatch();
@@ -252,34 +203,32 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-[9999] w-full">
+    <header className="fixed top-0 z-[9999] w-full">
       {/* Top bar - Black */}
-      <div className="w-full bg-black px-3 sm:px-4 md:px-[52px] py-2.5 md:py-2.5">
-        {/* Row 1: Logo + Search (centered) + Icons */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Left spacer - equal to right icons width to keep search centered */}
-          <div className="hidden md:flex flex-1 justify-start">
-            <Link to="/" className="flex-shrink-0">
-              <img
-                src="/images/logo.png"
-                alt="House of Cambridge"
-                className="h-9 sm:h-10 md:h-[73px] w-auto object-contain"
-              />
-            </Link>
-          </div>
-          {/* Mobile logo */}
+      <div className="w-full bg-black px-3 sm:px-4 md:px-6 py-2.5">
+        <div className="flex items-center justify-between gap-3 md:gap-6">
+          
+          {/* Desktop Logo */}
+          <Link to="/" className="hidden md:flex items-center gap-2 flex-shrink-0">
+            <img src="/images/logo-emblem-449bab.png" alt="House of Cambridge" className="h-9 md:h-10 lg:h-12 w-auto object-contain" />
+            <span className="font-serif text-[#d2aa50] text-[18px] lg:text-[20px] leading-tight whitespace-nowrap">
+              House Of Cambridge
+            </span>
+          </Link>
+
+          {/* Mobile/Tablet logo */}
           <Link to="/" className="flex-shrink-0 md:hidden">
             <img
               src="/images/logo.png"
               alt="House of Cambridge"
-              className="h-9 sm:h-10 w-auto object-contain"
+              className="h-8 sm:h-9 w-auto object-contain"
             />
           </Link>
 
           {/* Search - visible on md+ */}
           <form
             onSubmit={handleSearch}
-            className="hidden md:flex max-w-[502px] w-full"
+            className="hidden md:flex flex-1 justify-center px-2 md:px-4"
             role="search"
           >
             <input
@@ -287,25 +236,25 @@ export default function Navbar() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search for Products, Categories and More"
               aria-label="Search"
-              className="flex-1 bg-white text-[#1A1A1A] placeholder-gray-400 px-4 py-0 text-[14px] outline-none rounded-l h-10"
+              className="w-full max-w-[380px] lg:max-w-[480px] bg-white text-[#1A1A1A] placeholder-gray-400 px-4 py-0 text-[13px] outline-none rounded-l h-9"
             />
             <button
               type="submit"
               aria-label="Submit search"
-              className="bg-[#FFB700] w-[45px] h-10 rounded-r flex items-center justify-center hover:bg-amber-500 transition-colors"
+              className="bg-[#FFB700] w-[42px] h-9 rounded-r flex items-center justify-center hover:bg-amber-500 transition-colors"
             >
               <Icon icon="mdi:magnify" width={18} className="text-black" />
             </button>
           </form>
 
-          {/* Desktop icons */}
-          <div className="hidden md:flex flex-1 justify-end items-center gap-9">
-            <div className="flex items-center gap-6">
+          {/* Desktop Right Icons */}
+          <div className="hidden md:flex items-center justify-end gap-3 md:gap-4 lg:gap-6">
+            <div className="flex items-center gap-3 md:gap-4 lg:gap-5">
               <Link
                 to="/cart"
                 className="text-[#FFB700] hover:text-amber-400 transition-colors relative"
               >
-                <Icon icon="mdi:cart" width={28} />
+                <Icon icon="mdi:cart" width={26} />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-[#FFB700] text-black text-[10px] font-black min-w-[18px] h-[18px] rounded-full flex items-center justify-center">
                     {cartCount}
@@ -316,7 +265,7 @@ export default function Navbar() {
                 to="/wishlist"
                 className="text-[#FFB700] hover:text-amber-400 transition-colors relative"
               >
-                <Icon icon="mdi:heart" width={28} />
+                <Icon icon="mdi:heart" width={26} />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black min-w-[18px] h-[18px] rounded-full flex items-center justify-center">
                     {wishlistCount}
@@ -324,72 +273,61 @@ export default function Navbar() {
                 )}
               </Link>
               <Link
-              to={isAuthenticated ? '/profile' : '/login'}
-              className="text-[#FFB700] hover:text-amber-400 transition-colors"
-              aria-label="Account"
-            >
-              {isAuthenticated && user?.avatar?.url ? (
-                <img src={user.avatar.url} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-[#FFB700]" />
-              ) : (
-                <Icon icon="mdi:account" width={28} />
-              )}
-            </Link>
+                to={isAuthenticated ? '/profile' : '/login'}
+                className="text-[#FFB700] hover:text-amber-400 transition-colors"
+                aria-label="Account"
+              >
+                {isAuthenticated && user?.avatar?.url ? (
+                  <img src={user.avatar.url} alt="" className="w-7 h-7 rounded-full object-cover border-2 border-[#FFB700]" />
+                ) : (
+                  <Icon icon="mdi:account" width={26} />
+                )}
+              </Link>
             </div>
-
-
 
             <div ref={userRef} className="relative">
               {isAuthenticated ? (
                 <button
                   onClick={() => setUserOpen((v) => !v)}
-                  className="flex items-center justify-center bg-[#FFB700] text-black text-[14px] font-bold px-4 h-10 rounded-md hover:bg-amber-500 transition-colors whitespace-nowrap"
-                  aria-expanded={userOpen}
-                  aria-haspopup="true"
+                  className="flex items-center justify-center bg-[#FFB700] text-black text-[13px] font-bold px-3.5 h-9 rounded-md hover:bg-amber-500 transition-colors whitespace-nowrap"
                 >
-                  <span className="max-w-[55px] truncate">{user?.name?.split(" ")[0]}</span>
+                  <span className="max-w-[60px] truncate">{user?.name?.split(" ")[0]}</span>
                 </button>
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center justify-center bg-[#FFB700] text-black text-[14px] font-bold w-[114px] h-10 rounded-md hover:bg-amber-500 transition-colors whitespace-nowrap"
+                  className="flex items-center justify-center bg-[#FFB700] text-black text-[13px] font-bold w-[100px] h-9 rounded-md hover:bg-amber-500 transition-colors whitespace-nowrap"
                 >
                   Login
                 </Link>
               )}
               {userOpen && isAuthenticated && (
-                <div
-                  className="absolute right-0 top-full mt-2 w-48 bg-[#1e2130] border border-white/10 rounded shadow-xl py-1 z-50"
-                  role="menu"
-                >
+                <div className="absolute right-0 top-full mt-2 w-48 bg-[#1e2130] border border-white/10 rounded shadow-xl py-1 z-50">
                   <Link
                     to="/profile"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:text-[#FFB700] hover:bg-white/5"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:text-[#FFB700] hover:bg-white/5"
                     onClick={() => setUserOpen(false)}
-                    role="menuitem"
                   >
                     My Profile
                   </Link>
                   <Link
                     to="/orders"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:text-[#FFB700] hover:bg-white/5"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:text-[#FFB700] hover:bg-white/5"
                     onClick={() => setUserOpen(false)}
-                    role="menuitem"
                   >
                     My Orders
                   </Link>
                   <Link
                     to="/wishlist"
-                    className="block px-4 py-2.5 text-sm text-gray-300 hover:text-[#FFB700] hover:bg-white/5"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:text-[#FFB700] hover:bg-white/5"
                     onClick={() => setUserOpen(false)}
-                    role="menuitem"
                   >
                     Wishlist
                   </Link>
                   <hr className="my-1 border-white/5" />
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/5"
-                    role="menuitem"
+                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5"
                   >
                     Sign Out
                   </button>
@@ -398,8 +336,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Mobile hamburger + cart/wishlist */}
-          <div className="flex md:hidden items-center gap-2 ml-auto">
+          {/* Mobile/Tablet Controls (hamburger + icons) */}
+          <div className="flex md:hidden items-center gap-3 ml-auto">
             <div className="flex items-center gap-1 text-[#FFB700] text-[11px] font-extrabold uppercase tracking-wide">
              <Icon icon="mdi:earth" width={13} /> EN
             </div>
@@ -456,34 +394,32 @@ export default function Navbar() {
         </form>
       </div>
 
+      {/* Yellow Navigation Bar (Desktop md+ view) */}
       <nav
         className="hidden md:flex items-center h-[42px] bg-[#FFB700]" aria-label="Main navigation">
-        <div className="w-full flex items-center justify-between px-3 sm:px-4 md:px-[52px]">
-          <div className="flex-shrink-0">
+        <div className="w-full flex items-center justify-between px-3 md:px-6">
+          <div className="flex-1 flex justify-start flex-shrink-0">
             <AllCategoriesDropdown tree={categoryTree} />
           </div>
 
-          <div className="flex items-center gap-15">
+          <div className="flex-shrink-0 px-4">
+            <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
             <Link
               to="/"
-              className={`text-[16px] font-bold whitespace-nowrap pb-0.5 transition-colors ${isActive("/") ? "text-black border-b-2 border-black" : "text-black/80 hover:text-black"}`}
+              className={`text-[14px] md:text-[15px] font-bold whitespace-nowrap pb-0.5 transition-colors ${isActive("/") ? "text-black border-b-2 border-black" : "text-black/80 hover:text-black"}`}
             >
               Home
             </Link>
 
             <NavBadgeDropdown
-              className="text-[16px] font-bold whitespace-nowrap"
               label="Pre-Owned UK Items"
-              glowColor="#CC0000"
               tree={categoryTree}
               baseParam="preowned=true"
               loading={categoriesLoading}
               badgeColor="#CC0000"
             />
             <NavBadgeDropdown
-              className="text-[16px] font-bold whitespace-nowrap"
               label="New Arrivals"
-              glowColor="#008000"
               tree={categoryTree}
               baseParam="newArrival=true"
               loading={categoriesLoading}
@@ -492,44 +428,45 @@ export default function Navbar() {
 
             <Link
               to="/shop"
-              className={`text-[16px] font-bold whitespace-nowrap transition-colors ${isActive("/shop") ? "text-black border-b-2 border-black pb-0.5" : "text-black/80 hover:text-black"}`}
+              className={`text-[14px] md:text-[15px] font-bold whitespace-nowrap transition-colors ${isActive("/shop") ? "text-black border-b-2 border-black pb-0.5" : "text-black/80 hover:text-black"}`}
             >
               Shop
             </Link>
 
             <Link
               to="/about"
-              className={`text-[16px] font-bold whitespace-nowrap transition-colors ${isActive("/about") ? "text-black border-b-2 border-black pb-0.5" : "text-black/80 hover:text-black"}`}
+              className={`text-[14px] md:text-[15px] font-bold whitespace-nowrap transition-colors ${isActive("/about") ? "text-black border-b-2 border-black pb-0.5" : "text-black/80 hover:text-black"}`}
             >
               About
             </Link>
             <Link
               to="/contact"
-              className={`text-[16px] font-bold whitespace-nowrap transition-colors ${isActive("/contact") ? "text-black border-b-2 border-black pb-0.5" : "text-black/80 hover:text-black"}`}
+              className={`text-[14px] md:text-[15px] font-bold whitespace-nowrap transition-colors ${isActive("/contact") ? "text-black border-b-2 border-black pb-0.5" : "text-black/80 hover:text-black"}`}
             >
               Contact
             </Link>
+            </div>
           </div>
 
-          <a
-            href="tel:0112847846"
-            className="flex items-center gap-1.5 text-black font-bold text-[16px] tracking-wide whitespace-nowrap flex-shrink-0"
-          >
-            <Icon icon="mdi:phone" width={16} />
-            0112 847 846
-          </a>
-          <div className="flex items-center gap-1 bg-black/10 text-black px-2 py-0.5 rounded text-[12px] font-extrabold uppercase tracking-wider select-none">
-           <Icon icon="mdi:earth" width={14} />
-            EN
-         </div>
+          <div className="flex-1 flex justify-end items-center gap-2 md:gap-4 flex-shrink-0 hidden lg:flex">
+            <a
+              href="tel:0112847846"
+              className="flex items-center gap-1.5 text-black font-bold text-[14px] md:text-[15px] tracking-wide whitespace-nowrap flex-shrink-0"
+            >
+              <Icon icon="mdi:phone" width={16} />
+              0112 847 846
+            </a>
+            <div className="flex items-center gap-1 bg-black/10 text-black px-2 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider select-none">
+              <Icon icon="mdi:earth" width={14} />
+              EN
+            </div>
+          </div>
         </div>
       </nav>
 
       {mobileOpen && (
         <div
           className="md:hidden border-t border-white/10 bg-[#1a1a1a] py-2 max-h-[80vh] overflow-y-auto"
-          role="navigation"
-          aria-label="Mobile navigation"
         >
           {/* Quick links */}
           <div className="px-3 pb-2 border-b border-white/5 mb-1">
@@ -542,7 +479,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center gap-1.5 bg-[#FFB700] text-black text-[13px] font-bold px-4 py-1.5 rounded"
+                  className="flex items-center gap-1.5 bg-[#FFB700] text-black text-[13px] font-bold px-4 py-1.5 rounded inline-block"
                   onClick={() => setMobileOpen(false)}
                 >
                   <Icon icon="mdi:account" width={15} /> Login
@@ -570,7 +507,6 @@ export default function Navbar() {
             <button
               onClick={() => setMobileCatOpen((v) => !v)}
               className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-200 hover:bg-white/5"
-              aria-expanded={mobileCatOpen}
             >
               <span className="flex items-center gap-3">
                 <Icon
@@ -601,18 +537,13 @@ export default function Navbar() {
                   return (
                     <div key={parent._id}>
                       <div className="flex items-center">
-                        <Link
-                          to={`/shop?category=${parent._id}`}
-                          className="flex-1 py-2 pl-9 pr-2 text-[13px] text-gray-300 font-medium hover:text-[#FFB700] hover:bg-white/5"
-                          onClick={() => setMobileOpen(false)}
-                        >
+                        <Link to={`/shop?category=${parent._id}`} className="flex-1 py-2 pl-9 pr-2 text-[13px] text-gray-300 font-medium hover:text-[#FFB700]" onClick={() => setMobileOpen(false)}>
                           {parent.name}
                         </Link>
                         {hasChildren && (
                           <button
                             onClick={() => toggleMobileCat(parent._id)}
                             className="px-3 py-2 text-gray-500 hover:text-[#FFB700]"
-                            aria-expanded={isExpanded}
                           >
                             <Icon
                               icon="mdi:chevron-down"

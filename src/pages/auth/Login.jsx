@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, googleLogin, /**facebookLogin **/ } from '../../redux/slices/authSlice.js';
+import { login, googleLogin } from '../../redux/slices/authSlice.js';
 import { fetchCart } from '../../redux/slices/cartSlice.js';
 
-// import useFacebookSDK from '../../hooks/useFacebookSDK.js';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -28,13 +27,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-/** const FacebookIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-    <rect width="18" height="18" rx="3" fill="#1877F2"/>
-    <path d="M12.375 11.25l.45-2.925H9.99V6.525c0-.8.39-1.575 1.65-1.575H12.9V2.4S11.7 2.175 10.56 2.175c-2.34 0-3.87 1.42-3.87 3.99v2.16H4.2v2.925H6.69V18h3.3v-6.75h2.385Z" fill="white"/>
-  </svg>
-); **/
-
 export default function Login() {
   const dispatch  = useDispatch();
   const navigate  = useNavigate();
@@ -46,7 +38,6 @@ export default function Login() {
   const [remember,      setRemember]      = useState(false);
   const [socialLoading, setSocialLoading] = useState('');
 
-  // const fbReady = useFacebookSDK();
   const from    = location.state?.from?.pathname || '/';
 
   useEffect(() => {
@@ -67,7 +58,7 @@ export default function Login() {
  const handleGoogleLogin = async () => {
     setSocialLoading('google');
     try {
-      await dispatch(googleLogin()).unwrap(); // No argument — Firebase handles it inside thunk
+      await dispatch(googleLogin()).unwrap();
     } catch (err) {
       toast.error(typeof err === 'string' ? err : 'Google sign-in failed');
     } finally {
@@ -75,50 +66,51 @@ export default function Login() {
     }
   };
 
-  /** const handleFacebookLogin = () => {
-    if (!fbReady) { toast.error('Facebook SDK not ready yet, please try again'); return; }
-    setSocialLoading('facebook');
-    window.FB.login((response) => {
-      if (response.authResponse) {
-        dispatch(facebookLogin(response.authResponse.accessToken))
-          .unwrap()
-          .catch((err) => toast.error(typeof err === 'string' ? err : 'Facebook sign-in failed'))
-          .finally(() => setSocialLoading(''));
-      } else {
-        setSocialLoading('');
-        toast.error('Facebook sign-in was cancelled');
-      }
-    }, { scope: 'email,public_profile' });
-  }; **/
-
   return (
-    <div className="min-h-screen flex" style={{ background: 'linear-gradient(136deg, rgba(254,242,228,1) 42%, rgba(255,255,255,1) 83%)' }}>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#fdf0e5] relative overflow-hidden">
 
-      <div className="hidden lg:block lg:w-[40%] relative flex-shrink-0 overflow-hidden">
-        <img src="/images/auth/auth-login-bg.png" alt="" className="absolute bottom-0 right-0 h-[90%] w-full object-contain object-bottom pointer-events-none select-none" aria-hidden="true" />
-        <div className="relative z-10 p-10">
-          <Link to="/"><img src="/images/logo.png" alt="House of Cambridge" className="h-20 w-auto object-contain" /></Link>
-          <div className="mt-14">
-            <h2 className="font-black leading-tight text-[#1A1A1A]" style={{ fontSize: '36px' }}>
-              WELCOME BACK!<br /><span className="text-[#FFB700]">SHOP SMARTER,<br />FASTER & EASIER.</span>
+      {/* HERO BANNER SECTION */}
+      <div className="w-full lg:w-[40%] relative overflow-hidden bg-[#fdf0e5] h-[420px] sm:h-[620px] lg:h-auto lg:min-h-screen flex flex-col justify-start">
+  
+  {/* Full-width Background Artwork Image */}
+  <img
+    src="/images/auth/auth-login-bg.png"
+    alt=""
+    className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none z-0"
+    aria-hidden="true"
+  />
+
+        {/* Text & Headline Overlay */}
+        <div className="relative z-10 p-5 sm:p-8 lg:p-10 text-left">
+          {/* <Link to="/" className="hidden lg:inline-block">
+            <img
+              src="/images/logo-emblem-449bab.png"
+              alt="House of Cambridge"
+              className="h-10 sm:h-16 lg:h-20 w-auto object-contain"
+            />
+          </Link> */}
+          
+          <div className="mt-1 lg:mt-14">
+            <h2 className="font-black leading-tight text-[#1A1A1A] text-[20px] sm:text-[26px] lg:text-[36px]">
+              WELCOME BACK!<br />
+              <span className="text-[#FFB700]">SHOP SMARTER,<br />FASTER &amp; EASIER.</span>
             </h2>
           </div>
         </div>
+
       </div>
 
-      <div className="flex-1 lg:flex-none lg:w-[34%] flex items-start justify-center py-10 px-4 overflow-y-auto">
-        <div className="w-full max-w-[420px] bg-white border border-[#C5C5C5] rounded-sm p-9">
-          <div className="lg:hidden mb-6">
-            <Link to="/"><img src="/images/logo.png" alt="House of Cambridge" className="h-9 w-auto object-contain" /></Link>
-          </div>
+      {/* MAIN LOGIN FORM CONTAINER (Overlaps on Mobile with -mt-16) */}
+      <div className="w-full lg:w-[34%] flex items-start justify-center -mt-14 sm:-mt-16 lg:mt-0 py-0 sm:py-6 lg:py-10 px-3 sm:px-4 z-20 lg:h-full lg:overflow-y-auto no-scrollbar">
+        <div className="w-full max-w-[420px] bg-white border border-[#E0E0E0] lg:border-[#C5C5C5] rounded-[18px] lg:rounded-sm p-6 sm:p-9 shadow-lg lg:shadow-sm">
 
-          <h1 className="text-[22px] font-bold text-[#1A1A1A] mb-0.5">Welcome Back</h1>
+          <h1 className="text-[20px] sm:text-[22px] font-bold text-[#1A1A1A] mb-0.5">Welcome Back</h1>
           <p className="text-[13px] text-[#60717B] mb-6">Sign in to your account</p>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <label htmlFor="login-email" className="block text-[13px] font-medium text-[#60717B] mb-1.5">
-                Email Address <span className="text-red-500" aria-hidden="true">*</span>
+                EMAIL ADDRESS <span className="text-red-500" aria-hidden="true">*</span>
               </label>
               <input
                 id="login-email"
@@ -135,7 +127,7 @@ export default function Login() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="login-password" className="text-[13px] font-medium text-[#60717B]">
-                  Password <span className="text-red-500" aria-hidden="true">*</span>
+                  PASSWORD <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
                 <Link to="/forgot-password" className="text-[12px] text-[#1A1A1A] font-medium hover:text-[#FFB700]">Forgot Password?</Link>
               </div>
@@ -161,7 +153,7 @@ export default function Login() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-[13px] text-[#1A1A1A] cursor-pointer">
+            <label className="flex items-center gap-2 text-[12px] sm:text-[13px] text-[#1A1A1A] cursor-pointer">
               <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="w-3.5 h-3.5 accent-[#FFB700]" />
               Keep me signed in on this device
             </label>
@@ -185,17 +177,6 @@ export default function Login() {
               }
               Continue with Google
             </button>
-             
-           {/* 
-<button type="button" onClick={handleFacebookLogin} disabled={!!socialLoading} className="w-full flex items-center justify-center gap-2.5 border border-[#C5C5C5] bg-white rounded-[6px] py-2.5 text-[13px] font-medium text-[#1A1A1A] hover:bg-gray-50 transition-colors disabled:opacity-60">
-  {socialLoading === 'facebook'
-    ? <span className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-    : <FacebookIcon />
-  }
-  Continue with Facebook
-</button> 
-*/}
-            
           </div>
 
           <p className="text-center text-[13px] text-[#60717B] mt-5">
@@ -203,13 +184,14 @@ export default function Login() {
             <Link to="/register" className="font-bold text-[#1A1A1A] hover:text-[#FFB700]">Create one free →</Link>
           </p>
           <p className="text-center mt-2">
-            <Link to="/" className="text-[13px] text-[#FFB700] font-medium hover:underline">Continue as Guest →</Link>
+            <Link to="/" className="text-[13px] text-[#FFB700] font-medium hover:underline">Continue as Guest &rarr;</Link>
           </p>
         </div>
       </div>
 
-      <div className="hidden xl:flex xl:w-[26%] flex-col gap-5 py-10 pr-8 pl-3 overflow-y-auto">
-        <div className="bg-white border border-[#C5C5C5] rounded-sm p-5">
+      {/* BOTTOM / SIDE INFO CARDS (VISIBLE ON MOBILE & DESKTOP) */}
+      <div className="w-full lg:w-[26%] flex flex-col gap-5 py-6 lg:py-10 px-4 lg:pr-8 lg:pl-3 lg:h-full lg:overflow-y-auto no-scrollbar">
+        <div className="max-w-[420px] lg:max-w-none mx-auto w-full bg-white border border-[#C5C5C5] rounded-sm p-5 shadow-sm">
           <h2 className="text-[11px] font-bold text-[#60717B] uppercase tracking-widest mb-4">Why Create an Account?</h2>
           <ul className="space-y-3.5">
             {BENEFITS.map(({ icon, title, desc }) => (
@@ -223,7 +205,8 @@ export default function Login() {
             ))}
           </ul>
         </div>
-        <div className="bg-white border border-[#C5C5C5] rounded-sm p-5">
+
+        <div className="max-w-[420px] lg:max-w-none mx-auto w-full bg-white border border-[#C5C5C5] rounded-sm p-5 shadow-sm">
           <h2 className="text-[11px] font-bold text-[#60717B] uppercase tracking-widest mb-3">Need Help?</h2>
           <ul className="space-y-2.5">
             <li><Link to="/faq" className="flex items-center gap-2 text-[13px] text-[#1A1A1A] hover:text-[#FFB700]"><span aria-hidden="true">❓</span> FAQs</Link></li>
@@ -233,6 +216,14 @@ export default function Login() {
           </ul>
         </div>
       </div>
+
+      {/* Decorative corner blob */}
+      <img
+        src="/images/auth/corner-blob.png"
+        alt=""
+        className="hidden lg:block absolute bottom-0 right-0 w-[110px] xl:w-[130px] h-auto pointer-events-none select-none z-0"
+        aria-hidden="true"
+      />
     </div>
   );
 }
