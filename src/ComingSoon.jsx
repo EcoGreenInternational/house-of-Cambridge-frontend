@@ -1,6 +1,35 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+const getLaunchDate = () => {
+  const now = new Date();
+  const launchDate = new Date(now.getFullYear(), 8, 12, 0, 0, 0);
+  if (launchDate <= now) launchDate.setFullYear(now.getFullYear() + 1);
+  return launchDate;
+};
+
+const getCountdown = (launchDate) => {
+  const remaining = Math.max(0, launchDate.getTime() - Date.now());
+  const totalSeconds = Math.floor(remaining / 1000);
+
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    seconds: totalSeconds % 60,
+  };
+};
 
 const ComingSoon = () => {
+  const [launchDate] = useState(getLaunchDate);
+  const [countdown, setCountdown] = useState(() => getCountdown(launchDate));
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCountdown(getCountdown(launchDate));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [launchDate]);
+
   return (
     <div className="hoc-wrapper">
       <style>{`
@@ -99,6 +128,38 @@ const ComingSoon = () => {
           font-size: 12px;
           color: #333;
           font-weight: 500;
+        }
+
+        .hoc-countdown {
+          display: flex;
+          justify-content: center;
+          gap: 14px;
+          margin: 22px 0 12px;
+        }
+        .hoc-countdown-unit {
+          min-width: 82px;
+          padding: 12px 10px 10px;
+          text-align: center;
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(255, 140, 0, 0.35);
+          border-radius: 10px;
+          box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+        }
+        .hoc-countdown-value {
+          display: block;
+          color: #1a1a1a;
+          font-size: 28px;
+          font-weight: 900;
+          line-height: 1;
+        }
+        .hoc-countdown-label {
+          display: block;
+          margin-top: 6px;
+          color: #888;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 1px;
+          text-transform: uppercase;
         }
 
         /* Desktop: showcase image + contact card sit side by side */
@@ -217,6 +278,17 @@ const ComingSoon = () => {
 
         /* ---- Mobile ---- */
         @media (max-width: 768px) {
+          .hoc-countdown {
+            gap: 8px;
+          }
+          .hoc-countdown-unit {
+            min-width: 72px;
+            padding-left: 8px;
+            padding-right: 8px;
+          }
+          .hoc-countdown-value {
+            font-size: 24px;
+          }
           .hoc-main-row {
             flex-direction: column;
             gap: 10px;
@@ -285,6 +357,22 @@ const ComingSoon = () => {
           <span style={styles.notificationText}>
             Stay tuned! Something great is on the way.
           </span>
+        </div>
+
+        {/* Launch Countdown */}
+        <div className="hoc-countdown" aria-label="Countdown to launch">
+          <div className="hoc-countdown-unit">
+            <span className="hoc-countdown-value">{countdown.days}</span>
+            <span className="hoc-countdown-label">Days</span>
+          </div>
+          <div className="hoc-countdown-unit">
+            <span className="hoc-countdown-value">{String(countdown.hours).padStart(2, '0')}</span>
+            <span className="hoc-countdown-label">Hours</span>
+          </div>
+          <div className="hoc-countdown-unit">
+            <span className="hoc-countdown-value">{String(countdown.seconds).padStart(2, '0')}</span>
+            <span className="hoc-countdown-label">Seconds</span>
+          </div>
         </div>
 
 
