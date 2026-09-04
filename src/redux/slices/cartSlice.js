@@ -16,9 +16,9 @@ export const fetchCart = createAsyncThunk(
 
 export const addToCart = createAsyncThunk(
   'cart/add',
-  async ({ productId, quantity = 1 }, { rejectWithValue }) => {
+  async ({ productId, quantity = 1, selectedVariant = null }, { rejectWithValue }) => {
     try {
-      const res = await api.post('/cart/add', { productId, quantity });
+      const res = await api.post('/cart/add', { productId, quantity, selectedVariant });
       return res.data;
     } catch (err) { return rejectWithValue(apiErr(err)); }
   }
@@ -26,9 +26,9 @@ export const addToCart = createAsyncThunk(
 
 export const updateCartItem = createAsyncThunk(
   'cart/update',
-  async ({ productId, quantity }, { rejectWithValue }) => {
+  async ({ productId, quantity, itemId = null, variantName = null }, { rejectWithValue }) => {
     try {
-      const res = await api.put('/cart/update', { productId, quantity });
+      const res = await api.put('/cart/update', { productId, quantity, itemId, variantName });
       return res.data;
     } catch (err) { return rejectWithValue(apiErr(err)); }
   }
@@ -36,9 +36,16 @@ export const updateCartItem = createAsyncThunk(
 
 export const removeFromCart = createAsyncThunk(
   'cart/remove',
-  async (productId, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      const res = await api.delete(`/cart/item/${productId}`);
+      const productId = typeof payload === 'object' ? payload.productId : payload;
+      const itemId = typeof payload === 'object' ? payload.itemId : undefined;
+      const variantName = typeof payload === 'object' ? payload.variantName : undefined;
+      const params = {};
+      if (itemId) params.itemId = itemId;
+      if (variantName) params.variantName = variantName;
+
+      const res = await api.delete(`/cart/item/${productId}`, { params });
       return res.data;
     } catch (err) { return rejectWithValue(apiErr(err)); }
   }

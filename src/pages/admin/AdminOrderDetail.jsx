@@ -189,6 +189,9 @@ export default function AdminOrderDetail() {
                     }
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold text-[#1A1A1A] truncate">{item.name}</p>
+                      {item.selectedVariant?.name && (
+                        <p className="text-[11px] text-[#FFB700] font-semibold">Variant: {item.selectedVariant.name}</p>
+                      )}
                       <p className="text-[12px] text-[#60717B]">Qty: {item.quantity}</p>
                     </div>
                     <p className="text-[13px] font-bold text-[#1A1A1A] flex-shrink-0">

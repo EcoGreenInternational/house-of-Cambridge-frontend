@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useMemo,useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProduct, fetchProducts, createReview } from '../../redux/slices/productSlice';
@@ -67,13 +67,15 @@ export default function ProductDetail() {
   const [tab, setTab] = useState(0);
   const [review, setReview] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState({});
   const scrollRef = useRef(null);
 
   const productStock = safeInteger(product?.stock ?? 0);
 
   const safeId = id ? encodeURIComponent(id) : null;
   const isWishlisted = wishlist.some((p) => (p._id || p) === id);
- const handleRatingChange = useCallback((s) => {
+
+  const handleRatingChange = useCallback((s) => {
     const rating = Math.min(5, Math.max(1, Math.round(s)));
     setReview((prev) => ({ ...prev, rating }));
   }, []);
@@ -84,12 +86,6 @@ export default function ProductDetail() {
       setReview((prev) => ({ ...prev, comment: val }));
     }
   }, []);
-
-  const handleQtyDecrement = useCallback(() => setQty((q) => Math.max(1, q - 1)), []);
-  const handleQtyIncrement = useCallback(
-    () => setQty((q) => Math.min(productStock, MAX_QTY, q + 1)),
-    [productStock]
-  );
 
   const scrollRelated = useCallback((dir) => {
     if (scrollRef.current) {
@@ -108,10 +104,162 @@ export default function ProductDetail() {
   }, [id, dispatch]);
 
   useEffect(() => {
+    if (!product) return;
+    const initialOptions = {};
+    const firstInStockVar =
+      product.variants?.find((v) => v.isActive !== false && Number(v.stock) > 0) ||
+      product.variants?.find((v) => v.isActive !== false) ||
+      product.variants?.[0];
+
+    if (firstInStockVar?.attributes && Object.keys(firstInStockVar.attributes).length > 0) {
+      Object.assign(initialOptions, firstInStockVar.attributes);
+    } else if (Array.isArray(product.variantAttributes) && product.variantAttributes.length > 0) {
+      product.variantAttributes.forEach((attr) => {
+        if (attr.name && Array.isArray(attr.options) && attr.options.length > 0) {
+          const inStockOpt = attr.options.find((opt) => {
+            const v = product.variants?.find(
+              (pv) =>
+                pv.isActive !== false &&
+                Number(pv.stock) > 0 &&
+                (pv.attributes?.[attr.name] === opt || pv.name?.includes(opt) || pv.name === opt)
+            );
+            return !!v;
+          });
+          initialOptions[attr.name] = inStockOpt || attr.options[0];
+        }
+      });
+    }
+    setSelectedOptions(initialOptions);
+  }, [product]);
+
+  useEffect(() => {
     if (product?.category?._id) {
       dispatch(fetchProducts({ category: product.category._id, page: 1 }));
     }
   }, [product?.category?._id, dispatch]);
+
+  const matchedVariant = useMemo(() => {
+    if (!product?.variants?.length) return null;
+    return (
+      product.variants.find((v) => {
+        if (v.isActive === false) return false;
+        if (v.attributes && typeof v.attributes === 'object' && Object.keys(v.attributes).length > 0) {
+          const vKeys = Object.keys(v.attributes);
+          const selKeys = Object.keys(selectedOptions);
+          if (vKeys.length > 0 && vKeys.every((k) => String(v.attributes[k]) === String(selectedOptions[k]))) {
+            return true;
+          }
+        }
+        const optStr = Object.values(selectedOptions).join(' / ');
+        if (v.name && (v.name === optStr || optStr.includes(v.name) || v.name.includes(optStr))) {
+          return true;
+        }
+        return false;
+      }) || null
+    );
+  }, [product?.variants, selectedOptions]);
+
+  const getOptionStock = useCallback((attrName, optionVal) => {
+    if (!product?.variants?.length) return productStock;
+
+    const candidateOptions = { ...selectedOptions, [attrName]: optionVal };
+
+    const matched = product.variants.find((v) => {
+      if (v.isActive === false) return false;
+      if (v.attributes && typeof v.attributes === 'object' && Object.keys(v.attributes).length > 0) {
+        const vKeys = Object.keys(v.attributes);
+        const candKeys = Object.keys(candidateOptions);
+        if (candKeys.length > 0 && candKeys.every((k) => !v.attributes[k] || String(v.attributes[k]) === String(candidateOptions[k]))) {
+          return true;
+        }
+      }
+      const optStr = Object.values(candidateOptions).join(' / ');
+      if (v.name && (v.name === optStr || v.name === optionVal || optStr.includes(v.name) || v.name.includes(optStr))) {
+        return true;
+      }
+      return false;
+    });
+
+    if (matched) {
+      return safeInteger(matched.stock);
+    }
+
+    const anyMatchingVariant = product.variants.find((v) => {
+      if (v.isActive === false) return false;
+      if (v.attributes && typeof v.attributes === 'object') {
+        if (String(v.attributes[attrName]) === String(optionVal)) return true;
+      }
+      if (v.name && (v.name === optionVal || v.name.includes(optionVal))) return true;
+      return false;
+    });
+
+    if (anyMatchingVariant) {
+      return safeInteger(anyMatchingVariant.stock);
+    }
+
+    return 0;
+  }, [product, selectedOptions, productStock]);
+
+  const effectivePrice = safePrice(
+    matchedVariant?.price > 0
+      ? matchedVariant.price
+      : product?.flashSalePrice > 0
+        ? product.flashSalePrice
+        : product?.discountPrice > 0
+          ? product.discountPrice
+          : product?.price ?? 0
+  );
+
+  const effectiveOriginalPrice =
+    matchedVariant?.comparePrice > 0
+      ? safePrice(matchedVariant.comparePrice)
+      : (product?.flashSalePrice > 0 || product?.discountPrice > 0)
+        ? safePrice(product?.price ?? 0)
+        : null;
+
+  const discountPct =
+    effectiveOriginalPrice && effectiveOriginalPrice > 0
+      ? Math.min(99, Math.max(0, Math.round((1 - effectivePrice / effectiveOriginalPrice) * 100)))
+      : 0;
+
+  const currentStock =
+    matchedVariant !== null && matchedVariant.stock !== undefined
+      ? safeInteger(matchedVariant.stock)
+      : productStock;
+
+  useEffect(() => {
+    setQty((currentQty) => currentStock > 0
+      ? Math.min(Math.max(currentQty, 1), currentStock, MAX_QTY)
+      : 1);
+  }, [currentStock]);
+
+  const handleQtyDecrement = useCallback(() => setQty((q) => Math.max(1, q - 1)), []);
+  const handleQtyIncrement = useCallback(
+    () => setQty((q) => Math.min(currentStock, MAX_QTY, q + 1)),
+    [currentStock]
+  );
+
+  const handleOptionSelect = (attrName, optionVal) => {
+    setSelectedOptions((prev) => ({ ...prev, [attrName]: optionVal }));
+    setQty(1);
+  };
+
+  const selectedVariantImage = useMemo(() => {
+    if (matchedVariant?.image?.url) return matchedVariant.image.url;
+    const selValues = Object.values(selectedOptions).map((v) => String(v).trim().toLowerCase());
+    if (!selValues.length || !product?.variants?.length) return null;
+
+    const varWithImg = product.variants.find((v) => {
+      if (!v.image?.url) return false;
+      if (v.attributes && typeof v.attributes === 'object') {
+        const attrVals = Object.values(v.attributes).map((x) => String(x).trim().toLowerCase());
+        return selValues.some((sv) => attrVals.includes(sv));
+      }
+      return selValues.some((sv) => v.name?.toLowerCase().includes(sv));
+    });
+
+    return varWithImg?.image?.url || null;
+  }, [matchedVariant, selectedOptions, product?.variants]);
 
   if (!id) {
     return (
@@ -126,65 +274,80 @@ export default function ProductDetail() {
 
   if (loading || !product) return <Layout><PageSpinner /></Layout>;
 
-const price = safePrice(
-  product.flashSalePrice > 0 
-    ? product.flashSalePrice 
-    : product.discountPrice > 0 
-      ? product.discountPrice 
-      : product.price
-);
-
-const originalPrice = (product.flashSalePrice > 0 || product.discountPrice > 0) 
-  ? safePrice(product.price) 
-  : null;
-  const discountPct = originalPrice && originalPrice > 0
-    ? Math.min(99, Math.max(0, Math.round((1 - price / originalPrice) * 100)))
-    : 0;
-
+  const price = effectivePrice;
+  const originalPrice = effectiveOriginalPrice;
 
   const productRatings = safeRating(product.ratings);
   const productNumReviews = safeInteger(product.numReviews);
   const productName = sanitizeText(product.name);
 
-const handleAddToCart = () => {
-  if (!product._id) return;
+  const handleAddToCart = () => {
+    if (!product._id || currentStock <= 0) return;
 
-  const toastId = toast.loading('Adding to cart...');
+    const requestedQty = Math.min(Math.max(qty, 1), currentStock, MAX_QTY);
+    if (requestedQty !== qty) setQty(requestedQty);
 
-  dispatch(addToCart({ productId: product._id, quantity: qty }))
-    .then(() => {
-      toast.success('Added to cart!', { id: toastId });
-    })
-    .catch(() => {
-      toast.error('Failed to add to cart', { id: toastId });
-    });
-};
+    const toastId = toast.loading('Adding to cart...');
 
-const handleBuyNow = () => {
-  if (!product._id) return;
+    const variantPayload =
+      matchedVariant || Object.keys(selectedOptions).length > 0
+        ? {
+            sku: matchedVariant?.sku || '',
+            name: matchedVariant?.name || Object.values(selectedOptions).join(' / '),
+            attributes: selectedOptions,
+            price: effectivePrice,
+            image: matchedVariant?.image?.url || product.images?.[0]?.url || '',
+          }
+        : null;
 
-  const toastId = toast.loading('Adding to cart...');
+    dispatch(addToCart({ productId: product._id, quantity: requestedQty, selectedVariant: variantPayload }))
+      .then(() => {
+        toast.success('Added to cart!', { id: toastId });
+      })
+      .catch(() => {
+        toast.error('Failed to add to cart', { id: toastId });
+      });
+  };
 
-  dispatch(addToCart({ productId: product._id, quantity: qty }))
-    .then(() => {
-      toast.success('Added to cart!', { id: toastId });
-      navigate('/checkout');
-    })
-    .catch(() => {
-      toast.error('Failed to add to cart', { id: toastId });
-    });
-};
+  const handleBuyNow = () => {
+    if (!product._id || currentStock <= 0) return;
 
-const handleWishlist = () => {
-  if (!isAuthenticated) {
-    toast.error('Please login to save items');
-    return;
-  }
-  if (!product._id) return;
+    const requestedQty = Math.min(Math.max(qty, 1), currentStock, MAX_QTY);
+    if (requestedQty !== qty) setQty(requestedQty);
 
-  dispatch(toggleWishlist(product._id));
-  toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
-};
+    const toastId = toast.loading('Adding to cart...');
+
+    const variantPayload =
+      matchedVariant || Object.keys(selectedOptions).length > 0
+        ? {
+            sku: matchedVariant?.sku || '',
+            name: matchedVariant?.name || Object.values(selectedOptions).join(' / '),
+            attributes: selectedOptions,
+            price: effectivePrice,
+            image: matchedVariant?.image?.url || product.images?.[0]?.url || '',
+          }
+        : null;
+
+    dispatch(addToCart({ productId: product._id, quantity: requestedQty, selectedVariant: variantPayload }))
+      .then(() => {
+        toast.success('Added to cart!', { id: toastId });
+        navigate('/checkout');
+      })
+      .catch(() => {
+        toast.error('Failed to add to cart', { id: toastId });
+      });
+  };
+
+  const handleWishlist = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to save items');
+      return;
+    }
+    if (!product._id) return;
+
+    dispatch(toggleWishlist(product._id));
+    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
+  };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -298,9 +461,9 @@ const handleWishlist = () => {
 
             <div className="flex-1 relative aspect-square bg-[#F8F8F8] rounded-[10px] overflow-hidden border border-[#E9E9E9]">
               <img
-                src={images[safeActiveImg]?.url || 'https://placehold.co/600?text=Product'}
+                src={selectedVariantImage || images[safeActiveImg]?.url || 'https://placehold.co/600?text=Product'}
                 alt={productName}
-                className="w-full h-full object-contain p-4"
+                className="w-full h-full object-contain p-4 transition-all duration-200"
                 onError={(e) => { e.currentTarget.src = 'https://placehold.co/600?text=Product'; }}
               />
               <button
@@ -309,7 +472,7 @@ const handleWishlist = () => {
               >
                 <FiZoomIn size={15} className="text-[#60717B]" aria-hidden="true" />
               </button>
-              {productStock === 0 && (
+              {currentStock === 0 && (
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center" aria-label="Out of stock">
                   <span className="text-white font-bold text-sm bg-black/60 px-4 py-1.5 rounded">
                     Out of Stock
@@ -367,6 +530,112 @@ const handleWishlist = () => {
               Inclusive of all taxes. Free delivery on orders above Rs 5,000.
             </p>
 
+            {/* Variant Option Selectors (from variantAttributes) */}
+            {Array.isArray(product.variantAttributes) && product.variantAttributes.length > 0 && (
+              <div className="space-y-4 mb-5 border-y border-[#E9E9E9] py-4">
+                {product.variantAttributes.map((attr) => (
+                  <div key={attr.name} className="space-y-2">
+                    <div className="flex items-center justify-between text-[13px]">
+                      <span className="font-semibold text-[#1A1A1A]">
+                        {attr.name}:
+                      </span>
+                      <span className="font-bold text-[#1A1A1A] bg-amber-100 px-2 py-0.5 rounded text-[12px]">
+                        {selectedOptions[attr.name] || 'Select'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {attr.options?.map((optionVal) => {
+                        const isSelected = selectedOptions[attr.name] === optionVal;
+                        const stock = getOptionStock(attr.name, optionVal);
+                        const isOutOfStock = stock <= 0;
+
+                        return (
+                          <button
+                            key={optionVal}
+                            type="button"
+                            disabled={isOutOfStock}
+                            onClick={() => !isOutOfStock && handleOptionSelect(attr.name, optionVal)}
+                            className={`relative px-3.5 py-2 text-[13px] rounded-[6px] transition-all duration-150 font-medium ${
+                              isOutOfStock
+                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-60 select-none line-through'
+                                : isSelected
+                                ? 'bg-[#1A1A1A] text-white font-bold ring-2 ring-[#FFB700] ring-offset-1 shadow-sm cursor-pointer'
+                                : 'bg-white text-[#1A1A1A] border border-[#DCDCDC] hover:border-[#1A1A1A] hover:bg-gray-50 cursor-pointer'
+                            }`}
+                            title={isOutOfStock ? `${optionVal} (Out of Stock)` : optionVal}
+                            aria-disabled={isOutOfStock}
+                          >
+                            <span>{optionVal}</span>
+                            {isOutOfStock && (
+                              <span className="block text-[10px] font-semibold text-red-500 no-underline mt-0.5">
+                                Out of stock
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* When variants exist without variantAttributes */}
+            {(!Array.isArray(product.variantAttributes) || product.variantAttributes.length === 0) &&
+              Array.isArray(product.variants) &&
+              product.variants.length > 0 && (
+                <div className="space-y-4 mb-5 border-y border-[#E9E9E9] py-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[13px]">
+                      <span className="font-semibold text-[#1A1A1A]">Option:</span>
+                      <span className="font-bold text-[#1A1A1A] bg-amber-100 px-2 py-0.5 rounded text-[12px]">
+                        {matchedVariant?.name || 'Select'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {product.variants.map((v) => {
+                        const isOutOfStock = safeInteger(v.stock) <= 0 || v.isActive === false;
+                        const isSelected = matchedVariant?.sku ? matchedVariant.sku === v.sku : matchedVariant?.name === v.name;
+                        return (
+                          <button
+                            key={v.sku || v.name}
+                            type="button"
+                            disabled={isOutOfStock}
+                            onClick={() => {
+                              if (!isOutOfStock) {
+                                if (v.attributes && Object.keys(v.attributes).length > 0) {
+                                  setSelectedOptions(v.attributes);
+                                } else {
+                                  setSelectedOptions({ option: v.name });
+                                }
+                                setQty(1);
+                              }
+                            }}
+                            className={`relative px-3.5 py-2 text-[13px] rounded-[6px] transition-all duration-150 font-medium ${
+                              isOutOfStock
+                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed opacity-60 select-none line-through'
+                                : isSelected
+                                ? 'bg-[#1A1A1A] text-white font-bold ring-2 ring-[#FFB700] ring-offset-1 shadow-sm cursor-pointer'
+                                : 'bg-white text-[#1A1A1A] border border-[#DCDCDC] hover:border-[#1A1A1A] hover:bg-gray-50 cursor-pointer'
+                            }`}
+                            title={isOutOfStock ? `${v.name} (Out of Stock)` : v.name}
+                            aria-disabled={isOutOfStock}
+                          >
+                            <span>{v.name}</span>
+                            {isOutOfStock && (
+                              <span className="block text-[10px] font-semibold text-red-500 no-underline mt-0.5">
+                                Out of stock
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+            )}
+
             {ATTRIBUTES.length > 0 && (
               <div className="border border-[#E9E9E9] rounded-[6px] overflow-hidden mb-4">
                 {ATTRIBUTES.map((a, i) => (
@@ -385,16 +654,16 @@ const handleWishlist = () => {
 
             <div
               className={`text-[13px] font-medium mb-4 ${
-                productStock > 0 ? 'text-green-600' : 'text-red-500'
+                currentStock > 0 ? 'text-green-600' : 'text-red-500'
               }`}
               aria-live="polite"
             >
-              {productStock > 0
-                ? `✓ In Stock — ${productStock} units available`
+              {currentStock > 0
+                ? `✓ In Stock — ${currentStock} units available`
                 : '✗ Out of Stock'}
             </div>
 
-            {productStock > 0 && (
+            {currentStock > 0 ? (
               <>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-[13px] text-[#60717B]" id="qty-label">Quantity:</span>
@@ -420,7 +689,7 @@ const handleWishlist = () => {
                     </span>
                     <button
                       onClick={handleQtyIncrement}
-                      disabled={qty >= productStock || qty >= MAX_QTY}
+                      disabled={qty >= currentStock || qty >= MAX_QTY}
                       className="w-9 h-9 flex items-center justify-center hover:bg-gray-50 transition-colors border-l border-[#C5C5C5] disabled:opacity-40"
                       aria-label="Increase quantity"
                     >
@@ -430,41 +699,64 @@ const handleWishlist = () => {
                 </div>
 
                 <div className="flex flex-col gap-3 mb-5">
- 
-  <button
-    onClick={handleBuyNow}
-    className="w-full bg-[#FFB700] hover:bg-[#e6a600] active:scale-[0.985] text-black font-bold text-[14px] py-3.5 rounded-[6px] transition-all duration-200 cursor-pointer shadow-sm"
-  >
-    Buy Now
-  </button>
+                  <button
+                    onClick={handleBuyNow}
+                    className="w-full bg-[#FFB700] hover:bg-[#e6a600] active:scale-[0.985] text-black font-bold text-[14px] py-3.5 rounded-[6px] transition-all duration-200 cursor-pointer shadow-sm"
+                  >
+                    Buy Now
+                  </button>
 
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full bg-white hover:bg-gray-50 border-2 border-[#1A1A1A] text-[#1A1A1A] font-bold text-[14px] py-3.5 rounded-[6px] transition-all duration-200 cursor-pointer active:scale-[0.985]"
+                  >
+                    Add to Cart
+                  </button>
 
-  <button
-    onClick={handleAddToCart}
-    className="w-full bg-white hover:bg-gray-50 border-2 border-[#1A1A1A] text-[#1A1A1A] font-bold text-[14px] py-3.5 rounded-[6px] transition-all duration-200 cursor-pointer active:scale-[0.985]"
-  >
-    Add to Cart
-  </button>
-
-
-  <button
-    onClick={handleWishlist}
-    className={`w-full border-2 font-bold text-[14px] py-3.5 rounded-[6px] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.985] ${
-      isWishlisted
-        ? 'border-red-500 text-red-500 hover:bg-red-50'
-        : 'border-[#1A1A1A] text-[#1A1A1A] hover:bg-gray-50'
-    }`}
-    aria-pressed={isWishlisted}
-  >
-    {isWishlisted ? (
-      <FaHeart size={16} className="text-red-500" />
-    ) : (
-      <FiHeart size={16} />
-    )}
-    {isWishlisted ? 'Saved to Wishlist' : 'Add To Wishlist'}
-  </button>
-</div>
+                  <button
+                    onClick={handleWishlist}
+                    className={`w-full border-2 font-bold text-[14px] py-3.5 rounded-[6px] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.985] ${
+                      isWishlisted
+                        ? 'border-red-500 text-red-500 hover:bg-red-50'
+                        : 'border-[#1A1A1A] text-[#1A1A1A] hover:bg-gray-50'
+                    }`}
+                    aria-pressed={isWishlisted}
+                  >
+                    {isWishlisted ? (
+                      <FaHeart size={16} className="text-red-500" />
+                    ) : (
+                      <FiHeart size={16} />
+                    )}
+                    {isWishlisted ? 'Saved to Wishlist' : 'Add To Wishlist'}
+                  </button>
+                </div>
               </>
+            ) : (
+              <div className="flex flex-col gap-3 mb-5">
+                <button
+                  disabled
+                  className="w-full bg-gray-200 text-gray-400 font-bold text-[14px] py-3.5 rounded-[6px] cursor-not-allowed select-none"
+                >
+                  Out of Stock
+                </button>
+
+                <button
+                  onClick={handleWishlist}
+                  className={`w-full border-2 font-bold text-[14px] py-3.5 rounded-[6px] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.985] ${
+                    isWishlisted
+                      ? 'border-red-500 text-red-500 hover:bg-red-50'
+                      : 'border-[#1A1A1A] text-[#1A1A1A] hover:bg-gray-50'
+                  }`}
+                  aria-pressed={isWishlisted}
+                >
+                  {isWishlisted ? (
+                    <FaHeart size={16} className="text-red-500" />
+                  ) : (
+                    <FiHeart size={16} />
+                  )}
+                  {isWishlisted ? 'Saved to Wishlist' : 'Add To Wishlist'}
+                </button>
+              </div>
             )}
 
             <div className="grid grid-cols-3 gap-2 border-t border-[#E9E9E9] pt-4">

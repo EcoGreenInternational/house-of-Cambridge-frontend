@@ -60,7 +60,10 @@ export default function ProductCard({ product }) {
     toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
   };
 
-  const inStock = product.stock > 0;
+  const productVariants = Array.isArray(product.variants) ? product.variants : [];
+  const inStock = productVariants.length > 0
+    ? productVariants.some((variant) => variant.isActive !== false && Number(variant.stock) > 0)
+    : Number(product.stock) > 0;
 
   return (
     <Link

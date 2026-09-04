@@ -21,6 +21,13 @@ import {
 import { FaCcVisa, FaCcMastercard, FaCcPaypal, FaCcAmex } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
+const formatWeight = (weightGrams) => {
+  if (!Number.isFinite(weightGrams) || weightGrams <= 0) return '—';
+  return weightGrams > 1000
+    ? `${(weightGrams / 1000).toFixed(2)} kg`
+    : `${weightGrams.toLocaleString()} g`;
+};
+
 export default function CartPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -56,11 +63,12 @@ export default function CartPage() {
   }, [dispatch, items.length]);
 
   
-  const handleQty = useCallback((productId, qty) => {
+  const handleQty = useCallback((item, qty) => {
+    const productId = item?.product?._id || item?.product;
     if (qty <= 0) {
-      dispatch(removeFromCart(productId));
+      dispatch(removeFromCart({ productId, itemId: item?._id, variantName: item?.selectedVariant?.name }));
     } else {
-      dispatch(updateCartItem({ productId, quantity: qty }));
+      dispatch(updateCartItem({ productId, quantity: qty, itemId: item?._id, variantName: item?.selectedVariant?.name }));
     }
   }, [dispatch]);
 
@@ -85,8 +93,9 @@ export default function CartPage() {
     setCouponCode('');
   }, []);
 
-  const handleRemoveItem = useCallback((productId) => {
-    dispatch(removeFromCart(productId));
+  const handleRemoveItem = useCallback((item) => {
+    const productId = item?.product?._id || item?.product;
+    dispatch(removeFromCart({ productId, itemId: item?._id, variantName: item?.selectedVariant?.name }));
     toast.success('Item removed');
   }, [dispatch]);
 
@@ -101,6 +110,7 @@ export default function CartPage() {
   const subtotal      = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const discount      = cart?.discount || 0;
   const totalWeightKg = calcTotalWeightKg(items);
+  const totalWeightGrams = totalWeightKg * 1000;
   const vat           = Math.round((subtotal - discount) * VAT_RATE);
   const cartTotal     = subtotal - discount + vat;
   const loyaltyPoints = Math.floor(subtotal / 50);
@@ -184,14 +194,17 @@ export default function CartPage() {
                     <tbody className="divide-y divide-[#F0F0F0]">
                       {items.map((item) => {
                         const p      = item.product;
-                        const itemWt = (p?.weight || 0) * item.quantity;
+                        const itemWeightGrams = Number(item.selectedVariant?.weight ?? p?.weight ?? 0) * item.quantity;
+                        const itemImg = item.selectedVariant?.image || p?.images?.[0]?.url || 'https://placehold.co/80?text=P';
+                        const rowKey = item._id || `${p?._id}-${item.selectedVariant?.name || ''}`;
+
                         return (
-                          <tr key={p?._id} className="hover:bg-gray-50/50 transition-colors">
+                          <tr key={rowKey} className="hover:bg-gray-50/50 transition-colors">
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-3.5">
                                 <Link to={`/product/${p?._id}`} className="flex-shrink-0" tabIndex={-1} aria-hidden="true">
                                   <img
-                                    src={p?.images?.[0]?.url || 'https://placehold.co/80?text=P'}
+                                    src={itemImg}
                                     alt=""
                                     className="w-[70px] h-[70px] object-cover rounded-[8px] border border-[#E9E9E9]"
                                   />
@@ -206,6 +219,11 @@ export default function CartPage() {
                                   {p?.brand && (
                                     <p className="text-[11px] text-gray-400 mt-0.5">{p.brand}</p>
                                   )}
+                                  {item.selectedVariant?.name && (
+                                    <span className="inline-block mt-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-[#1A1A1A] text-[11px] font-semibold">
+                                      {item.selectedVariant.name}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -218,7 +236,7 @@ export default function CartPage() {
 
                             <td className="px-4 py-4 text-center">
                               <span className="text-[13px] text-[#60717B]">
-                                {itemWt > 0 ? `${itemWt.toFixed(2)} kg` : '—'}
+                                {formatWeight(itemWeightGrams)}
                               </span>
                             </td>
 
@@ -226,7 +244,7 @@ export default function CartPage() {
                               <div className="flex items-center justify-center" role="group" aria-label={`Quantity for ${p?.name}`}>
                                 <div className="flex items-center border border-[#C5C5C5] rounded-[6px] overflow-hidden">
                                   <button
-                                    onClick={() => handleQty(p?._id, item.quantity - 1)}
+                                    onClick={() => handleQty(item, item.quantity - 1)}
                                     aria-label={`Decrease quantity of ${p?.name}`}
                                     className="w-8 h-8 flex items-center justify-center bg-[#FFB700] hover:bg-amber-500 transition-colors"
                                   >
@@ -240,7 +258,7 @@ export default function CartPage() {
                                     {item.quantity}
                                   </span>
                                   <button
-                                    onClick={() => handleQty(p?._id, item.quantity + 1)}
+                                    onClick={() => handleQty(item, item.quantity + 1)}
                                     aria-label={`Increase quantity of ${p?.name}`}
                                     className="w-8 h-8 flex items-center justify-center bg-[#FFB700] hover:bg-amber-500 transition-colors"
                                   >
@@ -256,7 +274,7 @@ export default function CartPage() {
                                   Rs. {(item.price * item.quantity).toLocaleString()}
                                 </span>
                                 <button
-                                  onClick={() => handleRemoveItem(p?._id)}
+                                  onClick={() => handleRemoveItem(item)}
                                   aria-label={`Remove ${p?.name} from cart`}
                                   className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                                 >
@@ -425,7 +443,7 @@ export default function CartPage() {
                         <FiPackage size={11} aria-hidden="true" /> Total Weight
                       </span>
                       <span className="font-medium text-[#1A1A1A]">
-                        {totalWeightKg > 0 ? `${totalWeightKg.toFixed(2)} kg` : '—'}
+                        {formatWeight(totalWeightGrams)}
                       </span>
                     </div>
 
