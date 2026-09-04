@@ -131,8 +131,9 @@ export default function CheckoutPage() {
     [selectedAddr, addresses, newAddr],
   );
 
-  const handleRemoveItem = useCallback((productId) => {
-    dispatch(removeFromCart(productId));
+  const handleRemoveItem = useCallback((item) => {
+    const productId = item?.product?._id || item?.product || item;
+    dispatch(removeFromCart({ productId, itemId: item?._id, variantName: item?.selectedVariant?.name }));
     toast.success('Item removed');
   }, [dispatch]);
 
@@ -315,14 +316,22 @@ export default function CheckoutPage() {
                         {items.map((item) => {
                           const p      = item.product;
                           const itemWt = ((p?.weight || 0) / 1000) * item.quantity;
+                          const itemImg = item.selectedVariant?.image || p?.images?.[0]?.url || 'https://placehold.co/60?text=P';
+                          const rowKey = item._id || `${p?._id}-${item.selectedVariant?.name || ''}`;
+
                           return (
-                            <tr key={p?._id} className="hover:bg-gray-50/50 transition-colors">
+                            <tr key={rowKey} className="hover:bg-gray-50/50 transition-colors">
                               <td className="px-5 py-3.5">
                                 <div className="flex items-center gap-3">
-                                  <img src={p?.images?.[0]?.url || 'https://placehold.co/60?text=P'} alt={p?.name} className="w-14 h-14 object-cover rounded-[6px] border border-[#E9E9E9] flex-shrink-0" loading="lazy" />
+                                  <img src={itemImg} alt={p?.name} className="w-14 h-14 object-cover rounded-[6px] border border-[#E9E9E9] flex-shrink-0" loading="lazy" />
                                   <div>
                                     <p className="text-[13px] font-medium text-[#1A1A1A] line-clamp-2 max-w-[180px]">{p?.name}</p>
                                     {p?.brand && <p className="text-[11px] text-gray-400 mt-0.5">{p.brand}</p>}
+                                    {item.selectedVariant?.name && (
+                                      <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-[#1A1A1A] text-[10px] font-semibold">
+                                        {item.selectedVariant.name}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </td>
@@ -331,7 +340,7 @@ export default function CheckoutPage() {
                               <td className="px-4 py-3.5 text-center"><span className="text-[13px] font-medium text-[#60717B]">{item.quantity}</span></td>
                               <td className="px-4 py-3.5 text-center"><span className="text-[13px] font-bold text-[#1A1A1A]">Rs. {(item.price * item.quantity).toLocaleString()}</span></td>
                               <td className="px-2 py-3.5 text-center">
-                                <button type="button" onClick={() => handleRemoveItem(p?._id)} aria-label={`Remove ${p?.name}`} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors mx-auto">
+                                <button type="button" onClick={() => handleRemoveItem(item)} aria-label={`Remove ${p?.name}`} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors mx-auto">
                                   <FiX size={13} aria-hidden="true" />
                                 </button>
                               </td>
@@ -661,17 +670,23 @@ export default function CheckoutPage() {
                   <ul className="space-y-2.5 max-h-[150px] overflow-y-auto pr-1">
                     {items.map((item) => {
                       const p = item.product;
+                      const itemImg = item.selectedVariant?.image || p?.images?.[0]?.url || 'https://placehold.co/44?text=P';
+                      const rowKey = item._id || `${p?._id}-${item.selectedVariant?.name || ''}`;
+
                       return (
-                        <li key={p?._id} className="flex items-center gap-2.5">
-                          <img src={p?.images?.[0]?.url || 'https://placehold.co/44?text=P'} alt={p?.name} className="w-10 h-10 object-cover rounded-[5px] border border-[#E9E9E9] flex-shrink-0" loading="lazy" />
+                        <li key={rowKey} className="flex items-center gap-2.5">
+                          <img src={itemImg} alt={p?.name} className="w-10 h-10 object-cover rounded-[5px] border border-[#E9E9E9] flex-shrink-0" loading="lazy" />
                           <div className="flex-1 min-w-0">
                             <p className="text-[12px] font-medium text-[#1A1A1A] truncate">{p?.name}</p>
+                            {item.selectedVariant?.name && (
+                              <p className="text-[10px] text-[#FFB700] font-semibold truncate">{item.selectedVariant.name}</p>
+                            )}
                             <p className="text-[11px] text-[#60717B]">Qty {item.quantity}</p>
                           </div>
                           <span className="text-[12px] font-bold text-[#1A1A1A] whitespace-nowrap">Rs. {(item.price * item.quantity).toLocaleString()}</span>
                           <button
                             type="button"
-                            onClick={() => handleRemoveItem(p?._id)}
+                            onClick={() => handleRemoveItem(item)}
                             aria-label={`Remove ${p?.name} from checkout`}
                             className="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors ml-1 shrink-0"
                           >

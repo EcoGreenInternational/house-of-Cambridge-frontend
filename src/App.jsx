@@ -4,7 +4,7 @@ function App() {
   return <ComingSoon />;
 }
 
-export default App;
+export default App; 
 
 /*
 import { useEffect } from 'react';

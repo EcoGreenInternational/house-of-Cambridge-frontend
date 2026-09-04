@@ -424,11 +424,11 @@ export default function Home() {
                     aria-hidden="true"
                   >
                     <img
-                      src={cat.img}
-                      alt=""
-                      className="w-[75%] sm:w-[80%] h-[75%] sm:h-[80%] object-contain transition-transform duration-300 group-hover:scale-110"
-                      loading="lazy"a
-                    />
+                    src={cat.img}
+                    alt=""
+                    className="w-[75%] sm:w-[80%] h-[75%] sm:h-[80%] object-contain transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                  />
                   </div>
                   <p className="text-[11px] sm:text-[14px] font-medium text-black text-center whitespace-pre-line leading-tight group-hover:text-[#FFB700] transition-colors">
                     {cat.label.replace('\n', ' ')}

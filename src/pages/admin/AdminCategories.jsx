@@ -42,6 +42,8 @@ const normalizeSpecs = (specs) => {
   return [];
 };
 
+
+
 export default function AdminCategories() {
   const dispatch = useDispatch();
   const { categories, brands = [], loading } = useSelector((s) => s.admin);
@@ -130,6 +132,7 @@ export default function AdminCategories() {
       Object.entries(form).forEach(([k, v]) => { if (v !== '') fd.append(k, String(v)); });
       const cleanSpecs = specs.filter((s) => s.key.trim() && s.value.trim());
       if (cleanSpecs.length) fd.append('specifications', JSON.stringify(cleanSpecs));
+
       if (file) fd.append('image', file);
 
       if (editing) {
