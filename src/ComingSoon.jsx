@@ -360,7 +360,7 @@ const ComingSoon = () => {
         </div>
 
         {/* Launch Countdown */}
-        <div className="hoc-countdown" aria-label="Countdown to launch">
+        {/* <div className="hoc-countdown" aria-label="Countdown to launch">
           <div className="hoc-countdown-unit">
             <span className="hoc-countdown-value">{countdown.days}</span>
             <span className="hoc-countdown-label">Days</span>
@@ -373,7 +373,7 @@ const ComingSoon = () => {
             <span className="hoc-countdown-value">{String(countdown.seconds).padStart(2, '0')}</span>
             <span className="hoc-countdown-label">Seconds</span>
           </div>
-        </div>
+        </div> */}
 
 
         {/* Contact Section */}
