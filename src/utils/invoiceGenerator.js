@@ -70,9 +70,11 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   const safeEmail = escapeHtml(customerEmail || addr.email || '');
   const safePhone = escapeHtml(addr.phone    || '');
   
-  const addrLines = [addr.addressLine1 || addr.address, addr.city, addr.state, addr.country].filter(Boolean);
-  const line1 = escapeHtml(addrLines[0] || '');
-  const line2 = escapeHtml(addrLines.slice(1).join(', ') || '');
+  const addrLines = [addr.addressLine1 || addr.address, addr.city, addr.state, addr.country]
+    .filter(Boolean)
+    .flatMap((value) => String(value).split(',').map((part) => part.trim()).filter(Boolean));
+    const addressRows = addrLines.map((line, index) => `
+      <div class="info-line"><span class="label">${index === 0 ? 'Address' : ''}</span><span class="dots">${index === 0 ? ':' : ''}</span><span class="value-line">${escapeHtml(line)}${index < addrLines.length - 1 ? ',' : ''}</span></div>`).join('');
 
   const itemRows = items.map((item, idx) => {
     const itemName  = escapeHtml(item.name || '—');
@@ -101,9 +103,9 @@ export async function downloadInvoice(order, customerName, customerEmail) {
 <title>Invoice ${orderNum}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Times New Roman', Times, serif; }
-  body { font-size: 10px; color: #000; background: #fff; line-height: 1.3; }
+  body { font-size: 12px; color: #000; background: #fff; line-height: 1.35; overflow: visible; }
   
-  .page { max-width: 800px; margin: 0 auto; padding: 20px 24px; position: relative; }
+  .page { max-width: 800px; margin: 0 auto; padding: 6px; position: relative; overflow: visible; }
   /* HEADER BLOCK */
   .brand-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
   .logo-area { display: flex; align-items: center; gap: 12px; }
@@ -111,14 +113,14 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   
   .brand-text { display: flex; flex-direction: column; }
   .brand-title { font-size: 28px; font-weight: 700; color: #F4B41A; }
-  .brand-tagline { font-size: 10px; color: #000; font-weight: 700; margin-top: 4px; }
+  .brand-tagline { font-size: 11px; color: #000; font-weight: 700; margin-top: 4px; }
   
   .main-invoice-title { text-align: right; width: 245px; display: flex; flex-direction: column; align-items: flex-end; }
-  .main-invoice-title h1 { font-size: 44px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1; margin-bottom: 8px; font-family: 'Times New Roman', Times, serif; }
-  
-  .top-mini-meta { 
+  .main-invoice-title h1 { font-size: 44px; font-weight: 900; color: #000; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1; margin-bottom: 16px; font-family: 'Times New Roman', Times, serif; }
+
+  .top-mini-meta {
     width: 100%; 
-    font-size: 11px; 
+    font-size: 12px;
     border: 1px solid #d8d8d8; 
     border-radius: 4px; 
     padding: 8px 12px; 
@@ -128,8 +130,8 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     gap: 6px;
   }
   .top-mini-meta div { display: flex; align-items: center; justify-content: flex-start; width: 100%; }
-  .top-mini-meta .label { width: 72px; text-align: left; font-weight: 500; font-size: 11px; color: #000; }
-  .top-mini-meta .dots { width: 15px; text-align: center; font-size: 11px; color: #000; }
+  .top-mini-meta .label { width: 72px; text-align: left; font-weight: 500; font-size: 12px; color: #000; }
+  .top-mini-meta .dots { width: 15px; text-align: center; font-size: 12px; color: #000; }
   .top-mini-meta .line-input { 
     flex: 1; 
     border-bottom: 1px solid #000; 
@@ -137,7 +139,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     padding-left: 10px; 
     font-weight: 500;
     text-align: left;
-    font-size: 11px;
+    font-size: 12px;
   } 
   /* OFFICE DETAILS BLOCK */
   .offices-row { 
@@ -145,6 +147,8 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     border: 1px solid #F4B41A;
     margin-bottom: 12px;  
     background: #fff;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   .office-col { 
     width: 50%; 
@@ -156,7 +160,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     border-right: 1px solid #F4B41A;
   }
   
-  .office-heading { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; color: #000; margin-bottom: 6px; }
+  .office-heading { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #000; margin-bottom: 6px; }
   .office-heading .flag-icon { 
     width: 24px; 
     height: 24px; 
@@ -171,7 +175,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     align-items: flex-start; 
     justify-content: space-between; 
     gap: 10px; 
-    font-size: 9px; 
+    font-size: 11px;
   }
   
   .office-address { 
@@ -188,7 +192,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    font-size: 8.5px;
+    font-size: 10px;
   }
   
   .contact-row {
@@ -217,6 +221,8 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     justify-content: space-between;
     margin-bottom: 15px;   
     align-items: flex-start;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
   .invoice-to-box { 
     width: 50%; 
@@ -224,19 +230,21 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     border-radius: 4px;
     background: #fff;
     padding-bottom: 10px;
+    overflow: visible;
   } 
   
   .box-header { 
-    background: #F4B41A; color: #000; font-weight: 700; font-size: 10px; 
+    background: #F4B41A; color: #000; font-weight: 700; font-size: 12px;
     padding: 5px 12px; text-transform: uppercase; width: 110px; 
     clip-path: polygon(0 0, 85% 0, 100% 100%, 0 100%); margin-bottom: 10px;
     border-top-left-radius: 4px;
   }
   .box-content { display: flex; flex-direction: column; gap: 6px; padding: 0 12px; }
-  .info-line { display: flex; align-items: center; font-size: 10px; }
+  .info-line { display: flex; align-items: center; font-size: 11px; }
   .info-line .label { width: 95px; font-weight: 600; }
   .info-line .dots { width: 15px; color: #777; }
   .info-line .value-line { flex: 1; border-bottom: 1px solid #ccc; height: 16px; padding-left: 5px; font-weight: 500; }
+  .invoice-to-box .info-line .value-line { border-bottom: none; height: auto; min-height: 16px; }
   .invoice-cart-box { 
   width: 50%; 
   height: 130px;      
@@ -251,51 +259,56 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   }
 
   /* ITEMS TABLE */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 15px; } 
+  table { width: 100%; border-collapse: collapse; margin-bottom: 28px; } 
+  thead { display: table-header-group; }
   thead tr { background: #F4B41A; }
-  thead th { padding: 6px 8px; font-size: 10px; font-weight: 400; color: #000; text-transform: uppercase; border: 1px solid #ccc; text-align: center; }
+  thead th { padding: 7px 8px; font-size: 11px; font-weight: 400; color: #000; text-transform: uppercase; border: 1px solid #ccc; text-align: center; }
   thead th.center { text-align: center; }
   thead th.right { text-align: right; }
   
   tbody tr { border-bottom: 1px solid #ccc; }
-  tbody td { padding: 6px 8px; font-size: 10px; vertical-align: middle; height: 26px; text-align: center; }
+  tbody tr { break-inside: avoid; page-break-inside: avoid; }
+  tbody td { padding: 7px 8px; font-size: 11px; vertical-align: middle; height: 29px; text-align: center; }
   td.center { text-align: center; }
   td.right { text-align: right; }
   td.total-cell { font-weight: 500; }
-  td.item-name { font-weight: 500; }
+  td.item-name { font-weight: 500; text-align: left; white-space: normal; overflow-wrap: anywhere; word-break: normal; }
 
   /* TOTALS & SIGNATURES SECTIONS */
-  .bottom-pricing-container { display: flex; flex-direction: column; align-items: flex-end; width: 100%; margin-bottom: 12px; }
+  .bottom-pricing-container { display: flex; flex-direction: column; align-items: flex-end; width: 100%; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
   .financial-totals-block { 
-    width: 300px; 
+    width: 320px; 
     display: flex; 
     flex-direction: column; 
     gap: 6px; 
     margin-bottom: 12px;
+    margin-top: 2px;
     border: 1px solid #d8d8d8;
     border-radius: 6px;
-    padding: 10px 12px;
+    padding: 12px 14px;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
-  .totals-row { display: flex; align-items: center; font-size: 9.5px; font-weight: 700; color: #000; }
-  .totals-row .label { width: 120px; text-transform: uppercase; }
+  .totals-row { display: flex; align-items: center; font-size: 11px; font-weight: 700; color: #000; }
+  .totals-row .label { width: 130px; text-transform: uppercase; }
   .totals-row .dots { width: 20px; text-align: center; }
-  .totals-row .value-line { flex: 1; border-bottom: 1px solid #ccc; height: 16px; text-align: right; padding-right: 5px; font-weight: 500; }
+  .totals-row .value-line { flex: 1; border-bottom: 1px solid #ccc; height: 18px; text-align: right; padding-right: 5px; font-weight: 600; }
   
-  .totals-row.grand-due { background: #F4B41A; padding: 6px 8px; margin-top: 4px; justify-content: center; }
-  .totals-row.grand-due .label { width: 130px; font-weight: 400; }
+  .totals-row.grand-due { background: #F4B41A; padding: 8px 10px; margin-top: 4px; justify-content: center; font-size: 13px; }
+  .totals-row.grand-due .label { width: 145px; font-weight: 700; }
   .totals-row.grand-due .dots { width: 15px; }
-  .totals-row.grand-due .value-line { border-bottom: none; font-weight: 700; height: auto; padding-right: 0; }
+  .totals-row.grand-due .value-line { border-bottom: none; font-weight: 800; height: auto; padding-right: 0; }
 
-  .signatures-row { width: 100%; display: flex; justify-content: flex-end; align-items: center; gap: 20px; margin-top: 8px; padding-right: 5px; }
-  .sign-column { width: 160px; display: flex; flex-direction: column; gap: 5px; font-size: 9px; }
+  .signatures-row { width: 100%; display: flex; justify-content: flex-end; align-items: center; gap: 20px; margin-top: 8px; padding-right: 5px; break-inside: avoid; page-break-inside: avoid; }
+  .sign-column { width: 160px; display: flex; flex-direction: column; gap: 5px; font-size: 10px; }
   .sign-title { font-weight: 700; color: #F4B41A; margin-bottom: 2px; }
   .sign-field { display: flex; align-items: center; }
   .sign-field .lbl { width: 35px; }
   .sign-field .ln { flex: 1; border-bottom: 1px solid #ccc; height: 12px; }
 
   /* CARDS INFO BLOCK */
-  .info-boxes-row { display: flex; gap: 15px; margin-bottom: 12px; }
-  .footer-info-card { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px; background: #fff; }
+  .info-boxes-row { display: flex; gap: 15px; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
+  .footer-info-card { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px; background: #fff; break-inside: avoid; page-break-inside: avoid; overflow: visible; }
 
   .card-header-container { display: flex; align-items: center; gap: 0; margin-bottom: 8px; }
   .card-header-icon-badge {
@@ -309,18 +322,16 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   }
   .card-header-label {
     background: linear-gradient(135deg, #F9C846, #F4B41A); color: #000; padding: 5px 16px;
-    font-weight: 400; font-size: 9.5px; text-transform: uppercase; border-radius: 4px;
+    font-weight: 400; font-size: 11px; text-transform: uppercase; border-radius: 4px;
     display: flex; align-items: center; justify-content: center; margin-left: -10px;
   }
-  .card-body-text { font-size: 8.5px; color: #000; display: flex; flex-direction: column; gap: 3px; }
+  .card-body-text { font-size: 10px; color: #000; display: flex; flex-direction: column; gap: 3px; }
   .card-body-text ol { padding-left: 12px; }
   .card-body-text ol li { margin-bottom: 2px; line-height: 1.3; }
   .card-body-text .bank-row { display: flex; }
   .card-body-text .bank-label { width: 90px; font-weight: 600; }
   .card-body-text .bank-dots { width: 15px; }
 
-  /* SOLID FOOTER BANNER */
-  .bottom-yellow-banner { background: #F4B41A; color: #000; padding: 8px; text-align: center; font-size: 10px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -329,7 +340,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   <!-- TOP HEADER -->
   <div class="brand-container">
     <div class="logo-area">
-      <img class="brand-logo" src="/images/HOC.png" alt="House of Cambridge logo" />
+      <img class="brand-logo" src="/images/logo_plane.png" alt="House of Cambridge logo" />
       <div class="brand-text">
         <div class="brand-title">House Of Cambridge</div>
         <div class="brand-tagline">Global Perspective. Local Expertise. Lasting Value.</div>
@@ -409,16 +420,14 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       </div>
     </div>
   </div>
-  <!-- INVOICE TO SECTION -->
+  <!-- BILLED TO SECTION -->
   <div class="details-grid">
     <div class="invoice-to-box">
-      <div class="box-header">INVOICE TO</div>
+      <div class="box-header">BILLED TO</div>
       <div class="box-content">
         <div class="info-line"><span class="label">Client Name</span><span class="dots">:</span><span class="value-line">${safeName}</span></div>
         <div class="info-line"><span class="label">Company Name</span><span class="dots">:</span><span class="value-line">${safeCompany}</span></div>
-        <div class="info-line"><span class="label">Address</span><span class="dots">:</span><span class="value-line">${line1}</span></div>
-        <div class="info-line"><span class="label"></span><span class="dots"></span><span class="value-line">${line2}</span></div>
-        <div class="info-line"><span class="label"></span><span class="dots"></span><span class="value-line"></span></div>
+        ${addressRows}
         <div class="info-line"><span class="label">Email</span><span class="dots">:</span><span class="value-line">${safeEmail}</span></div>
         <div class="info-line"><span class="label">Phone</span><span class="dots">:</span><span class="value-line">${safePhone}</span></div>
       </div>
@@ -462,7 +471,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         </div>
       </div>
       <div class="totals-row grand-due">
-        <span class="label">TOTAL AMOUNT DUE</span><span class="dots">:</span><span class="value-line">${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+        <span class="label">TOTAL AMOUNT </span><span class="dots">:</span><span class="value-line">${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
       </div>
     </div>
     <div class="signatures-row">
@@ -517,10 +526,6 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       </div>
     </div>
   </div>
-  <!-- FOOTER GRATITUDE BANNER -->
-  <div class="bottom-yellow-banner">
-    Thank you for your business. We truly appreciate the opportunity to work with you.
-  </div>
 </div>
 </body>
 </html>`;
@@ -537,7 +542,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   const pageEl = container.querySelector('.page');
   html2pdf()
     .set({
-      margin:      [4, 4, 4, 4],
+      margin:      [15, 10, 22, 10],
       filename:    `Invoice-${orderNum}.pdf`,
       image:       { type: 'jpeg', quality: 0.98 },
       html2canvas: {
@@ -548,9 +553,34 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         windowWidth:     840,
       },
       jsPDF:     { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'] }
+      pagebreak: {
+        mode: ['avoid-all', 'css', 'legacy'],
+        avoid: ['.footer-info-card', '.info-boxes-row', '.financial-totals-block', '.signatures-row', '.offices-row', '.details-grid', 'tr']
+      }
     })
     .from(pageEl)
+    .toPdf()
+    .get('pdf')
+    .then((pdf) => {
+      const pageCount = pdf.internal.getNumberOfPages();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const footerHeight = 9;
+      const footerX = 10;
+      const footerWidth = pageWidth - 20;
+      const footerY = pageHeight - footerHeight - 5;
+      const footerText = 'Thank you for your business. We truly appreciate the opportunity to work with you.';
+
+      for (let page = 1; page <= pageCount; page += 1) {
+        pdf.setPage(page);
+        pdf.setFillColor(244, 180, 26);
+        pdf.rect(footerX, footerY, footerWidth, footerHeight, 'F');
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont('times', 'bold');
+        pdf.setFontSize(10);
+        pdf.text(footerText, pageWidth / 2, footerY + 5.8, { align: 'center', maxWidth: footerWidth - 8 });
+      }
+    })
     .save()
     .then(() => document.body.removeChild(container))
     .catch((err) => {
