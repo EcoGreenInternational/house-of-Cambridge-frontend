@@ -120,6 +120,55 @@ const normalizeCategorySpecs = (specs) => {
     .filter(Boolean);
 };
 
+const normalizeVariantAttrs = (attrs) => {
+  if (Array.isArray(attrs)) {
+    return attrs.map((a) => ({
+      name: a?.name ?? '',
+      options: Array.isArray(a?.options)
+        ? a.options.map((opt) => String(opt).trim()).filter(Boolean)
+        : typeof a?.options === 'string'
+          ? a.options.split(',').map((opt) => opt.trim()).filter(Boolean)
+          : [],
+    }));
+  }
+  if (typeof attrs === 'string' && attrs.trim()) {
+    try {
+      const parsed = JSON.parse(attrs);
+      return Array.isArray(parsed) ? normalizeVariantAttrs(parsed) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const normalizeVariants = (variants) => {
+  if (Array.isArray(variants)) {
+    return variants.map((v) => ({
+      sku: v?.sku || '',
+      name: v?.name || '',
+      attributes: typeof v?.attributes === 'object' && v.attributes !== null ? v.attributes : {},
+      price: v?.price !== undefined ? v.price : '',
+      comparePrice: v?.comparePrice !== undefined ? v.comparePrice : '',
+      weight: v?.weight !== undefined ? v.weight : '',
+      stock: v?.stock !== undefined ? v.stock : '',
+      image: v?.image && typeof v.image === 'object' ? v.image : { public_id: '', url: '' },
+      imagePreview: v?.image?.url || '',
+      imageFile: null,
+      isActive: v?.isActive !== false,
+    }));
+  }
+  if (typeof variants === 'string' && variants.trim()) {
+    try {
+      const parsed = JSON.parse(variants);
+      return Array.isArray(parsed) ? normalizeVariants(parsed) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 export default function AdminProducts() {
   const dispatch = useDispatch();
   const { products, productsTotal, categories, brands = [], loading } = useSelector((s) => s.admin);
@@ -140,6 +189,9 @@ export default function AdminProducts() {
   const fileRef = useRef(null);
 
   const [attributes, setAttributes] = useState({});
+  const [variantAttributes, setVariantAttributes] = useState([]);
+  const [variants, setVariants] = useState([]);
+  const [selectedVariantIndexes, setSelectedVariantIndexes] = useState({});
   const productCodeLabel = editing?.productCode;
 
   const pages = Math.ceil((productsTotal ?? 0) / PAGE_SIZE);
@@ -193,7 +245,6 @@ export default function AdminProducts() {
 
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
- 
   const handleCategorySelection = (e) => {
     const categoryId = e.target.value;
     setForm((f) => ({ ...f, category: categoryId, brand: '' }));
@@ -206,16 +257,21 @@ export default function AdminProducts() {
         return acc;
       }, {});
       setAttributes(nextAttributes);
-      return;
+    } else {
+      setAttributes({}); 
     }
 
-    setAttributes({}); 
+    if (chosenCategory?.variantAttributes?.length) {
+      setVariantAttributes(normalizeVariantAttrs(chosenCategory.variantAttributes));
+    }
   };
 
   const openCreate = useCallback(() => {
     setEditing(null);
     setForm(EMPTY);
     setAttributes({});
+    setVariantAttributes([]);
+    setVariants([]);
     setFiles([]);
     setPreviews([]);
     setInstrInput('');
@@ -223,6 +279,13 @@ export default function AdminProducts() {
   }, []);
 
   const openEdit = useCallback((p) => {
+    const normalizedVars = normalizeVariants(p.variants || []);
+    const availableVariantStocks = normalizedVars
+      .map((variant) => Number(variant.stock))
+      .filter((stock) => Number.isFinite(stock) && stock > 0)
+      .sort((a, b) => a - b);
+    const defaultStock = normalizedVars.length > 0 ? (availableVariantStocks[0] ?? 0) : p.stock;
+
     setEditing(p);
     setForm({
       name:              p.name,
@@ -230,7 +293,7 @@ export default function AdminProducts() {
       usageInstructions: Array.isArray(p.usageInstructions) ? p.usageInstructions : (p.usageInstructions ? [p.usageInstructions] : []),
       price:             p.price,
       comparePrice:      p.comparePrice || '',
-      stock:             p.stock,
+      stock:             defaultStock,
       sku:               p.sku || '',
       category:          p.category?._id || p.category || '',
       brand:             p.brand?._id    || p.brand    || '',
@@ -262,6 +325,18 @@ export default function AdminProducts() {
       });
     }
     setAttributes(loadedAttributes);
+
+    const loadedVariantAttrs = p.variantAttributes?.length
+      ? normalizeVariantAttrs(p.variantAttributes)
+      : normalizeVariantAttrs(p.category?.variantAttributes || []);
+    setVariantAttributes(loadedVariantAttrs);
+
+    if (normalizedVars.length === 0 && loadedVariantAttrs.length > 0) {
+      setVariants(buildVariantsFromAttributes(loadedVariantAttrs, []));
+    } else {
+      setVariants(normalizedVars);
+    }
+
     setFiles([]);
     setPreviews(p.images?.map((i) => i.url) || []);
     setInstrInput('');
@@ -269,6 +344,170 @@ export default function AdminProducts() {
   }, []);
 
   const closeForm = useCallback(() => { setShowForm(false); setEditing(null); }, []);
+
+  // Variant Helpers
+  const buildVariantsFromAttributes = (attrs, currentVariants) => {
+    const activeAttrs = attrs.filter((va) => va.name.trim() && va.options.length > 0);
+    if (!activeAttrs.length) return currentVariants;
+
+    const cartesian = (arrays) =>
+      arrays.reduce((acc, curr) => acc.flatMap((d) => curr.map((e) => [...d, e])), [[]]);
+
+    const combinations = cartesian(activeAttrs.map((a) => a.options.map((opt) => ({ name: a.name, val: opt }))));
+
+    const basePrice = form.price || 0;
+    const baseCompare = form.comparePrice || 0;
+    const baseWeight = form.weight || 0;
+    const baseStock = form.stock || 0;
+    const baseSku = form.sku || '';
+
+    return combinations.map((combo, idx) => {
+      const attrMap = {};
+      combo.forEach((item) => {
+        attrMap[item.name] = item.val;
+      });
+      const comboName = combo.map((c) => c.val).join(' / ');
+      const variantSku = baseSku ? `${baseSku}-V${idx + 1}` : '';
+
+      const existing = currentVariants.find((v) => v.name === comboName);
+      if (existing) return existing;
+
+      return {
+        sku: variantSku,
+        name: comboName,
+        attributes: attrMap,
+        price: basePrice,
+        comparePrice: baseCompare,
+        weight: baseWeight,
+        stock: baseStock,
+        image: { public_id: '', url: '' },
+        imagePreview: '',
+        imageFile: null,
+        isActive: true,
+      };
+    });
+  };
+
+  const addVariantAttribute = useCallback(() => {
+    setVariantAttributes((prev) => [...prev, { name: '', options: [] }]);
+  }, []);
+
+  const removeVariantAttribute = useCallback((idx) => {
+    setVariantAttributes((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      setVariants((curr) => buildVariantsFromAttributes(next, curr));
+      return next;
+    });
+  }, [form.price, form.comparePrice, form.weight, form.stock, form.sku]);
+
+  const setVariantAttrName = useCallback((idx, name) => {
+    setVariantAttributes((prev) => {
+      const next = prev.map((item, i) => (i === idx ? { ...item, name } : item));
+      setVariants((curr) => buildVariantsFromAttributes(next, curr));
+      return next;
+    });
+  }, [form.price, form.comparePrice, form.weight, form.stock, form.sku]);
+
+  const addVariantOption = useCallback((attrIdx, optVal) => {
+    const trimmed = optVal.trim();
+    if (!trimmed) return;
+    setVariantAttributes((prev) => {
+      const next = prev.map((item, i) => {
+        if (i !== attrIdx) return item;
+        if (item.options.includes(trimmed)) return item;
+        return { ...item, options: [...item.options, trimmed] };
+      });
+      setVariants((curr) => buildVariantsFromAttributes(next, curr));
+      return next;
+    });
+  }, [form.price, form.comparePrice, form.weight, form.stock, form.sku]);
+
+  const removeVariantOption = useCallback((attrIdx, optIdx) => {
+    setVariantAttributes((prev) => {
+      const next = prev.map((item, i) =>
+        i === attrIdx ? { ...item, options: item.options.filter((_, oi) => oi !== optIdx) } : item
+      );
+      setVariants((curr) => buildVariantsFromAttributes(next, curr));
+      return next;
+    });
+  }, [form.price, form.comparePrice, form.weight, form.stock, form.sku]);
+
+  const generateVariantMatrix = useCallback(() => {
+    const activeAttrs = variantAttributes.filter((va) => va.name.trim() && va.options.length > 0);
+    if (!activeAttrs.length) {
+      toast.error('Please add at least one option type with values (e.g. Size: 200ml, 500ml)');
+      return;
+    }
+    const newVariants = buildVariantsFromAttributes(variantAttributes, variants);
+    setVariants(newVariants);
+    toast.success(`Generated ${newVariants.length} variety item(s)`);
+  }, [variantAttributes, variants, form.price, form.comparePrice, form.weight, form.stock, form.sku, toast]);
+
+  const addCustomVariant = useCallback(() => {
+    setVariants((prev) => [
+      ...prev,
+      {
+        sku: form.sku ? `${form.sku}-V${prev.length + 1}` : '',
+        name: `Variant ${prev.length + 1}`,
+        attributes: {},
+        price: form.price || 0,
+        comparePrice: form.comparePrice || 0,
+        weight: form.weight || 0,
+        stock: form.stock || 0,
+        image: { public_id: '', url: '' },
+        imagePreview: '',
+        imageFile: null,
+        isActive: true,
+      },
+    ]);
+  }, [form.sku, form.price, form.comparePrice, form.weight, form.stock]);
+
+  const removeVariant = useCallback((idx) => {
+    setVariants((prev) => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  const setVariantField = useCallback((idx, field, value) => {
+    setVariants((prev) => prev.map((v, i) => (i === idx ? { ...v, [field]: value } : v)));
+  }, []);
+
+  const handleVariantImageChange = useCallback((idx, file) => {
+    if (!file) return;
+    const preview = URL.createObjectURL(file);
+    setVariants((prev) =>
+      prev.map((v, i) =>
+        i === idx
+          ? { ...v, imageFile: file, imagePreview: preview }
+          : v
+      )
+    );
+  }, []);
+
+  const handleOptionValueImageUpload = useCallback((optVal, file) => {
+    if (!file) return;
+    const preview = URL.createObjectURL(file);
+    setVariants((prev) =>
+      prev.map((v) => {
+        const matches =
+          (v.attributes && Object.values(v.attributes).some((x) => String(x).toLowerCase() === optVal.toLowerCase())) ||
+          (v.name && v.name.toLowerCase().includes(optVal.toLowerCase()));
+        if (matches) {
+          return { ...v, imageFile: file, imagePreview: preview };
+        }
+        return v;
+      })
+    );
+    toast.success(`Image applied to "${optVal}" varieties`);
+  }, [toast]);
+
+  const removeVariantImage = useCallback((idx) => {
+    setVariants((prev) =>
+      prev.map((v, i) =>
+        i === idx
+          ? { ...v, imageFile: null, imagePreview: '', image: { public_id: '', url: '' } }
+          : v
+      )
+    );
+  }, []);
 
   const handleFiles = (e) => {
     const selected = Array.from(e.target.files);
@@ -306,6 +545,36 @@ export default function AdminProducts() {
   
       if (Object.keys(attributes).length > 0) {
         fd.append('attributes', JSON.stringify(attributes));
+      }
+
+      const cleanVariantAttrs = variantAttributes
+        .filter((v) => v.name.trim())
+        .map((v) => ({
+          name: v.name.trim(),
+          options: v.options.filter(Boolean),
+        }));
+      if (cleanVariantAttrs.length > 0) {
+        fd.append('variantAttributes', JSON.stringify(cleanVariantAttrs));
+      }
+
+      if (variants.length > 0) {
+        const cleanVariants = variants.map((v, idx) => {
+          if (v.imageFile) {
+            fd.append(`variant_image_${idx}`, v.imageFile);
+          }
+          return {
+            sku: v.sku || '',
+            name: v.name || '',
+            attributes: v.attributes || {},
+            price: Number(v.price) >= 0 ? Number(v.price) : Number(form.price || 0),
+            comparePrice: Number(v.comparePrice) >= 0 ? Number(v.comparePrice) : 0,
+            weight: Number(v.weight) >= 0 ? Number(v.weight) : Number(form.weight || 0),
+            stock: Number(v.stock) >= 0 ? Math.floor(Number(v.stock)) : Number(form.stock || 0),
+            image: v.image && v.image.url ? v.image : { public_id: '', url: '' },
+            isActive: v.isActive !== false,
+          };
+        });
+        fd.append('variants', JSON.stringify(cleanVariants));
       }
 
       files.forEach((f) => fd.append('images', f));
@@ -376,7 +645,6 @@ export default function AdminProducts() {
             className="px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
           >
             <option value="">All Categories</option>
-            <option value="">All Categories</option>
             {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
         </div>
@@ -403,7 +671,25 @@ export default function AdminProducts() {
                   </tr>
                 ) : products.length === 0 ? (
                   <tr><td colSpan={11} className="text-center py-12 text-[#60717B]">No products found</td></tr>
-                ) : products.map((p) => (
+                ) : products.map((p) => {
+                  const productVariants = normalizeVariants(p.variants || []);
+                  const availableVariantIndexes = productVariants
+                    .map((variant, index) => ({ index, stock: Number(variant.stock) }))
+                    .filter(({ stock }) => Number.isFinite(stock) && stock > 0)
+                    .sort((a, b) => a.stock - b.stock);
+                  const defaultVariantIndex = availableVariantIndexes[0]?.index;
+                  const savedVariantIndex = selectedVariantIndexes[p._id];
+                  const selectedVariantIndex = savedVariantIndex !== undefined && productVariants[savedVariantIndex]
+                    ? savedVariantIndex
+                    : defaultVariantIndex;
+                  const selectedVariant = selectedVariantIndex !== undefined
+                    ? productVariants[Number(selectedVariantIndex)]
+                    : null;
+                  const displayedStock = productVariants.length > 0
+                    ? (selectedVariant ? selectedVariant.stock : 0)
+                    : p.stock;
+
+                  return (
                   <tr key={p._id} className="border-b border-[#F4F5F7] hover:bg-[#FAFAFA] transition-colors">
                     <td className="px-4 py-3">
                       {p.images?.[0]?.url
@@ -457,9 +743,29 @@ export default function AdminProducts() {
                       }
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`font-semibold ${p.stock <= 5 ? 'text-red-600' : p.stock <= 20 ? 'text-amber-600' : 'text-green-600'}`}>
-                        {p.stock}
-                      </span>
+                      <div className="space-y-1">
+                        <span className={`font-semibold ${displayedStock <= 5 ? 'text-red-600' : displayedStock <= 20 ? 'text-amber-600' : 'text-green-600'}`}>
+                          {displayedStock}
+                        </span>
+                        {productVariants.length > 0 && (
+                          <select
+                            aria-label={`Stock by variety for ${p.name}`}
+                            value={selectedVariantIndex ?? ''}
+                            onChange={(e) => setSelectedVariantIndexes((current) => ({
+                              ...current,
+                              [p._id]: e.target.value,
+                            }))}
+                            className="block max-w-[125px] px-1.5 py-1 text-[10px] border border-[#E9E9E9] rounded-[4px] bg-[#FAFAFA] text-[#60717B] focus:outline-none focus:border-[#FFB700]"
+                          >
+                            <option value="" disabled>Variety stock</option>
+                            {productVariants.map((variant, variantIndex) => (
+                              <option key={`${variant.sku || variant.name}-${variantIndex}`} value={variantIndex}>
+                                {variant.name || `Variety ${variantIndex + 1}`}: {variant.stock ?? 0}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -473,7 +779,8 @@ export default function AdminProducts() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -634,6 +941,336 @@ export default function AdminProducts() {
                   </div>
                 </div>
               )}
+
+              {/* Product Variations & Matrix Section */}
+              <div className="border border-[#E9E9E9] rounded-[10px] p-4 bg-[#FAFAFA] space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <h4 className="text-[13px] font-bold text-[#1A1A1A]">Product Variations & Options</h4>
+                    <p className="text-[11px] text-[#60717B]">
+                      Manage sizes, colors, capacities, pack sizes, stock, prices, and <strong>variety images</strong>.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={addCustomVariant}
+                      className="px-3 py-1.5 text-[11px] font-bold bg-[#FFB700] text-[#1A1A1A] rounded-[6px] hover:bg-amber-400 transition-colors shadow-sm flex items-center gap-1"
+                    >
+                      <FiPlus size={13} /> Add Variety
+                    </button>
+                    <button
+                      type="button"
+                      onClick={addVariantAttribute}
+                      className="px-2.5 py-1.5 text-[11px] font-semibold bg-white border border-[#DCDCDC] text-[#1A1A1A] rounded-[6px] hover:border-[#FFB700] transition-colors"
+                    >
+                      + Option Type
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateVariantMatrix}
+                      className="px-2.5 py-1.5 text-[11px] font-semibold bg-gray-100 border border-gray-200 text-[#1A1A1A] rounded-[6px] hover:bg-gray-200 transition-colors"
+                    >
+                      Generate Matrix
+                    </button>
+                  </div>
+                </div>
+
+                {/* Variant Attributes Definition */}
+                {variantAttributes.length > 0 && (
+                  <div className="space-y-2.5 bg-white p-3 rounded-[8px] border border-[#E9E9E9]">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#60717B]">Option Types & Values</span>
+                    {variantAttributes.map((va, aIdx) => (
+                      <div key={aIdx} className="p-2.5 bg-[#F8F9FA] rounded-[6px] border border-[#EBEBEB] space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            placeholder="Option Name (e.g. Size Option, Color, Weight)"
+                            value={va.name}
+                            onChange={(e) => setVariantAttrName(aIdx, e.target.value)}
+                            className="flex-1 px-2.5 py-1 text-[12px] font-medium border border-[#DCDCDC] rounded-[6px] bg-white focus:outline-none focus:border-[#FFB700]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeVariantAttribute(aIdx)}
+                            className="text-gray-400 hover:text-red-600 p-1"
+                            aria-label={`Remove option ${va.name}`}
+                          >
+                            <FiTrash2 size={13} />
+                          </button>
+                        </div>
+
+                        {/* Values chips */}
+                        <div className="flex flex-wrap gap-1.5 items-center">
+                          {va.options.map((opt, oIdx) => {
+                            const optPreview = variants.find(
+                              (v) =>
+                                ((v.attributes && Object.values(v.attributes).some((x) => String(x).toLowerCase() === opt.toLowerCase())) ||
+                                  (v.name && v.name.toLowerCase().includes(opt.toLowerCase()))) &&
+                                v.imagePreview
+                            )?.imagePreview;
+
+                            return (
+                              <span key={oIdx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-[#DCDCDC] hover:border-[#FFB700] rounded-[6px] text-[11px] text-[#1A1A1A] transition-colors shadow-2xs">
+                                <label
+                                  htmlFor={`opt-val-img-${aIdx}-${oIdx}`}
+                                  className="cursor-pointer flex items-center justify-center text-[#60717B] hover:text-[#FFB700]"
+                                  title={`Upload image for ${opt}`}
+                                >
+                                  {optPreview ? (
+                                    <img src={optPreview} alt={opt} className="w-4 h-4 rounded-[2px] object-cover border border-amber-300" />
+                                  ) : (
+                                    <FiImage size={13} className="text-[#8C8C8C] hover:text-[#FFB700]" />
+                                  )}
+                                </label>
+                                <input
+                                  id={`opt-val-img-${aIdx}-${oIdx}`}
+                                  type="file"
+                                  accept="image/jpeg,image/png,image/webp"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    if (e.target.files?.[0]) {
+                                      handleOptionValueImageUpload(opt, e.target.files[0]);
+                                      e.target.value = '';
+                                    }
+                                  }}
+                                />
+                                <span className="font-semibold">{opt}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeVariantOption(aIdx, oIdx)}
+                                  className="text-gray-400 hover:text-red-600 ml-0.5"
+                                  title={`Remove ${opt}`}
+                                >
+                                  <FiX size={11} />
+                                </button>
+                              </span>
+                            );
+                          })}
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              placeholder="+ Add value (e.g. 500ml)"
+                              id={`prod-opt-input-${aIdx}`}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addVariantOption(aIdx, e.currentTarget.value);
+                                  e.currentTarget.value = '';
+                                }
+                              }}
+                              className="w-36 px-2 py-0.5 text-[11px] border border-[#DCDCDC] rounded-[4px] bg-white focus:outline-none focus:border-[#FFB700]"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = document.getElementById(`prod-opt-input-${aIdx}`);
+                                if (el && el.value) {
+                                  addVariantOption(aIdx, el.value);
+                                  el.value = '';
+                                }
+                              }}
+                              className="px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-[11px] font-semibold rounded-[4px]"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Variant Combinations List / Table */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[12px] font-bold text-[#1A1A1A]">
+                        Configured Varieties ({variants.length})
+                      </span>
+                      <p className="text-[10.5px] text-[#60717B]">
+                        Click <strong>+ Image</strong> to upload a photo for each variety. It will display when a customer selects this variety.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addCustomVariant}
+                      className="text-[11px] text-[#FFB700] hover:underline font-semibold flex items-center gap-1"
+                    >
+                      <FiPlus size={12} /> Add Variety
+                    </button>
+                  </div>
+
+                  {variants.length > 0 ? (
+                    <div className="overflow-x-auto border border-[#E9E9E9] rounded-[8px] bg-white">
+                      <table className="w-full text-[11px]">
+                        <thead className="bg-[#F8F9FA] border-b border-[#E9E9E9]">
+                          <tr>
+                            <th className="px-3 py-2 text-center font-bold text-[#1A1A1A] w-24">Variety Image</th>
+                            <th className="px-3 py-2 text-left font-bold text-[#1A1A1A] min-w-[170px]">Variety Name / Options</th>
+                            <th className="px-2.5 py-2 text-left font-semibold text-[#60717B]">SKU</th>
+                            <th className="px-2.5 py-2 text-left font-semibold text-[#60717B]">Price (Rs.)</th>
+                            <th className="px-2.5 py-2 text-left font-semibold text-[#60717B]">Compare Price (Rs.)</th>
+                            <th className="px-2.5 py-2 text-left font-semibold text-[#60717B]">Weight (g)</th>
+                            <th className="px-2.5 py-2 text-left font-semibold text-[#60717B]">Stock</th>
+                            <th className="px-2.5 py-2 text-center font-semibold text-[#60717B]">Active</th>
+                            <th className="px-2.5 py-2 text-center font-semibold text-[#60717B]"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#F0F0F0]">
+                          {variants.map((v, vIdx) => (
+                            <tr key={vIdx} className="hover:bg-amber-50/20">
+                              <td className="px-3 py-2 text-center">
+                                <div className="flex flex-col items-center justify-center">
+                                  {v.imagePreview ? (
+                                    <div className="relative group w-11 h-11 rounded-[6px] overflow-hidden border-2 border-[#FFB700] bg-gray-50 flex-shrink-0 shadow-xs">
+                                      <img
+                                        src={v.imagePreview}
+                                        alt={v.name || 'Variant'}
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => removeVariantImage(vIdx)}
+                                        className="absolute inset-0 bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity font-semibold text-[10px]"
+                                        title="Remove variety image"
+                                      >
+                                        <FiTrash2 size={13} className="text-red-400" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <label
+                                      htmlFor={`variant-img-upload-${vIdx}`}
+                                      className="w-11 h-11 border-2 border-dashed border-[#C5C5C5] hover:border-[#FFB700] rounded-[6px] flex flex-col items-center justify-center cursor-pointer text-[#60717B] hover:text-[#FFB700] bg-[#FAFAFA] hover:bg-amber-50/30 transition-all group"
+                                      title="Upload image for this variety"
+                                    >
+                                      <FiImage size={15} className="group-hover:scale-110 transition-transform" />
+                                      <span className="text-[8px] font-bold mt-0.5 leading-none text-[#60717B] group-hover:text-[#1A1A1A]">+ Image</span>
+                                    </label>
+                                  )}
+                                  <input
+                                    id={`variant-img-upload-${vIdx}`}
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      if (e.target.files?.[0]) {
+                                        handleVariantImageChange(vIdx, e.target.files[0]);
+                                        e.target.value = '';
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 min-w-[170px]">
+                                <div className="space-y-1">
+                                  <div className="flex flex-wrap gap-1 items-center">
+                                    {v.attributes && Object.keys(v.attributes).length > 0 ? (
+                                      Object.entries(v.attributes).map(([key, val]) => (
+                                        <span key={key} className="px-2 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded text-[11px] font-bold">
+                                          {val}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="font-bold text-[#1A1A1A] text-[12px]">{v.name}</span>
+                                    )}
+                                  </div>
+                                  <input
+                                    value={v.name}
+                                    placeholder="Variant display name"
+                                    onChange={(e) => setVariantField(vIdx, 'name', e.target.value)}
+                                    className="w-full px-2 py-0.5 border border-[#E9E9E9] rounded-[4px] font-normal text-[#60717B] text-[10.5px]"
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-2.5 py-2">
+                                <input
+                                  placeholder="SKU"
+                                  value={v.sku}
+                                  onChange={(e) => setVariantField(vIdx, 'sku', e.target.value)}
+                                  className="w-24 px-2 py-1 border border-[#E9E9E9] rounded-[4px] text-[11px] font-mono"
+                                />
+                              </td>
+                              <td className="px-2.5 py-2">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  placeholder={String(form.price || 0)}
+                                  value={v.price}
+                                  onChange={(e) => setVariantField(vIdx, 'price', e.target.value)}
+                                  className="w-20 px-2 py-1 border border-[#E9E9E9] rounded-[4px] text-[11px]"
+                                />
+                              </td>
+                              <td className="px-2.5 py-2">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  placeholder={String(form.comparePrice || 0)}
+                                  value={v.comparePrice}
+                                  onChange={(e) => setVariantField(vIdx, 'comparePrice', e.target.value)}
+                                  className="w-24 px-2 py-1 border border-[#E9E9E9] rounded-[4px] text-[11px]"
+                                />
+                              </td>
+                              <td className="px-2.5 py-2">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={1}
+                                  placeholder={String(form.weight || 0)}
+                                  value={v.weight}
+                                  onChange={(e) => setVariantField(vIdx, 'weight', e.target.value)}
+                                  className="w-20 px-2 py-1 border border-[#E9E9E9] rounded-[4px] text-[11px]"
+                                />
+                              </td>
+                              <td className="px-2.5 py-2">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  placeholder={String(form.stock || 0)}
+                                  value={v.stock}
+                                  onChange={(e) => setVariantField(vIdx, 'stock', e.target.value)}
+                                  className="w-16 px-2 py-1 border border-[#E9E9E9] rounded-[4px] text-[11px]"
+                                />
+                              </td>
+                              <td className="px-2.5 py-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={v.isActive}
+                                  onChange={(e) => setVariantField(vIdx, 'isActive', e.target.checked)}
+                                  className="w-3.5 h-3.5 accent-[#FFB700]"
+                                />
+                              </td>
+                              <td className="px-2.5 py-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => removeVariant(vIdx)}
+                                  className="text-gray-400 hover:text-red-600"
+                                  title="Delete variety"
+                                >
+                                  <FiTrash2 size={13} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-5 px-4 bg-white rounded-[8px] border border-dashed border-[#DCDCDC] space-y-2">
+                      <FiImage size={24} className="mx-auto text-gray-400" />
+                      <p className="text-[12px] font-semibold text-[#1A1A1A]">No varieties configured yet</p>
+                      <p className="text-[11px] text-[#60717B]">
+                        Click <strong>&quot;+ Add Variety&quot;</strong> to add varieties (like 200ml, 500ml) with variety images, prices, and stock quantities.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={addCustomVariant}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FFB700] text-[#1A1A1A] font-bold text-[11px] rounded-[6px] hover:bg-amber-400 mt-1"
+                      >
+                        <FiPlus size={13} /> Add Variety
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <div className="flex flex-wrap gap-4" role="group" aria-label="Product flags">
                 {FLAG_FIELDS.map(({ key, label }) => (

@@ -83,8 +83,9 @@ export default function GuestCheckoutPage() {
   const setAddrField    = (key) => (e) => setAddr((a)    => ({ ...a, [key]: e.target.value }));
   const setCardField    = (key) => (e) => setCardInfo((c) => ({ ...c, [key]: e.target.value }));
 
-  const handleRemoveItem = useCallback((productId) => {
-    dispatch(removeFromCart(productId));
+  const handleRemoveItem = useCallback((item) => {
+    const productId = item?.product?._id || item?.product || item;
+    dispatch(removeFromCart({ productId, itemId: item?._id, variantName: item?.selectedVariant?.name }));
     toast.success('Item removed');
   }, [dispatch]);
 
@@ -439,17 +440,23 @@ export default function GuestCheckoutPage() {
                   <ul className="space-y-2.5 max-h-[160px] overflow-y-auto pr-1">
                     {items.map((item) => {
                       const p = item.product;
+                      const itemImg = item.selectedVariant?.image || p?.images?.[0]?.url || 'https://placehold.co/44?text=P';
+                      const rowKey = item._id || `${p?._id}-${item.selectedVariant?.name || ''}`;
+
                       return (
-                        <li key={p?._id} className="flex items-center gap-2.5">
-                          <img src={p?.images?.[0]?.url || 'https://placehold.co/44?text=P'} alt={p?.name} className="w-10 h-10 object-cover rounded-[5px] border border-[#E9E9E9] flex-shrink-0" loading="lazy" />
+                        <li key={rowKey} className="flex items-center gap-2.5">
+                          <img src={itemImg} alt={p?.name} className="w-10 h-10 object-cover rounded-[5px] border border-[#E9E9E9] flex-shrink-0" loading="lazy" />
                           <div className="flex-1 min-w-0">
                             <p className="text-[12px] font-medium text-[#1A1A1A] truncate">{p?.name}</p>
+                            {item.selectedVariant?.name && (
+                              <p className="text-[10px] text-[#FFB700] font-semibold truncate">{item.selectedVariant.name}</p>
+                            )}
                             <p className="text-[11px] text-[#60717B]">Qty {item.quantity}</p>
                           </div>
                           <span className="text-[12px] font-bold text-[#1A1A1A] whitespace-nowrap">Rs. {(item.price * item.quantity).toLocaleString()}</span>
                           <button
                             type="button"
-                            onClick={() => handleRemoveItem(p?._id)}
+                            onClick={() => handleRemoveItem(item)}
                             aria-label={`Remove ${p?.name} from checkout`}
                             className="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors ml-1 shrink-0"
                           >

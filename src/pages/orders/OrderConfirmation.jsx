@@ -254,9 +254,9 @@ export default function OrderConfirmation() {
                       <p className="text-[13px] font-semibold text-[#1A1A1A] line-clamp-2">
                         {item.name || item.product?.name}
                       </p>
-                      {(item.variant || item.size || item.color) && (
-                        <p className="text-[11px] text-[#60717B] mt-0.5">
-                          {[item.variant, item.size, item.color].filter(Boolean).join(' · ')}
+                      {(item.selectedVariant?.name || item.variant || item.size || item.color) && (
+                        <p className="text-[11px] text-[#FFB700] font-semibold mt-0.5">
+                          {item.selectedVariant?.name || [item.variant, item.size, item.color].filter(Boolean).join(' · ')}
                         </p>
                       )}
                       <p className="text-[12px] text-[#60717B] mt-0.5">Qty: {qty}</p>

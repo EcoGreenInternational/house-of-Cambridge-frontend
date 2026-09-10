@@ -56,7 +56,7 @@ export function calcShipping(method, weightKg) {
 export function calcTotalWeightKg(items) {
   if (!Array.isArray(items)) return 0;
   return items.reduce((sum, i) => {
-    const weight   = Number(i.product?.weight ?? 0);
+    const weight   = Number(i.selectedVariant?.weight ?? i.product?.weight ?? 0);
     const quantity = Number(i.quantity ?? 0);
     if (!isFinite(weight) || weight < 0)   return sum;
     if (!isFinite(quantity) || quantity < 0) return sum;

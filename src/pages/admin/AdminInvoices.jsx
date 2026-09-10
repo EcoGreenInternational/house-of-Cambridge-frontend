@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInvoices, createNewInvoice, deleteInvoice, updateInvoice } from '../../redux/slices/invoiceSlice';
 import { fetchProducts } from '../../redux/slices/productSlice';
@@ -7,7 +7,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
 import { ToastContainer } from '../../components/ui/Toast.jsx';
 import useToast from '../../hooks/useToast.js';
 import { generateInvoicePDF } from '../../utils/invoiceGenerator.js';
-import { FiSearch, FiPlus, FiX, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiX, FiEdit2, FiTrash2, FiPackage, FiEdit3 } from 'react-icons/fi';
 
 const INPUT_CLS = 'w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]';
 
@@ -37,58 +37,216 @@ export default function AdminInvoices() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [items, setItems] = useState([]);
+  const [itemMode, setItemMode] = useState('catalog'); // 'catalog' | 'custom'
   const [selectedProduct, setSelectedProduct] = useState('');
+  const [catalogPrice, setCatalogPrice] = useState('');
+  const [customName, setCustomName] = useState('');
+  const [customPrice, setCustomPrice] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [productSearch, setProductSearch] = useState('');
+  const [showProductList, setShowProductList] = useState(false);
+  const productDropdownRef = useRef(null);
+
+  // Ever-incrementing counter for line item IDs (NP_0001, NP_0002, ...)
+  // Using a ref (not state) so it persists across renders without
+  // triggering re-renders itself, and never reuses a number even
+  // after items are removed.
+  const itemCounterRef = useRef(0);
+
+  const generateItemId = () => {
+    itemCounterRef.current += 1;
+    return `NP_${String(itemCounterRef.current).padStart(4, '0')}`;
+  };
 
   const loadInvoices = useCallback(() => {
     dispatch(fetchInvoices({ search: search || undefined, status: statusFilter || undefined }));
   }, [dispatch, search, statusFilter]);
 
-  // Fetch past invoices automatically when page mounts
+  // Fetch past invoices and all available catalog products automatically
   useEffect(() => {
     loadInvoices();
-    dispatch(fetchProducts());
+    dispatch(fetchProducts({ limit: 96 }));
   }, [loadInvoices, dispatch]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (productDropdownRef.current && !productDropdownRef.current.contains(event.target)) {
+        setShowProductList(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     loadInvoices();
   };
 
-  const handleAddItem = () => {
-    if (!selectedProduct) {
-      alert('Please choose a product from the list.');
-      return;
-    }
-    if (quantity < 1) {
-      alert('Quantity must be 1 or more.');
-      return;
-    }
-
-    const existingIndex = items.findIndex((item) => item.productId === selectedProduct);
-
-    if (existingIndex > -1) {
-      const updatedItems = [...items];
-      updatedItems[existingIndex].quantity += Number(quantity);
-      setItems(updatedItems);
+  // When a catalog product is chosen, automatically set its default price
+  const handleProductSelect = (productId) => {
+    setSelectedProduct(productId);
+    const prod = products?.find((p) => p._id === productId);
+    if (prod) {
+      setCatalogPrice(prod.price ?? 0);
+      setProductSearch(prod.name);
     } else {
-      setItems([...items, { productId: selectedProduct, quantity: Number(quantity) }]);
+      setCatalogPrice('');
+      setProductSearch('');
+    }
+    setShowProductList(false);
+  };
+
+  const handleEditItem = (item) => {
+    setEditingItemId(item.id);
+    if (item.productId) {
+      setItemMode('catalog');
+      setSelectedProduct(item.productId);
+      setCatalogPrice(item.unitPrice);
+      setQuantity(item.quantity);
+      setProductSearch(item.name);
+    } else {
+      setItemMode('custom');
+      setCustomName(item.name);
+      setCustomPrice(item.unitPrice);
+      setQuantity(item.quantity);
+    }
+  };
+
+  const handleAddItem = () => {
+    const qty = Number(quantity);
+    if (!qty || qty < 1) {
+      toast.error('Quantity must be 1 or more.');
+      return;
     }
 
+    if (itemMode === 'catalog') {
+      if (!selectedProduct) {
+        toast.error('Please choose a product from the catalog list.');
+        return;
+      }
+      const prod = products?.find((p) => p._id === selectedProduct);
+      if (!prod) {
+        toast.error('Selected product not found in catalog.');
+        return;
+      }
+
+      const unitPrice = catalogPrice !== '' && !isNaN(Number(catalogPrice)) && Number(catalogPrice) >= 0
+        ? Number(catalogPrice)
+        : (prod.price || 0);
+
+      if (editingItemId) {
+        setItems(items.map((it) =>
+          it.id === editingItemId
+            ? { ...it, productId: prod._id, name: prod.name, unitPrice, quantity: qty, total: unitPrice * qty, stock: prod.stock }
+            : it
+        ));
+        setEditingItemId(null);
+      } else {
+        const existingIndex = items.findIndex((item) => item.productId === selectedProduct);
+
+        if (existingIndex > -1) {
+          const updatedItems = [...items];
+          updatedItems[existingIndex].quantity += qty;
+          updatedItems[existingIndex].unitPrice = unitPrice;
+          updatedItems[existingIndex].total = updatedItems[existingIndex].quantity * unitPrice;
+          setItems(updatedItems);
+        } else {
+          setItems([
+            ...items,
+            {
+              id: generateItemId(),
+              productId: prod._id,
+              name: prod.name,
+              unitPrice,
+              quantity: qty,
+              total: unitPrice * qty,
+              stock: prod.stock,
+            },
+          ]);
+        }
+      }
+
+      setSelectedProduct('');
+      setCatalogPrice('');
+      setProductSearch('');
+      setQuantity(1);
+    } else {
+      // Custom / Non-catalog item
+      if (!customName || !customName.trim()) {
+        toast.error('Please enter a product or service name.');
+        return;
+      }
+      const unitPrice = customPrice !== '' && !isNaN(Number(customPrice)) && Number(customPrice) >= 0
+        ? Number(customPrice)
+        : 0;
+
+      if (editingItemId) {
+        setItems(items.map((it) =>
+          it.id === editingItemId
+            ? { ...it, name: customName.trim(), unitPrice, quantity: qty, total: unitPrice * qty }
+            : it
+        ));
+        setEditingItemId(null);
+      } else {
+        setItems([
+          ...items,
+          {
+            id: generateItemId(),
+            productId: null,
+            name: customName.trim(),
+            unitPrice,
+            quantity: qty,
+            total: unitPrice * qty,
+          },
+        ]);
+      }
+
+      setCustomName('');
+      setCustomPrice('');
+      setQuantity(1);
+    }
+  };
+
+  const handleCancelEditItem = () => {
+    setEditingItemId(null);
     setSelectedProduct('');
+    setCatalogPrice('');
+    setProductSearch('');
+    setCustomName('');
+    setCustomPrice('');
     setQuantity(1);
   };
 
-  const handleRemoveItem = (indexToRemove) => {
-    setItems(items.filter((_, idx) => idx !== indexToRemove));
+  const handleRemoveItem = (idToRemove) => {
+    setItems(items.filter((item) => item.id !== idToRemove));
   };
 
+  const filteredProducts = (products || []).filter((product) =>
+    product.name?.toLowerCase().includes(productSearch.trim().toLowerCase())
+  );
+
+  // Financial calculations
+  const calcSubtotal = items.reduce((sum, item) => sum + (Number(item.total) || (Number(item.unitPrice) * Number(item.quantity))), 0);
+  const discountVal = Number(form.discount) || 0;
+  const taxPercentVal = Number(form.taxPercent) || 0;
+  const taxableAmount = Math.max(0, calcSubtotal - discountVal);
+  const calcTaxAmount = Math.round(taxableAmount * (taxPercentVal / 100));
+  const calcTotalDue = taxableAmount + calcTaxAmount;
 
   const buildInvoicePayload = () => ({
     ...form,
-    items,
-    discount: Number(form.discount) || 0,
-    taxPercent: Number(form.taxPercent) || 0,
+    items: items.map((i) => ({
+      productId: i.productId || undefined,
+      name: i.name,
+      quantity: Number(i.quantity),
+      unitPrice: Number(i.unitPrice),
+      total: Number(i.total),
+    })),
+    discount: discountVal,
+    taxPercent: taxPercentVal,
   });
 
   const handleInvoiceAction = async (exportPdf = false) => {
@@ -131,17 +289,25 @@ export default function AdminInvoices() {
   const openCreate = useCallback(() => {
     setEditing(null);
     setForm(EMPTY_FORM);
-    setItems([]); 
+    setItems([]);
+    itemCounterRef.current = 0;
+    setEditingItemId(null);
+    setItemMode('catalog');
     setSelectedProduct('');
+    setCatalogPrice('');
+    setProductSearch('');
+    setCustomName('');
+    setCustomPrice('');
     setQuantity(1);
     setShowForm(true);
-  }, []);
+    dispatch(fetchProducts({ limit: 96 }));
+  }, [dispatch]);
 
   const openEdit = (invoice) => {
     setEditing(invoice);
     setForm({
       invoiceType: invoice.invoiceType,
-      assignedPeople: invoice.assignedPeople,
+      assignedPeople: invoice.assignedPeople || '',
       dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
       clientDetails: {
         clientName: invoice.clientDetails?.clientName || '',
@@ -150,14 +316,26 @@ export default function AdminInvoices() {
         email: invoice.clientDetails?.email || '',
         phone: invoice.clientDetails?.phone || '',
       },
-      discount: invoice.discount || '',
-      taxPercent: invoice.taxPercent || '',
+      discount: invoice.discount ?? '',
+      taxPercent: invoice.taxPercent ?? '',
     });
+
+    itemCounterRef.current = 0;
+  setEditingItemId(null);
     setItems(invoice.items ? invoice.items.map(item => ({
-      productId: item.product?._id || item.product || '', // Normalizes populated ID references
-      quantity: item.quantity || 1
+      id: generateItemId(),
+      productId: item.product?._id || (typeof item.product === 'string' ? item.product : null),
+      name: item.name || item.product?.name || 'Item',
+      unitPrice: Number(item.unitPrice) || 0,
+      quantity: Number(item.quantity) || 1,
+      total: Number(item.total) || (Number(item.unitPrice || 0) * Number(item.quantity || 1)),
     })) : []);
+    setItemMode('catalog');
     setSelectedProduct('');
+    setCatalogPrice('');
+    setProductSearch('');
+    setCustomName('');
+    setCustomPrice('');
     setQuantity(1);
     setShowForm(true);
   };
@@ -166,8 +344,14 @@ export default function AdminInvoices() {
     setShowForm(false);
     setEditing(null);
     setForm(EMPTY_FORM);
-    setItems([]); 
+    setItems([]);
+    itemCounterRef.current = 0;
+    setEditingItemId(null);
     setSelectedProduct('');
+    setCatalogPrice('');
+    setProductSearch('');
+    setCustomName('');
+    setCustomPrice('');
     setQuantity(1);
   }, []);
 
@@ -335,77 +519,320 @@ export default function AdminInvoices() {
 
               {/* Interactive Line Items Picker Grid */}
               <div className="border-t border-b border-[#E9E9E9] py-4 my-2 space-y-4">
-                <h4 className="text-[12px] font-bold text-[#FFB700] uppercase tracking-wider">Line Items</h4>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-[12px] font-bold text-[#FFB700] uppercase tracking-wider">Line Items</h4>
+                    <span className="text-[11px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                      {items.length} {items.length === 1 ? 'item' : 'items'}
+                    </span>
+                  </div>
 
-                {/* Add Item Panel Row */}
-                <div className="flex items-end gap-2 bg-[#FAFAFA] p-3 rounded-[8px] border border-[#E9E9E9]">
-                  <div className="flex-1">
-                    <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">Select Product</label>
-                    <select
-                      value={selectedProduct}
-                      onChange={(e) => setSelectedProduct(e.target.value)}
-                      className="w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                  {/* Mode Switcher Tabs */}
+                  <div className="flex bg-[#F4F5F7] p-1 rounded-[8px] border border-[#E9E9E9] text-[12px]">
+                    <button
+                      type="button"
+                      onClick={() => setItemMode('catalog')}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-[6px] font-semibold transition-all ${
+                        itemMode === 'catalog'
+                          ? 'bg-[#FFB700] text-[#1A1A1A] shadow-sm'
+                          : 'text-[#60717B] hover:text-[#1A1A1A]'
+                      }`}
                     >
-                      <option value="">-- Choose Product --</option>
-                      {products?.map((prod) => (
-                        <option key={prod._id} value={prod._id}>
-                          {prod.name}
-                        </option>
-                      ))}
-                    </select>
+                      <FiPackage size={13} />
+                      Catalog Product
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setItemMode('custom')}
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-[6px] font-semibold transition-all ${
+                        itemMode === 'custom'
+                          ? 'bg-[#FFB700] text-[#1A1A1A] shadow-sm'
+                          : 'text-[#60717B] hover:text-[#1A1A1A]'
+                      }`}
+                    >
+                      <FiEdit3 size={13} />
+                      New Product
+                    </button>
                   </div>
-
-                  <div className="w-[85px]">
-                    <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">Qty</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      className="w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleAddItem}
-                    className="px-4 py-2 bg-[#1A1A1A] text-white text-[13px] font-semibold rounded-[8px] hover:bg-zinc-800 transition-colors h-[38px] flex items-center justify-center"
-                  >
-                    Add
-                  </button>
                 </div>
 
+                {/* Mode 1: Catalog Product Selection */}
+                {itemMode === 'catalog' ? (
+                  <div className="bg-[#FAFAFA] p-3 rounded-[8px] border border-[#E9E9E9] space-y-3">
+                    <div className="relative" ref={productDropdownRef}>
+                      <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">
+                        Select Product from Database Catalog
+                      </label>
+                      <div className="relative">
+                        <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#60717B]" aria-hidden="true" />
+                        <input
+                          type="text"
+                          value={productSearch}
+                          onChange={(e) => {
+                            setProductSearch(e.target.value);
+                            setShowProductList(true);
+                            if (selectedProduct) {
+                              setSelectedProduct('');
+                              setCatalogPrice('');
+                            }
+                          }}
+                          onFocus={() => setShowProductList(true)}
+                          placeholder="Search product by name..."
+                          autoComplete="off"
+                          className="w-full pl-8 pr-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                        />
+                      </div>
+
+                      {showProductList && (
+                        <div className="absolute z-20 mt-1 w-full max-h-[220px] overflow-y-auto bg-white border border-[#E9E9E9] rounded-[8px] shadow-lg">
+                          {filteredProducts.length === 0 ? (
+                            <div className="px-3 py-2 text-[12px] text-[#60717B] italic">No products found.</div>
+                          ) : (
+                            filteredProducts.map((prod) => (
+                              <button
+                                type="button"
+                                key={prod._id}
+                                onClick={() => handleProductSelect(prod._id)}
+                                className="w-full text-left px-3 py-2 text-[13px] hover:bg-amber-50 transition-colors flex justify-between items-center gap-2"
+                              >
+                                <span className="truncate">{prod.name}</span>
+                                <span className="text-[11px] text-[#60717B] shrink-0">
+                                  Rs. {prod.price?.toLocaleString('en-US', { minimumFractionDigits: 2 })} (Stock: {prod.stock ?? 0})
+                                </span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">
+                          Unit Price (Rs.)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="Price"
+                          value={catalogPrice}
+                          onChange={(e) => setCatalogPrice(e.target.value)}
+                          className="w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                        />
+                      </div>
+
+                      <div className="w-[85px]">
+                        <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">Qty</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={quantity}
+                          onChange={(e) => setQuantity(e.target.value)}
+                          className="w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAddItem}
+                        className="px-4 py-2 bg-[#FFB700] text-[#1A1A1A] text-[13px] font-bold rounded-[8px] hover:bg-amber-400 transition-colors h-[38px] flex items-center justify-center gap-1.5 shrink-0"
+                      >
+                        <FiPlus size={15} /> {editingItemId ? 'Update Item' : 'Add Item'}
+                      </button>
+                      {editingItemId && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEditItem}
+                          className="px-3 py-2 border border-[#E9E9E9] text-[#60717B] text-[13px] font-semibold rounded-[8px] hover:bg-white transition-colors h-[38px]"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Mode 2: Custom / Non-Catalog Item Entry */
+                  <div className="bg-amber-50/40 p-3 rounded-[8px] border border-amber-200/80 space-y-3">
+                    <div className="text-[11px] text-[#60717B] flex items-center gap-1.5">
+                      <span className="font-semibold text-[#1A1A1A]">Custom Item:</span> Add an offline, custom, or non-catalog item directly to this invoice.
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">
+                        Product Name 
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Custom Wood Carving or Special Service"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        className="w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                      />
+                    </div>
+
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">
+                          Unit Price (Rs.) 
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="e.g. 2500"
+                          value={customPrice}
+                          onChange={(e) => setCustomPrice(e.target.value)}
+                          className="w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                        />
+                      </div>
+
+                      <div className="w-[85px]">
+                        <label className="text-[11px] font-semibold text-[#1A1A1A] block mb-1">Qty</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={quantity}
+                          onChange={(e) => setQuantity(e.target.value)}
+                          className="w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAddItem}
+                        className="px-4 py-2 bg-[#1A1A1A] text-white text-[13px] font-bold rounded-[8px] hover:bg-zinc-800 transition-colors h-[38px] flex items-center justify-center gap-1.5 shrink-0"
+                      >
+                        <FiPlus size={15} /> {editingItemId ? 'Update Item' : 'Add Custom'}
+                      </button>
+                      {editingItemId && (
+                        <button
+                          type="button"
+                          onClick={handleCancelEditItem}
+                          className="px-3 py-2 border border-[#E9E9E9] text-[#60717B] text-[13px] font-semibold rounded-[8px] hover:bg-white transition-colors h-[38px]"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Display List of Current Selected Items */}
-                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[190px] overflow-y-auto pr-1">
                   {items.length === 0 ? (
-                    <p className="text-[12px] text-[#60717B] italic text-center py-2">No product items added to this invoice yet.</p>
+                    <div className="text-center py-4 bg-[#FAFAFA] rounded-[8px] border border-dashed border-[#E0E0E0]">
+                      <p className="text-[12px] text-[#60717B] italic">No product items added to this invoice yet.</p>
+                      <p className="text-[11px] text-[#9E9E9E] mt-0.5">Select a catalog product or add a custom item above.</p>
+                    </div>
                   ) : (
-                    items.map((item, index) => {
-                      // Find product object name to display accurately
-                      const matchedProduct = products?.find(p => p._id === item.productId);
+                    items.map((item) => {
+                      const isCustom = !item.productId;
                       return (
-                        <div key={index} className="flex items-center justify-between bg-[#FAFAFA] border border-[#E9E9E9] rounded-[8px] p-2 text-[13px]">
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-[#1A1A1A]">{matchedProduct ? matchedProduct.name : 'Selected Product'}</span>
-                            <span className="text-[11px] text-[#60717B]">ID: {item.productId}</span>
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between bg-[#FAFAFA] border border-[#E9E9E9] rounded-[8px] p-2.5 text-[13px] hover:bg-amber-50/20 transition-colors"
+                        >
+                          <div className="flex flex-col min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono text-[#9E9E9E]">{item.id}</span>
+                              <span className="font-semibold text-[#1A1A1A] truncate">{item.name}</span>
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  isCustom
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {isCustom ? 'Custom' : 'Catalog'}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-[#60717B]">
+                              Rs. {Number(item.unitPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} × {item.quantity}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="font-bold text-[#1A1A1A] bg-white px-2 py-1 rounded border border-[#E9E9E9]">
-                              Qty: {item.quantity}
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className="font-bold text-[#1A1A1A]">
+                              Rs. {(Number(item.unitPrice || 0) * Number(item.quantity)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                             </span>
                             <button
                               type="button"
-                              onClick={() => handleRemoveItem(index)}
-                              className="text-red-500 hover:text-red-700 transition-colors p-1"
+                              onClick={() => handleEditItem(item)}
+                              className="text-[#60717B] hover:text-[#1A1A1A] transition-colors p-1"
+                              aria-label="Edit item"
+                            >
+                              <FiEdit2 size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(item.id)}
+                              className="text-red-400 hover:text-red-600 transition-colors p-1"
                               aria-label="Remove item"
                             >
-                              <FiX size={16} />
+                              <FiTrash2 size={15} />
                             </button>
                           </div>
                         </div>
                       );
                     })
                   )}
+                </div>
+              </div>
+
+              {/* Discount & Tax Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider block mb-1">
+                    Discount (Rs.)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.00"
+                    value={form.discount}
+                    onChange={(e) => setForm((f) => ({ ...f, discount: e.target.value }))}
+                    className={INPUT_CLS}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider block mb-1">
+                    Tax / VAT (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="any"
+                    placeholder="0"
+                    value={form.taxPercent}
+                    onChange={(e) => setForm((f) => ({ ...f, taxPercent: e.target.value }))}
+                    className={INPUT_CLS}
+                  />
+                </div>
+              </div>
+
+              {/* Real-time Calculation Summary Box */}
+              <div className="bg-[#1A1A1A] text-white p-3.5 rounded-[8px] space-y-1.5 text-[12px]">
+                <div className="flex justify-between text-zinc-300">
+                  <span>Subtotal:</span>
+                  <span className="font-semibold">Rs. {calcSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+                {discountVal > 0 && (
+                  <div className="flex justify-between text-amber-400">
+                    <span>Discount:</span>
+                    <span className="font-semibold">- Rs. {discountVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+                {taxPercentVal > 0 && (
+                  <div className="flex justify-between text-zinc-300">
+                    <span>Tax ({taxPercentVal}%):</span>
+                    <span className="font-semibold">+ Rs. {calcTaxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+                <div className="border-t border-zinc-700 pt-1.5 flex justify-between items-center text-[14px] font-bold text-[#FFB700]">
+                  <span>Total Amount Due:</span>
+                  <span>Rs. {calcTotalDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
               </div>
 

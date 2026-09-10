@@ -382,6 +382,9 @@ export default function OrderTracking() {
                         <p className="text-[13px] font-semibold text-[#1A1A1A]">
                           {item.name || item.product?.name}
                         </p>
+                        {item.selectedVariant?.name && (
+                          <p className="text-[11px] text-[#FFB700] font-semibold">Variant: {item.selectedVariant.name}</p>
+                        )}
                         <p className="text-[12px] text-[#60717B]">Qty: {qty}</p>
                       </div>
                       <span className="text-[13px] font-bold text-[#1A1A1A] whitespace-nowrap">
