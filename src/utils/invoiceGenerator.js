@@ -89,7 +89,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       <td class="right total-cell">${(itemPrice * itemQty).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
     </tr>`;
   }).join('');
-  const minRows = 4;
+  const minRows = 2;
   let fillerRows = '';
   for (let i = items.length; i < minRows; i++) {
     fillerRows += `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
@@ -109,10 +109,10 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   /* HEADER BLOCK */
   .brand-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
   .logo-area { display: flex; align-items: center; gap: 12px; }
-  .brand-logo { width: 68px; height: 68px; object-fit: contain; }
+  .brand-logo { width: 68px; height: 65px; object-fit: contain; }
   
   .brand-text { display: flex; flex-direction: column; }
-  .brand-title { font-size: 28px; font-weight: 700; color: #F4B41A; }
+  .brand-title { font-size: 32px; font-weight: 700; color: #F4B41A; }
   .brand-tagline { font-size: 11px; color: #000; font-weight: 700; margin-top: 4px; }
   
   .main-invoice-title { text-align: right; width: 245px; display: flex; flex-direction: column; align-items: flex-end; }
@@ -259,14 +259,14 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   }
 
   /* ITEMS TABLE */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 28px; } 
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; } 
   thead { display: table-header-group; }
   thead tr { background: #F4B41A; }
   thead th { padding: 7px 8px; font-size: 11px; font-weight: 400; color: #000; text-transform: uppercase; border: 1px solid #ccc; text-align: center; }
   thead th.center { text-align: center; }
   thead th.right { text-align: right; }
   
-  tbody tr { border-bottom: 1px solid #ccc; }
+  tbody tr { border-bottom: none; }
   tbody tr { break-inside: avoid; page-break-inside: avoid; }
   tbody td { padding: 7px 8px; font-size: 11px; vertical-align: middle; height: 29px; text-align: center; }
   td.center { text-align: center; }
@@ -282,7 +282,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     flex-direction: column; 
     gap: 6px; 
     margin-bottom: 12px;
-    margin-top: 2px;
+    margin-top: 0;
     border: 1px solid #d8d8d8;
     border-radius: 6px;
     padding: 12px 14px;
@@ -307,7 +307,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   .sign-field .ln { flex: 1; border-bottom: 1px solid #ccc; height: 12px; }
 
   /* CARDS INFO BLOCK */
-  .info-boxes-row { display: flex; gap: 15px; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
+  .info-boxes-row { display: flex; gap: 15px; margin-top: 20px; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
   .footer-info-card { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px; background: #fff; break-inside: avoid; page-break-inside: avoid; overflow: visible; }
 
   .card-header-container { display: flex; align-items: center; gap: 0; margin-bottom: 8px; }
@@ -392,7 +392,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     <div class="office-col">
       <div class="office-heading">
         <img class="flag-icon" src="/images/UK_flag.png" alt="UK flag" />
-        <span>HEAD OFFICE - UK</span>
+        <span>UK OFFICE</span>
       </div>
       <div class="office-detail-wrapper">
         <div class="office-address">
@@ -517,12 +517,12 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         <span class="card-header-label">BANK ACCOUNT DETAILS</span>
       </div>
       <div class="card-body-text" style="gap: 5px;">
-        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span class="bank-value">House of Cambridge Limited</span></div>
-        <div class="bank-row"><span class="bank-label">Bank Name</span><span class="bank-dots">:</span><span class="bank-value">HSBC UK Bank plc</span></div>
-        <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-dots">:</span><span class="bank-value">12345678</span></div>
-        <div class="bank-row"><span class="bank-label">Sort Code</span><span class="bank-dots">:</span><span class="bank-value">40-05-30</span></div>
-        <div class="bank-row"><span class="bank-label">IBAN</span><span class="bank-dots">:</span><span class="bank-value">GB12HBUK40053012345678</span></div>
-        <div class="bank-row"><span class="bank-label">SWIFT/BIC</span><span class="bank-dots">:</span><span class="bank-value">HBUKGB4B</span></div>
+        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span class="bank-value">EGI HOLDING PVT LTD </span></div>
+        <div class="bank-row"><span class="bank-label">Bank Name</span><span class="bank-dots">:</span><span class="bank-value">NDB (National Development Bank)</span></div>
+        <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-dots">:</span><span class="bank-value">115510346318</span></div>
+        <div class="bank-row"><span class="bank-label">Bank Code</span><span class="bank-dots">:</span><span class="bank-value">7214</span></div>
+        <div class="bank-row"><span class="bank-label">Branch</span><span class="bank-dots">:</span><span class="bank-value">Kottawa</span></div>
+        <div class="bank-row"><span class="bank-label">SWIFT/BIC</span><span class="bank-dots">:</span><span class="bank-value">NDBSLKLX</span></div>
       </div>
     </div>
   </div>
@@ -554,7 +554,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       },
       jsPDF:     { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy'],
+        mode: ['avoid-all'],
         avoid: ['.footer-info-card', '.info-boxes-row', '.financial-totals-block', '.signatures-row', '.offices-row', '.details-grid', 'tr']
       }
     })
