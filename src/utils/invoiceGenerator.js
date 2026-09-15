@@ -56,10 +56,10 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   const items      = Array.isArray(order.items) ? order.items : [];
   const subtotal = safeNum(order.subtotal, items.reduce((s, i) => s + safeNum(i.price || i.unitPrice) * safeNum(i.quantity), 0));
   const discount = safeNum(order.discount);
-  const shipping = safeNum(order.shippingCost || 0);
-  const taxPercent = safeNum(order.taxPercent || 8); 
-  const tax        = safeNum(order.tax || order.taxAmount || (subtotal - discount) * (taxPercent / 100));
-  const total      = safeNum(order.total || order.totalAmountDue || (subtotal - discount + shipping + tax));
+  const shipping = safeNum(order.deliveryFee ?? order.shippingCost ?? 0);
+  const taxPercent = order.taxPercent !== undefined && order.taxPercent !== null && order.taxPercent !== '' ? safeNum(order.taxPercent) : 0;
+  const tax        = order.taxAmount !== undefined && order.taxAmount !== null ? safeNum(order.taxAmount) : (order.tax !== undefined && order.tax !== null ? safeNum(order.tax) : Math.round((subtotal - discount) * (taxPercent / 100)));
+  const total      = safeNum(order.totalAmountDue ?? order.total ?? (subtotal - discount + shipping + tax));
   const addr       = order.shippingAddress || order.clientDetails || {};
   const orderNum = fmtOrderNum(order);
   const invoiceDate = fmtDate(order.createdAt || order.invoiceDate);
@@ -275,7 +275,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   td.item-name { font-weight: 500; text-align: left; white-space: normal; overflow-wrap: anywhere; word-break: normal; }
 
   /* TOTALS & SIGNATURES SECTIONS */
-  .bottom-pricing-container { display: flex; flex-direction: column; align-items: flex-end; width: 100%; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
+  .bottom-pricing-container { display: flex; flex-direction: column; align-items: flex-end; width: 100%; margin-bottom: 12px; break-inside: avoid !important; page-break-inside: avoid !important; }
   .financial-totals-block { 
     width: 320px; 
     display: flex; 
@@ -286,8 +286,8 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     border: 1px solid #d8d8d8;
     border-radius: 6px;
     padding: 12px 14px;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
   .totals-row { display: flex; align-items: center; font-size: 11px; font-weight: 700; color: #000; }
   .totals-row .label { width: 130px; text-transform: uppercase; }
@@ -464,7 +464,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
           <span class="label">DISCOUNT</span><span class="dots">:</span><span class="value-line">${discount > 0 ? discount.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
         </div>
         <div class="totals-row">
-          <span class="label">TAX / VAT (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%)</span><span class="dots">:</span><span class="value-line">${tax > 0 ? tax.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
+          <span class="label">TAX / VAT (${taxPercent > 0 ? `${taxPercent}%` : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%'})</span><span class="dots">:</span><span class="value-line">${tax > 0 ? tax.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
         </div>
         <div class="totals-row">
           <span class="label">Delivery Charges</span><span class="dots">:</span><span class="value-line">${shipping > 0 ? shipping.toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}</span>
@@ -554,8 +554,8 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       },
       jsPDF:     { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: {
-        mode: ['avoid-all'],
-        avoid: ['.footer-info-card', '.info-boxes-row', '.financial-totals-block', '.signatures-row', '.offices-row', '.details-grid', 'tr']
+        mode: ['avoid-all', 'css', 'legacy'],
+        avoid: ['.bottom-pricing-container', '.financial-totals-block', '.signatures-row', '.footer-info-card', '.info-boxes-row', '.offices-row', '.details-grid', 'tr']
       }
     })
     .from(pageEl)

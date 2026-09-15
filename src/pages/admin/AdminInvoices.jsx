@@ -18,6 +18,7 @@ const EMPTY_FORM = {
   clientDetails: { clientName: '', companyName: '', address: '', email: '', phone: '' },
   discount: '',
   taxPercent: '',
+  deliveryFee: '',
 };
 
 export default function AdminInvoices() {
@@ -231,10 +232,11 @@ export default function AdminInvoices() {
   // Financial calculations
   const calcSubtotal = items.reduce((sum, item) => sum + (Number(item.total) || (Number(item.unitPrice) * Number(item.quantity))), 0);
   const discountVal = Number(form.discount) || 0;
+  const deliveryFeeVal = Number(form.deliveryFee) || 0;
   const taxPercentVal = Number(form.taxPercent) || 0;
   const taxableAmount = Math.max(0, calcSubtotal - discountVal);
   const calcTaxAmount = Math.round(taxableAmount * (taxPercentVal / 100));
-  const calcTotalDue = taxableAmount + calcTaxAmount;
+  const calcTotalDue = taxableAmount + calcTaxAmount + deliveryFeeVal;
 
   const buildInvoicePayload = () => ({
     ...form,
@@ -246,6 +248,7 @@ export default function AdminInvoices() {
       total: Number(i.total),
     })),
     discount: discountVal,
+    deliveryFee: deliveryFeeVal,
     taxPercent: taxPercentVal,
   });
 
@@ -317,6 +320,7 @@ export default function AdminInvoices() {
         phone: invoice.clientDetails?.phone || '',
       },
       discount: invoice.discount ?? '',
+      deliveryFee: invoice.deliveryFee ?? '',
       taxPercent: invoice.taxPercent ?? '',
     });
 
@@ -779,8 +783,8 @@ export default function AdminInvoices() {
                 </div>
               </div>
 
-              {/* Discount & Tax Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Discount, Delivery Fee & Tax Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider block mb-1">
                     Discount (Rs.)
@@ -792,6 +796,20 @@ export default function AdminInvoices() {
                     placeholder="0.00"
                     value={form.discount}
                     onChange={(e) => setForm((f) => ({ ...f, discount: e.target.value }))}
+                    className={INPUT_CLS}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider block mb-1">
+                    Delivery Fee (Rs.)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.00"
+                    value={form.deliveryFee}
+                    onChange={(e) => setForm((f) => ({ ...f, deliveryFee: e.target.value }))}
                     className={INPUT_CLS}
                   />
                 </div>
@@ -828,6 +846,12 @@ export default function AdminInvoices() {
                   <div className="flex justify-between text-zinc-300">
                     <span>Tax ({taxPercentVal}%):</span>
                     <span className="font-semibold">+ Rs. {calcTaxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                )}
+                {deliveryFeeVal > 0 && (
+                  <div className="flex justify-between text-zinc-300">
+                    <span>Delivery Fee:</span>
+                    <span className="font-semibold">+ Rs. {deliveryFeeVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                   </div>
                 )}
                 <div className="border-t border-zinc-700 pt-1.5 flex justify-between items-center text-[14px] font-bold text-[#FFB700]">

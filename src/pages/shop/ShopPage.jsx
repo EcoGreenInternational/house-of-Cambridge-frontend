@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
+import { fetchBrands } from '../../redux/slices/brandSlice';
 import Layout from '../../components/common/Layout';
 import ProductCard from '../../components/ui/ProductCard';
 import Breadcrumb from '../../components/ui/Breadcrumb';
@@ -51,6 +52,7 @@ export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useDispatch();
   const { products, loading, total, resPerPage, categories } = useSelector((s) => s.products);
+  const allBrands = useSelector((s) => s.brands?.brands || []);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [brandsExpanded, setBrandsExpanded] = useState(false);
@@ -76,6 +78,7 @@ export default function ShopPage() {
 
   useEffect(() => {
     dispatch(fetchCategories());
+    dispatch(fetchBrands());
   }, [dispatch]);
 
   useEffect(() => {
@@ -159,15 +162,34 @@ export default function ShopPage() {
     });
   }, []);
 
+  const brandMap = useMemo(() => {
+    const m = new Map();
+    (allBrands || []).forEach((b) => {
+      if (b._id && b.name) m.set(b._id, b.name);
+    });
+    return m;
+  }, [allBrands]);
+
   const brands = useMemo(() => {
     const map = {};
     products.forEach((p) => {
-      if (p.brand && typeof p.brand === 'string') {
-        map[p.brand] = (map[p.brand] || 0) + 1;
+      let bName = null;
+      if (p.brand && typeof p.brand === 'object' && p.brand.name) {
+        bName = p.brand.name;
+      } else if (p.brand && typeof p.brand === 'string') {
+        const trimmed = p.brand.trim();
+        if (brandMap.has(trimmed)) {
+          bName = brandMap.get(trimmed);
+        } else if (!/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+          bName = trimmed;
+        }
+      }
+      if (bName) {
+        map[bName] = (map[bName] || 0) + 1;
       }
     });
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
-  }, [products]);
+  }, [products, brandMap]);
 
   const visibleBrands = brandsExpanded ? brands : brands.slice(0, 5);
   const hasFilters = keyword || category || minPrice || maxPrice || preowned || newArrival;
