@@ -144,9 +144,14 @@ export default function FlashSalePage() {
   const brandCounts = useMemo(() => {
     const map = {};
     flashSale.forEach((p) => {
-      const b = p.brand;
-      if (b && typeof b === 'string') {
-        map[b] = (map[b] || 0) + 1;
+      let bName = null;
+      if (p.brand && typeof p.brand === 'object' && p.brand.name) {
+        bName = p.brand.name;
+      } else if (p.brand && typeof p.brand === 'string' && !/^[0-9a-fA-F]{24}$/.test(p.brand.trim())) {
+        bName = p.brand.trim();
+      }
+      if (bName) {
+        map[bName] = (map[bName] || 0) + 1;
       }
     });
     return map;

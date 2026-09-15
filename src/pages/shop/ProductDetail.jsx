@@ -395,8 +395,12 @@ export default function ProductDetail() {
     .filter((p) => p._id && p._id !== id)
     .slice(0, MAX_RELATED);
 
+  const brandDisplay = typeof product.brand === 'object' && product.brand?.name 
+    ? product.brand.name 
+    : (typeof product.brand === 'string' && !/^[0-9a-fA-F]{24}$/.test(product.brand) ? product.brand : '');
+
   const ATTRIBUTES = [
-    product.brand  && { label: 'Brand',  value: sanitizeText(String(product.brand)) },
+    brandDisplay   && { label: 'Brand',  value: sanitizeText(brandDisplay) },
     product.weight && { label: 'Weight(g)', value: sanitizeText(String(product.weight)) },
     product.volume && { label: 'Volume', value: sanitizeText(String(product.volume)) },
     product.model  && { label: 'Model',  value: sanitizeText(String(product.model)) },
