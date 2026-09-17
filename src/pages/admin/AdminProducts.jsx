@@ -142,26 +142,31 @@ const normalizeVariantAttrs = (attrs) => {
   return [];
 };
 
-const normalizeVariants = (variants) => {
+const normalizeVariants = (variants, parentCode = '') => {
   if (Array.isArray(variants)) {
-    return variants.map((v) => ({
-      sku: v?.sku || '',
-      name: v?.name || '',
-      attributes: typeof v?.attributes === 'object' && v.attributes !== null ? v.attributes : {},
-      price: v?.price !== undefined ? v.price : '',
-      comparePrice: v?.comparePrice !== undefined ? v.comparePrice : '',
-      weight: v?.weight !== undefined ? v.weight : '',
-      stock: v?.stock !== undefined ? v.stock : '',
-      image: v?.image && typeof v.image === 'object' ? v.image : { public_id: '', url: '' },
-      imagePreview: v?.image?.url || '',
-      imageFile: null,
-      isActive: v?.isActive !== false,
-    }));
+    return variants.map((v, idx) => {
+      const code = v?.variantCode || (parentCode ? `${parentCode}-V${idx + 1}` : `HOC-V${idx + 1}`);
+      return {
+        _id: v?._id || v?.id || `var_${Date.now()}_${idx}`,
+        variantCode: code,
+        sku: v?.sku || code,
+        name: v?.name || '',
+        attributes: typeof v?.attributes === 'object' && v.attributes !== null ? v.attributes : {},
+        price: v?.price !== undefined ? v.price : '',
+        comparePrice: v?.comparePrice !== undefined ? v.comparePrice : '',
+        weight: v?.weight !== undefined ? v.weight : '',
+        stock: v?.stock !== undefined ? v.stock : '',
+        image: v?.image && typeof v.image === 'object' ? v.image : { public_id: '', url: '' },
+        imagePreview: v?.image?.url || '',
+        imageFile: null,
+        isActive: v?.isActive !== false,
+      };
+    });
   }
   if (typeof variants === 'string' && variants.trim()) {
     try {
       const parsed = JSON.parse(variants);
-      return Array.isArray(parsed) ? normalizeVariants(parsed) : [];
+      return Array.isArray(parsed) ? normalizeVariants(parsed, parentCode) : [];
     } catch {
       return [];
     }
@@ -277,7 +282,7 @@ export default function AdminProducts() {
   }, []);
 
   const openEdit = useCallback((p) => {
-    const normalizedVars = normalizeVariants(p.variants || []);
+    const normalizedVars = normalizeVariants(p.variants || [], p.productCode);
     const availableVariantStocks = normalizedVars
       .map((variant) => Number(variant.stock))
       .filter((stock) => Number.isFinite(stock) && stock > 0)
@@ -364,12 +369,21 @@ export default function AdminProducts() {
         attrMap[item.name] = item.val;
       });
       const comboName = combo.map((c) => c.val).join(' / ');
-      const variantSku = baseSku ? `${baseSku}-V${idx + 1}` : '';
 
       const existing = currentVariants.find((v) => v.name === comboName);
-      if (existing) return existing;
+      if (existing) {
+        if (!existing.sku) {
+          existing.sku = baseSku ? `${baseSku}-V${idx + 1}` : `SKU-V${idx + 1}`;
+        }
+        return existing;
+      }
+
+      const variantSku = baseSku
+        ? `${baseSku}-V${idx + 1}`
+        : `VAR-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${idx + 1}`;
 
       return {
+        _id: 'var_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now(),
         sku: variantSku,
         name: comboName,
         attributes: attrMap,
@@ -441,22 +455,30 @@ export default function AdminProducts() {
   }, [variantAttributes, variants, form.price, form.comparePrice, form.weight, form.stock, form.sku, toast]);
 
   const addCustomVariant = useCallback(() => {
-    setVariants((prev) => [
-      ...prev,
-      {
-        sku: form.sku ? `${form.sku}-V${prev.length + 1}` : '',
-        name: `Variant ${prev.length + 1}`,
-        attributes: {},
-        price: form.price || 0,
-        comparePrice: form.comparePrice || 0,
-        weight: form.weight || 0,
-        stock: form.stock || 0,
-        image: { public_id: '', url: '' },
-        imagePreview: '',
-        imageFile: null,
-        isActive: true,
-      },
-    ]);
+    setVariants((prev) => {
+      const idx = prev.length + 1;
+      const baseSku = form.sku || '';
+      const uniqueSku = baseSku
+        ? `${baseSku}-V${idx}`
+        : `VAR-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${idx}`;
+      return [
+        ...prev,
+        {
+          _id: 'var_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now(),
+          sku: uniqueSku,
+          name: `Variant ${idx}`,
+          attributes: {},
+          price: form.price || 0,
+          comparePrice: form.comparePrice || 0,
+          weight: form.weight || 0,
+          stock: form.stock || 0,
+          image: { public_id: '', url: '' },
+          imagePreview: '',
+          imageFile: null,
+          isActive: true,
+        },
+      ];
+    });
   }, [form.sku, form.price, form.comparePrice, form.weight, form.stock]);
 
   const removeVariant = useCallback((idx) => {
@@ -554,24 +576,32 @@ export default function AdminProducts() {
         fd.append('attributes', JSON.stringify(attributes));
       }
 
-      const cleanVariantAttrs = variantAttributes
-        .filter((v) => v.name.trim())
-        .map((v) => ({
-          name: v.name.trim(),
-          options: v.options.filter(Boolean),
-        }));
-      if (cleanVariantAttrs.length > 0) {
-        fd.append('variantAttributes', JSON.stringify(cleanVariantAttrs));
-      }
+      const hasMultipleVariants = variants.length > 1;
 
-      if (variants.length > 0) {
+      if (hasMultipleVariants) {
+        const cleanVariantAttrs = variantAttributes
+          .filter((v) => v.name.trim())
+          .map((v) => ({
+            name: v.name.trim(),
+            options: v.options.filter(Boolean),
+          }));
+        if (cleanVariantAttrs.length > 0) {
+          fd.append('variantAttributes', JSON.stringify(cleanVariantAttrs));
+        }
+
+        const baseCode = productCodeLabel && productCodeLabel !== 'HOC-XXXX' ? productCodeLabel : (form.sku || 'HOC-0001');
         const cleanVariants = variants.map((v, idx) => {
           if (v.imageFile) {
             fd.append(`variant_image_${idx}`, v.imageFile);
           }
+          const vCode = v.variantCode || `${baseCode}-V${idx + 1}`;
+          const fallbackSku = v.sku || vCode;
+
           return {
-            sku: v.sku || '',
-            name: v.name || '',
+            _id: v._id || v.id || undefined,
+            variantCode: vCode,
+            sku: String(fallbackSku).trim().slice(0, 100),
+            name: String(v.name || '').trim().slice(0, 200),
             attributes: v.attributes || {},
             price: Number(v.price) >= 0 ? Number(v.price) : Number(form.price || 0),
             comparePrice: Number(v.comparePrice) >= 0 ? Number(v.comparePrice) : 0,
@@ -582,6 +612,18 @@ export default function AdminProducts() {
           };
         });
         fd.append('variants', JSON.stringify(cleanVariants));
+      } else {
+        fd.append('variants', JSON.stringify([]));
+        fd.append('variantAttributes', JSON.stringify([]));
+
+        if (variants.length === 1) {
+          const single = variants[0];
+          if (single.price !== '' && Number(single.price) >= 0) fd.set('price', String(single.price));
+          if (single.comparePrice !== '' && Number(single.comparePrice) >= 0) fd.set('comparePrice', String(single.comparePrice));
+          if (single.stock !== '' && Number(single.stock) >= 0) fd.set('stock', String(single.stock));
+          if (single.weight !== '' && Number(single.weight) >= 0) fd.set('weight', String(single.weight));
+          if (single.sku) fd.set('sku', String(single.sku));
+        }
       }
 
       const existingImages = imageItems
@@ -1208,14 +1250,17 @@ export default function AdminProducts() {
                                     onChange={(e) => setVariantField(vIdx, 'name', e.target.value)}
                                     className="w-full px-2 py-0.5 border border-[#E9E9E9] rounded-[4px] font-normal text-[#60717B] text-[10.5px]"
                                   />
+                                  <span className="text-[10px] font-mono font-semibold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80 inline-block mt-0.5" title={`Variety Code: ${v.variantCode}`}>
+                                    Code: {v.variantCode || (productCodeLabel && productCodeLabel !== 'HOC-XXXX' ? `${productCodeLabel}-V${vIdx + 1}` : `HOC-0001-V${vIdx + 1}`)}
+                                  </span>
                                 </div>
                               </td>
                               <td className="px-2.5 py-2">
                                 <input
-                                  placeholder="SKU"
+                                  placeholder={form.sku ? `${form.sku}-V${vIdx + 1}` : `SKU-V${vIdx + 1}`}
                                   value={v.sku}
                                   onChange={(e) => setVariantField(vIdx, 'sku', e.target.value)}
-                                  className="w-24 px-2 py-1 border border-[#E9E9E9] rounded-[4px] text-[11px] font-mono"
+                                  className="w-28 px-2 py-1 border border-[#E9E9E9] focus:border-[#FFB700] focus:outline-none rounded-[4px] text-[11px] font-mono"
                                 />
                               </td>
                               <td className="px-2.5 py-2">
