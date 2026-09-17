@@ -182,8 +182,7 @@ export default function AdminProducts() {
   const [showForm,     setShowForm]     = useState(false);
   const [editing,      setEditing]      = useState(null);
   const [form,         setForm]         = useState(EMPTY);
-  const [files,        setFiles]        = useState([]);
-  const [previews,     setPreviews]     = useState([]);
+  const [imageItems,   setImageItems]   = useState([]);
   const [saving,       setSaving]       = useState(false);
   const [instrInput,   setInstrInput]   = useState('');
   const fileRef = useRef(null);
@@ -272,8 +271,7 @@ export default function AdminProducts() {
     setAttributes({});
     setVariantAttributes([]);
     setVariants([]);
-    setFiles([]);
-    setPreviews([]);
+    setImageItems([]);
     setInstrInput('');
     setShowForm(true);
   }, []);
@@ -337,8 +335,7 @@ export default function AdminProducts() {
       setVariants(normalizedVars);
     }
 
-    setFiles([]);
-    setPreviews(p.images?.map((i) => i.url) || []);
+    setImageItems(p.images?.map((i) => ({ id: Math.random().toString() + Date.now(), url: i.url, existingImage: i })) || []);
     setInstrInput('');
     setShowForm(true);
   }, []);
@@ -510,9 +507,19 @@ export default function AdminProducts() {
   }, []);
 
   const handleFiles = (e) => {
-    const selected = Array.from(e.target.files);
-    setFiles(selected);
-    setPreviews(selected.map((f) => URL.createObjectURL(f)));
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+    const newItems = selected.map((file) => ({
+      id: Math.random().toString() + Date.now(),
+      url: URL.createObjectURL(file),
+      file,
+    }));
+    setImageItems((prev) => [...prev, ...newItems]);
+    if (e.target) e.target.value = '';
+  };
+
+  const removeImage = (index) => {
+    setImageItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addInstruction = () => {
@@ -577,7 +584,15 @@ export default function AdminProducts() {
         fd.append('variants', JSON.stringify(cleanVariants));
       }
 
-      files.forEach((f) => fd.append('images', f));
+      const existingImages = imageItems
+        .filter((item) => item.existingImage)
+        .map((item) => item.existingImage);
+      fd.append('existingImages', JSON.stringify(existingImages));
+
+      const newFiles = imageItems
+        .filter((item) => item.file)
+        .map((item) => item.file);
+      newFiles.forEach((f) => fd.append('images', f));
 
       if (editing) {
         await dispatch(updateAdminProduct({ id: editing._id, formData: fd })).unwrap();
@@ -808,18 +823,32 @@ export default function AdminProducts() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1">
               <div>
-                <label className="text-[13px] font-semibold text-[#1A1A1A] block mb-2">Images</label>
+                <label className="text-[13px] font-semibold text-[#1A1A1A] block mb-2">
+                  Images <span className="text-[11px] font-normal text-[#60717B]">({imageItems.length} selected)</span>
+                </label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {previews.map((src, i) => (
-                    <img key={i} src={src} alt={`Preview ${i + 1}`} className="w-16 h-16 object-cover rounded-[8px] border border-[#E9E9E9]" />
+                  {imageItems.map((item, i) => (
+                    <div key={item.id || i} className="relative group w-16 h-16 rounded-[8px] overflow-hidden border border-[#E9E9E9] bg-gray-50 shrink-0">
+                      <img src={item.url} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-sm"
+                        title="Remove image"
+                        aria-label={`Remove image ${i + 1}`}
+                      >
+                        <FiX size={12} />
+                      </button>
+                    </div>
                   ))}
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
                     aria-label="Upload images"
-                    className="w-16 h-16 border-2 border-dashed border-[#C5C5C5] rounded-[8px] flex items-center justify-center text-[#60717B] hover:border-[#FFB700] hover:text-[#FFB700] transition-colors"
+                    className="w-16 h-16 border-2 border-dashed border-[#C5C5C5] rounded-[8px] flex flex-col items-center justify-center text-[#60717B] hover:border-[#FFB700] hover:text-[#FFB700] transition-colors shrink-0"
                   >
-                    <FiImage size={20} aria-hidden="true" />
+                    <FiImage size={18} aria-hidden="true" />
+                    <span className="text-[9px] font-semibold mt-0.5">+ Add</span>
                   </button>
                 </div>
                 <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFiles} />
