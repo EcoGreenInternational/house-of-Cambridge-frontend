@@ -19,7 +19,7 @@ const EMPTY = {
   name: '', description: '', usageInstructions: [],
   price: '', comparePrice: '', stock: '', sku: '',
   category: '', brand: '', weight: '',
-  isActive: true, isFeatured: false, isPreOwned: false,
+  isActive: true, showInUserView: true, isFeatured: false, isPreOwned: false,
   isNewArrival: false, isFlashSale: false, flashSalePrice: '',
 };
 
@@ -34,11 +34,12 @@ const NUMERIC_FIELDS = [
 ];
 
 const FLAG_FIELDS = [
-  { key: 'isActive',     label: 'Active' },
-  { key: 'isFeatured',   label: 'Featured' },
-  { key: 'isPreOwned',   label: 'Pre-Owned UK' },
-  { key: 'isNewArrival', label: 'New Arrival' },
-  { key: 'isFlashSale',  label: 'Flash Sale' },
+  { key: 'isActive',       label: 'Active' },
+  { key: 'showInUserView', label: 'Show in User View' },
+  { key: 'isFeatured',     label: 'Featured' },
+  { key: 'isPreOwned',     label: 'Pre-Owned UK' },
+  { key: 'isNewArrival',   label: 'New Arrival' },
+  { key: 'isFlashSale',    label: 'Flash Sale' },
 ];
 
 const CATEGORY_SPECIFIC_FIELDS = {
@@ -179,17 +180,18 @@ export default function AdminProducts() {
   const { products, productsTotal, categories, brands = [], loading } = useSelector((s) => s.admin);
   const { toasts, toast, removeToast } = useToast();
 
-  const [search,       setSearch]       = useState('');
-  const [catFilter,    setCatFilter]    = useState('');
-  const [page,         setPage]         = useState(1);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [delLoading,   setDelLoading]   = useState(false);
-  const [showForm,     setShowForm]     = useState(false);
-  const [editing,      setEditing]      = useState(null);
-  const [form,         setForm]         = useState(EMPTY);
-  const [imageItems,   setImageItems]   = useState([]);
-  const [saving,       setSaving]       = useState(false);
-  const [instrInput,   setInstrInput]   = useState('');
+  const [search,         setSearch]         = useState('');
+  const [catFilter,      setCatFilter]      = useState('');
+  const [userViewFilter, setUserViewFilter] = useState('');
+  const [page,           setPage]           = useState(1);
+  const [deleteTarget,   setDeleteTarget]   = useState(null);
+  const [delLoading,     setDelLoading]     = useState(false);
+  const [showForm,       setShowForm]       = useState(false);
+  const [editing,        setEditing]        = useState(null);
+  const [form,           setForm]           = useState(EMPTY);
+  const [imageItems,     setImageItems]     = useState([]);
+  const [saving,         setSaving]         = useState(false);
+  const [instrInput,     setInstrInput]     = useState('');
   const fileRef = useRef(null);
 
   const [attributes, setAttributes] = useState({});
@@ -236,16 +238,17 @@ export default function AdminProducts() {
     dispatch(fetchAdminBrands());
   }, [dispatch]);
 
-  useEffect(() => { load(search, catFilter, page); }, [page]);
+  useEffect(() => { load(search, catFilter, userViewFilter, page); }, [page]);
 
-  const load = useCallback((s = search, c = catFilter, p = page) => {
+  const load = useCallback((s = search, c = catFilter, uv = userViewFilter, p = page) => {
     dispatch(fetchAdminProducts({
-      search:   s || undefined,
-      category: c || undefined,
-      page:     p,
-      limit:    PAGE_SIZE,
+      search:         s || undefined,
+      category:       c || undefined,
+      showInUserView: uv || undefined,
+      page:           p,
+      limit:          PAGE_SIZE,
     }));
-  }, [dispatch, search, catFilter, page]);
+  }, [dispatch, search, catFilter, userViewFilter, page]);
 
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -302,6 +305,7 @@ export default function AdminProducts() {
       brand:             p.brand?._id    || p.brand    || '',
       weight:            p.weight ?? '',
       isActive:          p.isActive,
+      showInUserView:    p.showInUserView !== false,
       isFeatured:        p.isFeatured    || false,
       isPreOwned:        p.isPreOwned    || false,
       isNewArrival:      p.isNewArrival  || false,
@@ -566,6 +570,8 @@ export default function AdminProducts() {
       Object.entries(form).forEach(([k, v]) => {
         if (k === 'usageInstructions') {
           v.filter(Boolean).forEach((item) => fd.append('usageInstructions', item));
+        } else if (typeof v === 'boolean') {
+          fd.append(k, String(v));
         } else if (v !== '') {
           fd.append(k, String(v));
         }
@@ -697,12 +703,22 @@ export default function AdminProducts() {
           </form>
           <select
             value={catFilter}
-            onChange={(e) => { setCatFilter(e.target.value); setPage(1); load(search, e.target.value, 1); }}
+            onChange={(e) => { setCatFilter(e.target.value); setPage(1); load(search, e.target.value, userViewFilter, 1); }}
             aria-label="Filter by category"
             className="px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
           >
             <option value="">All Categories</option>
             {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+          </select>
+          <select
+            value={userViewFilter}
+            onChange={(e) => { setUserViewFilter(e.target.value); setPage(1); load(search, catFilter, e.target.value, 1); }}
+            aria-label="Filter by User View visibility"
+            className="px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+          >
+            <option value="">All User View Status</option>
+            <option value="true">Shown in User View</option>
+            <option value="false">Hidden in User View</option>
           </select>
         </div>
 
@@ -711,7 +727,7 @@ export default function AdminProducts() {
             <table className="w-full text-[13px]">
               <thead className="bg-[#FAFAFA] border-b border-[#E9E9E9]">
                 <tr>
-                  {['Image', 'Name', 'SKU', 'Product Code', 'Category', 'Brand', 'Price', 'Weight', 'Stock', 'Status', 'Actions'].map((h) => (
+                  {['Image', 'Name', 'SKU', 'Product Code', 'Category', 'Brand', 'Price', 'Weight', 'Stock', 'Status', 'User View', 'Actions'].map((h) => (
                     <th key={h} className="px-4 py-3 text-left font-semibold text-[#60717B] whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -719,7 +735,7 @@ export default function AdminProducts() {
               <tbody>
                 {loading && !products.length ? (
                   <tr>
-                    <td colSpan={11} className="text-center py-12 text-[#60717B]">
+                    <td colSpan={12} className="text-center py-12 text-[#60717B]">
                       <div className="flex items-center justify-center gap-2">
                         <span className="w-4 h-4 border-2 border-[#FFB700] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                         Loading…
@@ -727,7 +743,7 @@ export default function AdminProducts() {
                     </td>
                   </tr>
                 ) : products.length === 0 ? (
-                  <tr><td colSpan={11} className="text-center py-12 text-[#60717B]">No products found</td></tr>
+                  <tr><td colSpan={12} className="text-center py-12 text-[#60717B]">No products found</td></tr>
                 ) : products.map((p) => {
                   const productVariants = normalizeVariants(p.variants || []);
                   const availableVariantIndexes = productVariants
@@ -827,6 +843,11 @@ export default function AdminProducts() {
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                         {p.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${p.showInUserView !== false ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {p.showInUserView !== false ? 'Shown' : 'Hidden'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

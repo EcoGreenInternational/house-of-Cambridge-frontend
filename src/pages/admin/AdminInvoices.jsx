@@ -7,7 +7,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
 import { ToastContainer } from '../../components/ui/Toast.jsx';
 import useToast from '../../hooks/useToast.js';
 import { generateInvoicePDF } from '../../utils/invoiceGenerator.js';
-import { FiSearch, FiPlus, FiX, FiEdit2, FiTrash2, FiPackage, FiEdit3 } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiX, FiEdit2, FiTrash2, FiPackage, FiEdit3, FiUpload } from 'react-icons/fi';
 
 const INPUT_CLS = 'w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]';
 
@@ -15,6 +15,9 @@ const EMPTY_FORM = {
   invoiceType: 'manual',
   assignedPeople: '',
   dueDate: '',
+  approvedByName: '',
+  approvedByDate: '',
+  approvedBySignature: '',
   clientDetails: { clientName: '', companyName: '', address: '', email: '', phone: '' },
   discount: '',
   taxPercent: '',
@@ -58,6 +61,32 @@ export default function AdminInvoices() {
   const generateItemId = () => {
     itemCounterRef.current += 1;
     return `NP_${String(itemCounterRef.current).padStart(4, '0')}`;
+  };
+
+  const handleApprovalSignatureUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file for the signature.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxWidth = 500;
+        const scale = Math.min(1, maxWidth / image.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+        setForm((current) => ({ ...current, approvedBySignature: canvas.toDataURL('image/png') }));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
   };
 
   const loadInvoices = useCallback(() => {
@@ -312,6 +341,11 @@ export default function AdminInvoices() {
       invoiceType: invoice.invoiceType,
       assignedPeople: invoice.assignedPeople || '',
       dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
+      approvedByName: invoice.approvedByName || invoice.approvedBy?.name || '',
+      approvedByDate: invoice.approvedByDate
+        ? new Date(invoice.approvedByDate).toISOString().split('T')[0]
+        : (invoice.approvedBy?.date ? new Date(invoice.approvedBy.date).toISOString().split('T')[0] : ''),
+      approvedBySignature: invoice.approvedBySignature || invoice.approvedBy?.signature || '',
       clientDetails: {
         clientName: invoice.clientDetails?.clientName || '',
         companyName: invoice.clientDetails?.companyName || '',
@@ -480,7 +514,7 @@ export default function AdminInvoices() {
                 <div>
                   <label className="text-[13px] font-semibold text-[#1A1A1A] block mb-1">Invoice Type</label>
                   <select value={form.invoiceType} onChange={(e) => setForm(f => ({...f, invoiceType: e.target.value}))} className={INPUT_CLS}>
-                    <option value="manual">Manual (Deduct Stock)</option>
+                    <option value="manual">Manual process</option>
                     <option value="online">Online System Process</option>
                   </select>
                 </div>
@@ -493,6 +527,36 @@ export default function AdminInvoices() {
               <div>
                 <label className="text-[13px] font-semibold text-[#1A1A1A] block mb-1">Assigned Executive</label>
                 <input type="text" value={form.assignedPeople} onChange={(e) => setForm(f => ({...f, assignedPeople: e.target.value}))} placeholder="e.g. John Doe" className={INPUT_CLS} required />
+              </div>
+
+              <div className="p-4 bg-gray-50 border border-[#E9E9E9] rounded-[8px] space-y-3">
+                <h4 className="text-[12px] font-bold text-[#60717B] uppercase tracking-wider">Approval Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-1">Approved By Name</label>
+                    <input type="text" value={form.approvedByName} onChange={(e) => setForm(f => ({...f, approvedByName: e.target.value}))} placeholder="Optional" className={INPUT_CLS} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-1">Approval Date</label>
+                    <input type="date" value={form.approvedByDate} onChange={(e) => setForm(f => ({...f, approvedByDate: e.target.value}))} className={INPUT_CLS} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-1">Approved By Signature</label>
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-2 px-3 py-2 text-[13px] font-semibold border border-[#E9E9E9] rounded-[8px] bg-white cursor-pointer hover:border-[#FFB700]">
+                        <FiUpload size={15} aria-hidden="true" /> Upload Signature
+                        <input type="file" accept="image/*" onChange={handleApprovalSignatureUpload} className="sr-only" />
+                      </label>
+                      {form.approvedBySignature && (
+                        <>
+                          <img src={form.approvedBySignature} alt="Approval signature preview" className="h-10 max-w-[180px] object-contain border border-[#E9E9E9] rounded-[4px] bg-white" />
+                          <button type="button" onClick={() => setForm(f => ({ ...f, approvedBySignature: '' }))} className="text-[12px] text-red-600 hover:underline">Remove</button>
+                        </>
+                      )}
+                    </div>
+                    <p className="mt-1 text-[11px] text-[#60717B]">Upload a handwritten or digital signature image. Optional.</p>
+                  </div>
+                </div>
               </div>
 
               <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-[8px] space-y-3">
