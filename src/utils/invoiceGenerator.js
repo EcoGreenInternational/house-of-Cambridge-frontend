@@ -16,6 +16,53 @@ async function imageToBase64(url) {
     return '';
   }
 }
+async function trimImageDataUrl(dataUrl) {
+  if (!dataUrl) return '';
+  try {
+    const img = new Image();
+    img.src = dataUrl;
+    await img.decode();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let minX = width, minY = height, maxX = -1, maxY = -1;
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        const isTransparent = data[i + 3] < 10;
+        const isWhite = data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240;
+        if (!isTransparent && !isWhite) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX < 0) return dataUrl;
+
+    const pad = 2;
+    minX = Math.max(0, minX - pad);
+    minY = Math.max(0, minY - pad);
+    maxX = Math.min(width - 1, maxX + pad);
+    maxY = Math.min(height - 1, maxY + pad);
+
+    const out = document.createElement('canvas');
+    out.width = maxX - minX + 1;
+    out.height = maxY - minY + 1;
+    out.getContext('2d').drawImage(canvas, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+    return out.toDataURL('image/png');
+  } catch {
+    return dataUrl;
+  }
+}
 const MAX_FIELD_LEN = 200;
 function escapeHtml(value) {
   if (value === null || value === undefined) return '';
@@ -27,6 +74,10 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;');
+}
+function safeImageDataUrl(value) {
+  if (typeof value !== 'string') return '';
+  return /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(value) ? value : '';
 }
 function sanitizeOrderId(id) {
   if (!id) return '';
@@ -64,6 +115,17 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   const orderNum = fmtOrderNum(order);
   const invoiceDate = fmtDate(order.createdAt || order.invoiceDate);
   const dueDate     = order.dueDate ? fmtDate(order.dueDate) : fmtDate(Date.now() + 10 * 24 * 60 * 60 * 1000);
+  const approvedBy = order.approvedBy && typeof order.approvedBy === 'object' ? order.approvedBy : {};
+  const customerSignature = order.customerSignature && typeof order.customerSignature === 'object' ? order.customerSignature : {};
+  const approvedName = escapeHtml(approvedBy.name || order.approvedByName || order.approverName || '');
+  const approvedSignature = await trimImageDataUrl(
+    safeImageDataUrl(approvedBy.signature || order.approvedBySignature || '')
+  );
+  const approvedDate = approvedBy.date || order.approvedByDate || order.approvalDate;
+  const customerSignatureName = escapeHtml(customerSignature.name || order.customerSignatureName || '');
+  const customerSignatureDate = customerSignature.date || order.customerSignatureDate;
+  const approvedDateText = approvedDate ? escapeHtml(fmtDate(approvedDate)) : '';
+  const customerSignatureDateText = customerSignatureDate ? escapeHtml(fmtDate(customerSignatureDate)) : '';
 
   const safeName  = escapeHtml(customerName  || addr.clientName || addr.fullName || '');
   const safeCompany = escapeHtml(addr.companyName || '');
@@ -301,10 +363,12 @@ export async function downloadInvoice(order, customerName, customerEmail) {
 
   .signatures-row { width: 100%; display: flex; justify-content: flex-end; align-items: center; gap: 20px; margin-top: 8px; padding-right: 5px; break-inside: avoid; page-break-inside: avoid; }
   .sign-column { width: 160px; display: flex; flex-direction: column; gap: 5px; font-size: 10px; }
-  .sign-title { font-weight: 700; color: #F4B41A; margin-bottom: 2px; }
-  .sign-field { display: flex; align-items: center; }
+  .sign-title { display: flex; align-items: center; gap: 5px; font-weight: 700; color: #F4B41A; margin-bottom: 2px; }
+  .sign-field { display: flex; align-items: flex-end; }
   .sign-field .lbl { width: 35px; }
-  .sign-field .ln { flex: 1; border-bottom: 1px solid #ccc; height: 12px; }
+  .sign-field .ln { flex: 1; display: block; min-height: 17px; border-bottom: 1px solid #ccc; line-height: 13px; padding: 0 2px 3px; white-space: nowrap; }
+  .sign-field .approved-value { font-weight: 700; }
+  .approval-signature { display: block; height: 21px; width: auto; max-width: 93px; }
 
   /* CARDS INFO BLOCK */
   .info-boxes-row { display: flex; gap: 15px; margin-top: 20px; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
@@ -476,14 +540,15 @@ export async function downloadInvoice(order, customerName, customerEmail) {
     </div>
     <div class="signatures-row">
       <div class="sign-column">
-        <div class="sign-title">Approved By</div>
-        <div class="sign-field"><span class="lbl">Name</span><span class="ln"></span></div>
-        <div class="sign-field"><span class="lbl">Date</span><span class="ln"></span></div>
+        <div class="sign-title">Approved By:${approvedSignature ? `<img class="approval-signature" src="${approvedSignature}" alt="Approval signature" />` : ''}</div>
+        <div class="sign-field"><span class="lbl">Name :</span><span class="ln approved-value">${approvedName}</span></div>
+        <div class="sign-field"><span class="lbl">Date :</span><span class="ln approved-value">${approvedDateText}</span></div>
+        
       </div>
       <div class="sign-column">
         <div class="sign-title">Customer's Signature</div>
-        <div class="sign-field"><span class="lbl">Name</span><span class="ln"></span></div>
-        <div class="sign-field"><span class="lbl">Date</span><span class="ln"></span></div>
+        <div class="sign-field"><span class="lbl">Name</span><span class="ln">${customerSignatureName}</span></div>
+        <div class="sign-field"><span class="lbl">Date</span><span class="ln">${customerSignatureDateText}</span></div>
       </div>
     </div>
   </div>
