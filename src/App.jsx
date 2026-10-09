@@ -38,6 +38,7 @@ import ContactUs from './pages/misc/ContactUs';
 import FAQ from './pages/misc/FAQ';
 import HowToBuy from './pages/misc/HowToBuy';
 import DataPrivacy from './pages/misc/DataPrivacy';
+import ReturnAndRefundPolicy from './pages/misc/ReturnAndRefundPolicy';
 import TermsAndConditions from './pages/misc/TermsAndConditions';
 import Error404 from './pages/misc/Error404';
 import WriteReview from './pages/reviews/WriteReview';
@@ -155,6 +156,7 @@ function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/how-to-buy" element={<HowToBuy />} />
         <Route path="/privacy-policy" element={<DataPrivacy />} />
+        <Route path="/return-policy" element={<ReturnAndRefundPolicy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
 
         <Route path="*" element={<Error404 />} />
