@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fi';
 
 const EMPTY_FORM = { name: '', description: '', category: '', isActive: true, order: 0 };
+const EMPTY_SPEC = { key: '', value: '' };
 
 const INPUT_CLS =
   'w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]';
@@ -32,6 +33,7 @@ export default function AdminBrands() {
   const [saving,         setSaving]         = useState(false);
   const [deleteTarget,   setDeleteTarget]   = useState(null);
   const [delLoading,     setDelLoading]     = useState(false);
+  const [specs,          setSpecs]          = useState([]);
   const fileRef = useRef(null);
 
   useEffect(() => { dispatch(fetchAdminCategories()); }, [dispatch]);
@@ -51,6 +53,7 @@ export default function AdminBrands() {
     setForm({ ...EMPTY_FORM, category: filterCategory });
     setLogoFile(null);
     setLogoPreview('');
+    setSpecs([]);
     setShowForm(true);
   }, [filterCategory]);
 
@@ -65,6 +68,12 @@ export default function AdminBrands() {
     });
     setLogoFile(null);
     setLogoPreview(brand.logo?.url || '');
+    setSpecs(Array.isArray(brand.specifications)
+      ? brand.specifications.map((spec) => ({
+        key: spec?.key ?? spec?.name ?? '',
+        value: spec?.value ?? spec?.text ?? '',
+      }))
+      : []);
     setShowForm(true);
   }, []);
 
@@ -90,6 +99,7 @@ export default function AdminBrands() {
       fd.append('category',    form.category);
       fd.append('isActive',    String(form.isActive));
       fd.append('order',       String(form.order));
+      fd.append('specifications', JSON.stringify(specs.filter((spec) => spec.key.trim() && spec.value.trim())));
       if (logoFile) fd.append('logo', logoFile);
 
       if (editing) {
@@ -124,6 +134,10 @@ export default function AdminBrands() {
     brand.category?.name || categories.find((c) => c._id === brand.category)?.name || '—';
 
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const addSpec = () => setSpecs((current) => [...current, { ...EMPTY_SPEC }]);
+  const removeSpec = (index) => setSpecs((current) => current.filter((_, i) => i !== index));
+  const setSpecField = (index, field) => (e) => setSpecs((current) =>
+    current.map((spec, i) => (i === index ? { ...spec, [field]: e.target.value } : spec)));
 
   return (
     <AdminLayout>
@@ -374,6 +388,41 @@ export default function AdminBrands() {
                   maxLength={500}
                   className={`${INPUT_CLS} resize-none`}
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[13px] font-semibold text-[#1A1A1A]">Specifications</label>
+                  <button type="button" onClick={addSpec} className="text-[12px] font-medium text-[#FFB700] hover:underline">
+                    + Add row
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {specs.map((spec, index) => (
+                    <div key={index} className="flex gap-2 items-center">
+                      <input
+                        value={spec.key}
+                        onChange={setSpecField(index, 'key')}
+                        placeholder="Key"
+                        maxLength={100}
+                        className={INPUT_CLS}
+                        aria-label={`Brand specification ${index + 1} key`}
+                      />
+                      <input
+                        value={spec.value}
+                        onChange={setSpecField(index, 'value')}
+                        placeholder="Value"
+                        maxLength={300}
+                        className={INPUT_CLS}
+                        aria-label={`Brand specification ${index + 1} value`}
+                      />
+                      <button type="button" onClick={() => removeSpec(index)} aria-label={`Remove brand specification ${index + 1}`} className="text-[#60717B] hover:text-red-600 flex-shrink-0">
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  {specs.length === 0 && <p className="text-[12px] text-[#60717B]">No specifications added.</p>}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

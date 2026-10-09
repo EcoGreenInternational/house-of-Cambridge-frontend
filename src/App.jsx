@@ -6,7 +6,7 @@ import { loadUser } from './redux/slices/authSlice';
 import { fetchCart } from './redux/slices/cartSlice';
 import { fetchWishlist } from './redux/slices/userSlice';
 import ScrollToTop from './components/common/ScrollToTop';
-import ComingSoon from './ComingSoon';
+// import ComingSoon from './ComingSoon';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -99,9 +99,9 @@ function App() {
         }}
       />
       <Routes>
-        {/* Public-facing root shows the Coming Soon page */}
-        <Route path="/" element={<ComingSoon />} />
-        <Route path="/home" element={<Home/>}/>
+        {/* Temporarily disabled while the main home page is active. */}
+        {/* <Route path="/" element={<ComingSoon />} /> */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

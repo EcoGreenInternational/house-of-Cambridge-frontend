@@ -9,6 +9,7 @@ import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
 import { ToastContainer } from '../../components/ui/Toast.jsx';
 import useToast from '../../hooks/useToast.js';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiImage } from 'react-icons/fi';
+import { defaultCategorySpecifications } from '../../utils/categorySpecifications.js';
 
 const EMPTY = { name: '', slug: '', description: '', isActive: true, order: 0, brand: '', specifications: [] };
 const EMPTY_SPEC = { key: '', value: '' };
@@ -85,7 +86,9 @@ export default function AdminCategories() {
       order:       c.order ?? 0,
       brand:       c.brand?._id || c.brand || '',
     });
-    setSpecs(normalizeSpecs(c.specifications));
+    setSpecs(normalizeSpecs(c.specifications).length
+      ? normalizeSpecs(c.specifications)
+      : defaultCategorySpecifications(c.name));
     setFile(null);
     setPreview(c.image?.url || '');
 
@@ -103,10 +106,12 @@ export default function AdminCategories() {
         order:       category.order ?? 0,
         brand:       category.brand?._id || category.brand || '',
       });
-      setSpecs(normalizeSpecs(category.specifications ?? category.specs ?? category.specification));
+      const categorySpecs = normalizeSpecs(category.specifications ?? category.specs ?? category.specification);
+      setSpecs(categorySpecs.length ? categorySpecs : defaultCategorySpecifications(category.name));
       setPreview(category.image?.url || c.image?.url || '');
     } catch {
-      setSpecs(normalizeSpecs(c.specifications));
+      const categorySpecs = normalizeSpecs(c.specifications);
+      setSpecs(categorySpecs.length ? categorySpecs : defaultCategorySpecifications(c.name));
     }
   }, [dispatch]);
 
@@ -131,7 +136,7 @@ export default function AdminCategories() {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => { if (v !== '') fd.append(k, String(v)); });
       const cleanSpecs = specs.filter((s) => s.key.trim() && s.value.trim());
-      if (cleanSpecs.length) fd.append('specifications', JSON.stringify(cleanSpecs));
+      fd.append('specifications', JSON.stringify(cleanSpecs));
 
       if (file) fd.append('image', file);
 

@@ -582,12 +582,12 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         <span class="card-header-label">BANK ACCOUNT DETAILS</span>
       </div>
       <div class="card-body-text" style="gap: 5px;">
-        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span class="bank-value">EGI HOLDING PVT LTD </span></div>
-        <div class="bank-row"><span class="bank-label">Bank Name</span><span class="bank-dots">:</span><span class="bank-value">NDB (National Development Bank)</span></div>
-        <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-dots">:</span><span class="bank-value">115510346318</span></div>
-        <div class="bank-row"><span class="bank-label">Bank Code</span><span class="bank-dots">:</span><span class="bank-value">7214</span></div>
+        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span class="bank-value">House of Cambridge(pvt)LTD </span></div>
+        <div class="bank-row"><span class="bank-label">Bank Name</span><span class="bank-dots">:</span><span class="bank-value">HNB (Hatton National Bank)</span></div>
+        <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-dots">:</span><span class="bank-value">098010032357</span></div>
+        <div class="bank-row"><span class="bank-label">Bank Code</span><span class="bank-dots">:</span><span class="bank-value">7083</span></div>
         <div class="bank-row"><span class="bank-label">Branch</span><span class="bank-dots">:</span><span class="bank-value">Kottawa</span></div>
-        <div class="bank-row"><span class="bank-label">SWIFT/BIC</span><span class="bank-dots">:</span><span class="bank-value">NDBSLKLX</span></div>
+        <div class="bank-row"><span class="bank-label">SWIFT/BIC</span><span class="bank-dots">:</span><span class="bank-value">HBLILKLX</span></div>
       </div>
     </div>
   </div>

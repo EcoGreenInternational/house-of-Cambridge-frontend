@@ -151,7 +151,7 @@ export default function ProductDetail() {
           }
         }
         const optStr = Object.values(selectedOptions).join(' / ');
-        if (v.name && (v.name === optStr || optStr.includes(v.name) || v.name.includes(optStr))) {
+        if (optStr && v.name && (v.name === optStr || optStr.includes(v.name) || v.name.includes(optStr))) {
           return true;
         }
         return false;
@@ -260,6 +260,15 @@ export default function ProductDetail() {
 
     return varWithImg?.image?.url || null;
   }, [matchedVariant, selectedOptions, product?.variants]);
+
+  const selectVariant = useCallback((variant) => {
+    if (variant.attributes && Object.keys(variant.attributes).length > 0) {
+      setSelectedOptions(variant.attributes);
+    } else {
+      setSelectedOptions({ option: variant.name || variant.sku || '' });
+    }
+    setQty(1);
+  }, []);
 
   if (!id) {
     return (
@@ -401,7 +410,10 @@ export default function ProductDetail() {
 
   const ATTRIBUTES = [
     brandDisplay   && { label: 'Brand',  value: sanitizeText(brandDisplay) },
-    product.weight && { label: 'Weight(g)', value: sanitizeText(String(product.weight)) },
+    { label: 'SKU', value: sanitizeText(String(matchedVariant?.sku || product.sku || '—')) },
+    { label: 'Product Code', value: sanitizeText(String(matchedVariant?.variantCode || product.productCode || '—')) },
+    matchedVariant?.name && { label: 'Variety', value: sanitizeText(String(matchedVariant.name)) },
+    (matchedVariant?.weight ?? product.weight) && { label: 'Weight(g)', value: sanitizeText(String(matchedVariant?.weight ?? product.weight)) },
     product.volume && { label: 'Volume', value: sanitizeText(String(product.volume)) },
     product.model  && { label: 'Model',  value: sanitizeText(String(product.model)) },
     product.origin && { label: 'Origin', value: sanitizeText(String(product.origin)) },
@@ -415,6 +427,22 @@ export default function ProductDetail() {
 
   const images = Array.isArray(product.images) ? product.images : [];
   const safeActiveImg = Math.min(activeImg, Math.max(0, images.length - 1));
+  const galleryItems = [
+    ...images.map((image, index) => ({
+      type: 'main',
+      key: `main-${image.public_id || image.url || index}`,
+      image,
+      index,
+    })),
+    ...(Array.isArray(product.variants) ? product.variants : [])
+      .filter((variant) => variant.image?.url)
+      .map((variant, index) => ({
+        type: 'variant',
+        key: `variant-${variant._id || variant.sku || index}`,
+        image: variant.image,
+        variant,
+      })),
+  ];
 
   return (
     <Layout>
@@ -436,28 +464,44 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
           <div className="flex gap-3">
-            {images.length > 1 && (
+            {galleryItems.length > 0 && (
               <div className="flex flex-col gap-2 w-[70px] flex-shrink-0" role="list" aria-label="Product images">
-                {images.map((img, i) => (
+                {galleryItems.map((item, i) => (
                   <button
-                    key={i}
-                    onClick={() => setActiveImg(i)}
+                    key={item.key}
+                    onClick={() => {
+                      if (item.type === 'variant') {
+                        selectVariant(item.variant);
+                      } else {
+                        setSelectedOptions({});
+                        setActiveImg(item.index);
+                      }
+                    }}
                     role="listitem"
-                    aria-label={`View image ${i + 1}`}
-                    aria-pressed={i === safeActiveImg}
-                    className={`aspect-square rounded-[6px] overflow-hidden border-2 transition-colors flex-shrink-0 ${
-                      i === safeActiveImg
+                    aria-label={item.type === 'variant' ? `View ${item.variant.name || 'variety'} image` : `View image ${item.index + 1}`}
+                    aria-pressed={item.type === 'variant'
+                      ? matchedVariant?._id === item.variant._id
+                      : !matchedVariant && item.index === safeActiveImg}
+                    className={`relative aspect-square rounded-[6px] overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                      (item.type === 'variant'
+                        ? matchedVariant?._id === item.variant._id
+                        : !matchedVariant && item.index === safeActiveImg)
                         ? 'border-[#FFB700]'
                         : 'border-[#E9E9E9] hover:border-gray-300'
                     }`}
                   >
                     <img
-                      src={img.url}
-                      alt={`${productName} thumbnail ${i + 1}`}
+                      src={item.image.url}
+                      alt={item.type === 'variant' ? `${productName} ${item.variant.name || 'variety'}` : `${productName} image ${item.index + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                       onError={(e) => { e.currentTarget.src = 'https://placehold.co/70x70?text=Img'; }}
                     />
+                    {item.type === 'variant' && (
+                      <span className="absolute bottom-0 inset-x-0 bg-black/65 text-white text-[8px] leading-tight px-0.5 py-0.5 truncate">
+                        {item.variant.name || 'Variety'}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -549,6 +593,21 @@ export default function ProductDetail() {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                      <select
+                        value={selectedOptions[attr.name] || ''}
+                        onChange={(e) => e.target.value && handleOptionSelect(attr.name, e.target.value)}
+                        aria-label={`Select ${attr.name}`}
+                        className="w-full sm:w-auto min-w-[180px] px-3 py-2 text-[13px] rounded-[6px] border border-[#DCDCDC] bg-white text-[#1A1A1A] focus:outline-none focus:border-[#FFB700]"
+                      >
+                        <option value="">Select {attr.name}</option>
+                        {attr.options
+                          ?.filter((optionVal) => getOptionStock(attr.name, optionVal) > 0)
+                          .map((optionVal) => (
+                            <option key={optionVal} value={optionVal}>
+                              {optionVal}
+                            </option>
+                          ))}
+                      </select>
                       {attr.options?.map((optionVal) => {
                         const isSelected = selectedOptions[attr.name] === optionVal;
                         const stock = getOptionStock(attr.name, optionVal);
@@ -598,6 +657,24 @@ export default function ProductDetail() {
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      <select
+                        value={matchedVariant?.sku || matchedVariant?.name || ''}
+                        onChange={(e) => {
+                          const selected = product.variants.find((variant) => (variant.sku || variant.name) === e.target.value);
+                          if (selected && safeInteger(selected.stock) > 0 && selected.isActive !== false) selectVariant(selected);
+                        }}
+                        aria-label="Select variety"
+                        className="w-full sm:w-auto min-w-[180px] px-3 py-2 text-[13px] rounded-[6px] border border-[#DCDCDC] bg-white text-[#1A1A1A] focus:outline-none focus:border-[#FFB700]"
+                      >
+                        <option value="">Select variety</option>
+                        {product.variants
+                          .filter((v) => safeInteger(v.stock) > 0 && v.isActive !== false)
+                          .map((v) => (
+                            <option key={v.sku || v.name} value={v.sku || v.name}>
+                              {v.name}
+                            </option>
+                          ))}
+                      </select>
                       {product.variants.map((v) => {
                         const isOutOfStock = safeInteger(v.stock) <= 0 || v.isActive === false;
                         const isSelected = matchedVariant?.sku ? matchedVariant.sku === v.sku : matchedVariant?.name === v.name;
@@ -608,12 +685,7 @@ export default function ProductDetail() {
                             disabled={isOutOfStock}
                             onClick={() => {
                               if (!isOutOfStock) {
-                                if (v.attributes && Object.keys(v.attributes).length > 0) {
-                                  setSelectedOptions(v.attributes);
-                                } else {
-                                  setSelectedOptions({ option: v.name });
-                                }
-                                setQty(1);
+                                selectVariant(v);
                               }
                             }}
                             className={`relative px-3.5 py-2 text-[13px] rounded-[6px] transition-all duration-150 font-medium ${

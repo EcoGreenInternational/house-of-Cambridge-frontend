@@ -8,6 +8,7 @@ import AdminLayout from '../../components/admin/AdminLayout.jsx';
 import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
 import { ToastContainer } from '../../components/ui/Toast.jsx';
 import useToast from '../../hooks/useToast.js';
+import { CATEGORY_SPECIFICATIONS, categoryNameFrom } from '../../utils/categorySpecifications.js';
 import {
   FiSearch, FiPlus, FiEdit2, FiTrash2,
   FiChevronLeft, FiChevronRight, FiX, FiImage,
@@ -42,52 +43,10 @@ const FLAG_FIELDS = [
   { key: 'isFlashSale',    label: 'Flash Sale' },
 ];
 
-const CATEGORY_SPECIFIC_FIELDS = {
-  'Beauty & Cosmetics': [
-    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'France' },
-    { name: 'suitableFor', label: 'Suitable For', type: 'text', placeholder: 'Adults, Unisex' },
-    { name: 'skinHairType', label: 'Skin Hair Type', type: 'text', placeholder: 'Oily Skin, Dry Hair' },
-    { name: 'keyIngredients', label: 'Key Ingredients', type: 'text', placeholder: 'Retinol, Vitamin C' },
-  ],
-  'Baby Care': [
-    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'United Kingdom' },
-    { name: 'ageRange', label: 'Age Range', type: 'text', placeholder: '0-6 Months' },
-    { name: 'suitableFor', label: 'Suitable For', type: 'text', placeholder: 'Newborns' },
-    { name: 'skinTypeCompatibility', label: 'Skin Type Compatibility', type: 'text', placeholder: 'Hypoallergenic' },
-    { name: 'keyIngredients', label: 'Key Ingredients', type: 'text', placeholder: 'Aloe Vera, Chamomile' },
-  ],
-  'Home Appliances': [
-    { name: 'manufactureCountry', label: 'Manufacture Country', type: 'text', placeholder: 'Germany' },
-    { name: 'model', label: 'Model', type: 'text', placeholder: 'H-200' },
-    { name: 'material', label: 'Material', type: 'text', placeholder: 'Stainless Steel, Plastic' },
-    { name: 'dimensions', label: 'Dimensions (L × W × H)', type: 'text', placeholder: '30x20x15 cm' },
-    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'Silver, White' },
-    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'Standard Sink' },
-    { name: 'packaging', label: 'Packaging', type: 'text', placeholder: 'Eco-friendly box' },
-    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: '1 Year' },
-  ],
-  'Electronics': [
-    { name: 'model', label: 'Model', type: 'text', placeholder: 'E-X70' },
-    { name: 'powerSupply', label: 'Power Supply', type: 'text', placeholder: '220V / Battery' },
-    { name: 'material', label: 'Material', type: 'text', placeholder: 'Polycarbonate' },
-    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'Charcoal Black' },
-    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'Bluetooth 5.0 Devices' },
-    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: '2 Years' },
-  ],
-  'Computer & Printers': [
-    { name: 'model', label: 'Model', type: 'text', placeholder: 'LaserJet Pro' },
-    { name: 'processor', label: 'Processor / Chipset', type: 'text', placeholder: 'Intel i5 / Quad-Core' },
-    { name: 'ram', label: 'RAM', type: 'text', placeholder: '8GB DDR4' },
-    { name: 'storage', label: 'Storage (SSD / HDD)', type: 'text', placeholder: '512GB NVMe SSD' },
-    { name: 'display', label: 'Display Size & Resolution', type: 'text', placeholder: '15.6" FHD' },
-    { name: 'os', label: 'Operating System', type: 'text', placeholder: 'Windows 11' },
-    { name: 'connectivity', label: 'Connectivity (USB, Bluetooth, Wi-Fi)', type: 'text', placeholder: 'USB 3.0, Wi-Fi 6' },
-    { name: 'powerSupply', label: 'Power Supply', type: 'text', placeholder: '65W AC Adapter' },
-    { name: 'colour', label: 'Colour', type: 'text', placeholder: 'Platinum Silver' },
-    { name: 'compatibility', label: 'Compatibility', type: 'text', placeholder: 'Universal macOS & Windows' },
-    { name: 'warranty', label: 'Warranty', type: 'text', placeholder: '3 Years' },
-  ]
-};
+const CATEGORY_SPECIFIC_FIELDS = Object.fromEntries(Object.entries(CATEGORY_SPECIFICATIONS).map(([category, specs]) => [
+  category,
+  specs.map(([name, placeholder]) => ({ name, label: name, type: 'text', placeholder })),
+]));
 
 const toSpecFieldName = (key) =>
   key
@@ -103,6 +62,13 @@ const toSpecFieldName = (key) =>
     .join('');
 
 const normalizeCategorySpecs = (specs) => {
+  if (typeof specs === 'string' && specs.trim()) {
+    try {
+      return normalizeCategorySpecs(JSON.parse(specs));
+    } catch {
+      return [];
+    }
+  }
   if (!Array.isArray(specs)) return [];
 
   return specs
@@ -120,6 +86,8 @@ const normalizeCategorySpecs = (specs) => {
     })
     .filter(Boolean);
 };
+
+const normalizeBrandSpecs = (specs) => normalizeCategorySpecs(specs);
 
 const normalizeVariantAttrs = (attrs) => {
   if (Array.isArray(attrs)) {
@@ -213,18 +181,15 @@ export default function AdminProducts() {
     () => categories.find((c) => c._id === form.category) || null,
     [categories, form.category],
   );
+  const selectedBrand = useMemo(
+    () => brands.find((brand) => brand._id === form.brand) || null,
+    [brands, form.brand],
+  );
 
   const currentCategoryName = useMemo(() => {
     if (!selectedCategory) return '';
 
-    const name = selectedCategory.name.trim().toLowerCase();
-    if (name.includes('computer')) return 'Computer & Printers';
-    if (name.includes('appliance') || name.includes('house')) return 'Home Appliances';
-    if (name.includes('beauty')) return 'Beauty & Cosmetics';
-    if (name.includes('baby')) return 'Baby Care';
-    if (name.includes('elect')) return 'Electronics';
-
-    return selectedCategory.name;
+    return categoryNameFrom(selectedCategory.name);
   }, [selectedCategory]);
 
   const categorySpecificFields = useMemo(() => {
@@ -232,6 +197,10 @@ export default function AdminProducts() {
     if (templateFields.length) return templateFields;
     return CATEGORY_SPECIFIC_FIELDS[currentCategoryName] || [];
   }, [currentCategoryName, selectedCategory]);
+  const brandSpecificFields = useMemo(
+    () => normalizeBrandSpecs(selectedBrand?.specifications),
+    [selectedBrand],
+  );
 
   useEffect(() => {
     dispatch(fetchAdminCategories());
@@ -271,6 +240,25 @@ export default function AdminProducts() {
     if (chosenCategory?.variantAttributes?.length) {
       setVariantAttributes(normalizeVariantAttrs(chosenCategory.variantAttributes));
     }
+  };
+
+  const handleBrandSelection = (e) => {
+    const brandId = e.target.value;
+    const previousBrand = brands.find((item) => item._id === form.brand);
+    setForm((f) => ({ ...f, brand: brandId }));
+    const brand = brands.find((item) => item._id === brandId);
+    const brandFields = normalizeBrandSpecs(brand?.specifications);
+    const nextBrandAttributes = brandFields.reduce((acc, field) => {
+      acc[field.name] = field.placeholder || '';
+      return acc;
+    }, {});
+    setAttributes((current) => {
+      const retained = Object.fromEntries(
+        Object.entries(current).filter(([key]) =>
+          !normalizeBrandSpecs(previousBrand?.specifications).some((field) => field.name === key)),
+      );
+      return { ...retained, ...nextBrandAttributes };
+    });
   };
 
   const openCreate = useCallback(() => {
@@ -688,7 +676,7 @@ export default function AdminProducts() {
         </div>
 
         <div className="bg-white rounded-[12px] border border-[#E9E9E9] p-4 flex flex-wrap gap-3">
-          <form onSubmit={(e) => { e.preventDefault(); setPage(1); load(search, catFilter, 1); }} className="flex gap-2 flex-1 min-w-[200px]" role="search">
+          <form onSubmit={(e) => { e.preventDefault(); setPage(1); load(search, catFilter, userViewFilter, 1); }} className="flex gap-2 flex-1 min-w-[200px]" role="search">
             <div className="relative flex-1">
               <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#60717B]" aria-hidden="true" />
               <input
@@ -1003,7 +991,7 @@ export default function AdminProducts() {
                 </div>
                 <div>
                   <label htmlFor="prod-brand" className="text-[13px] font-semibold text-[#1A1A1A] block mb-1">Brand</label>
-                  <select id="prod-brand" value={form.brand} onChange={setField('brand')} className={INPUT_CLS}>
+                  <select id="prod-brand" value={form.brand} onChange={handleBrandSelection} className={INPUT_CLS}>
                     <option value="">No brand</option>
                     {filteredBrands.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
                   </select>
@@ -1021,6 +1009,28 @@ export default function AdminProducts() {
                         <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-1">
                           {field.label}
                         </label>
+                        <input
+                          type={field.type}
+                          placeholder={field.placeholder}
+                          value={attributes[field.name] || ''}
+                          onChange={(e) => setAttributes((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                          className="w-full px-3 py-1.5 text-[12px] border border-[#E9E9E9] rounded-[6px] bg-white focus:outline-none focus:border-[#FFB700]"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {brandSpecificFields.length > 0 && (
+                <div className="p-4 bg-blue-50/50 border border-blue-200/60 rounded-[8px] space-y-3">
+                  <h4 className="text-[12px] font-bold text-blue-700 uppercase tracking-wider border-b border-blue-200/60 pb-1">
+                    {selectedBrand.name} Specifications
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {brandSpecificFields.map((field) => (
+                      <div key={field.name} className="flex flex-col">
+                        <label className="text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-1">{field.label}</label>
                         <input
                           type={field.type}
                           placeholder={field.placeholder}
