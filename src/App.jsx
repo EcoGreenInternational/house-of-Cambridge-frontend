@@ -6,7 +6,7 @@ import { loadUser } from './redux/slices/authSlice';
 import { fetchCart } from './redux/slices/cartSlice';
 import { fetchWishlist } from './redux/slices/userSlice';
 import ScrollToTop from './components/common/ScrollToTop';
-import ComingSoon from './ComingSoon';
+// import ComingSoon from './ComingSoon';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -38,6 +38,7 @@ import ContactUs from './pages/misc/ContactUs';
 import FAQ from './pages/misc/FAQ';
 import HowToBuy from './pages/misc/HowToBuy';
 import DataPrivacy from './pages/misc/DataPrivacy';
+import ReturnAndRefundPolicy from './pages/misc/ReturnAndRefundPolicy';
 import TermsAndConditions from './pages/misc/TermsAndConditions';
 import Error404 from './pages/misc/Error404';
 import WriteReview from './pages/reviews/WriteReview';
@@ -99,9 +100,9 @@ function App() {
         }}
       />
       <Routes>
-        {/* Public-facing root shows the Coming Soon page */}
-        <Route path="/" element={<ComingSoon />} />
-        <Route path="/home" element={<Home/>}/>
+        {/* Temporarily disabled while the main home page is active. */}
+        {/* <Route path="/" element={<ComingSoon />} /> */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -155,6 +156,7 @@ function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/how-to-buy" element={<HowToBuy />} />
         <Route path="/privacy-policy" element={<DataPrivacy />} />
+        <Route path="/return-policy" element={<ReturnAndRefundPolicy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
 
         <Route path="*" element={<Error404 />} />
