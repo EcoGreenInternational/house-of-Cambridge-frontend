@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
@@ -208,9 +208,29 @@ function SectionHeader({ title, to }) {
   );
 }
 
+// Map the home-page slug to a keyword used by the category names in the database.
+const SLUG_KEYWORDS = {
+  beauty: 'beauty',
+  computers: 'computer',
+  electronics: 'electronic',
+  'home-appliances': 'home',
+  'baby-care': 'baby',
+};
+
+function buildCategoryLink(categories, slug) {
+  const keyword = SLUG_KEYWORDS[slug] || slug;
+  const matches = (categories || []).filter((category) =>
+    category.name?.toLowerCase().includes(keyword)
+  );
+  const match = matches.find((category) => !category.parent) || matches[0];
+  return match ? `/shop?category=${match._id}` : '/shop';
+}
+
 export default function Home() {
   const dispatch = useDispatch();
-  const { flashSale, popular, homeNewArrivals, categories } = useSelector((s) => s.products);
+  const { flashSale, flashSaleVisible, flashSalePosterUrl, popular, homeNewArrivals, categories } = useSelector((s) => s.products);
+  const categoryList = useMemo(() => categories || [], [categories]);
+  const catLink = useCallback((slug) => buildCategoryLink(categoryList, slug), [categoryList]);
 
   const [slide, setSlide]                       = useState(0);
   const [beautyProducts, setBeautyProducts]     = useState([]);
@@ -362,12 +382,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section
+      {(flashSaleVisible || flashSalePosterUrl) && <section
         className="py-6 sm:py-8 bg-white"
         aria-labelledby="flash-sale-heading"
       >
         <div className="max-w-[1280px] mx-auto px-3 sm:px-4">
-            <div className="bg-[linear-gradient(90deg,#C20404_60.25%,#FF5312_100%)] rounded-[10px] p-4 sm:p-6">
+            <div className={flashSaleVisible
+              ? 'bg-[linear-gradient(90deg,#C20404_60.25%,#FF5312_100%)] rounded-[10px] p-4 sm:p-6'
+              : 'rounded-[10px]'}>
+            {flashSaleVisible && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5">
                 <div className="flex items-center gap-2">
                   <Icon icon="mdi:flash" width={28} className="sm:w-[32px] text-[#FFB700]" aria-hidden="true" />
@@ -388,8 +411,15 @@ export default function Home() {
                   View All Deals <Icon icon="mdi:chevron-right" width={14} className="ml-1" aria-hidden="true" />
                 </Link>
               </div>
+            )}
 
-            {flashSale.length > 0 ? (
+            {!flashSaleVisible && flashSalePosterUrl ? (
+              <img
+                src={flashSalePosterUrl}
+                alt="Flash sale promotion"
+                className="w-full h-[320px] sm:h-[420px] object-cover rounded-[10px]"
+              />
+            ) : flashSale.length > 0 ? (
               <div
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"
                 role="list"
@@ -406,7 +436,7 @@ export default function Home() {
             )}
           </div>
         </div>
-      </section>
+      </section>}
 
       <section className="py-6 sm:py-8 bg-white" aria-labelledby="categories-heading">
         <div className="max-w-[1280px] mx-auto px-4">
@@ -415,7 +445,7 @@ export default function Home() {
             {STATIC_CATS.map((cat) => (
               <li key={cat.slug}>
                 <Link
-                  to={`/shop?category=${encodeURIComponent(cat.slug)}`}
+                  to={catLink(cat.slug)}
                   className="flex flex-col items-center gap-2 sm:gap-3 group"
                 >
                   <div
@@ -482,7 +512,7 @@ export default function Home() {
               />
             </Link>
 
-            <Link to="/shop?newArrival=true" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #831843 0%, #be185d 30%, #ec4899 60%, #f9a8d4 100%)' }}>
+            <Link to={catLink('beauty')} className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #831843 0%, #be185d 30%, #ec4899 60%, #f9a8d4 100%)' }}>
               <div className="relative p-4 sm:p-6 z-10 w-[50%]">
                 <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">BEAUTY</h3>
                 <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">DEALS</h3>
@@ -529,7 +559,7 @@ export default function Home() {
         <div className="max-w-[1280px] mx-auto px-3 sm:px-10">
           <h2 id="sub-banners-heading" className="sr-only">Shop by department</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/shop?category=home-appliances" className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card%201.png')", backgroundColor: '#1E2A3A' }}>
+            <Link to={catLink('home-appliances')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card%201.png')", backgroundColor: '#1E2A3A' }}>
               <div className="relative p-4 sm:p-5 z-10 w-[55%]">
                 <h3 className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">PREMIUM HOME</h3>
                 <p className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5 sm:mb-1">APPLIANCES</p>
@@ -540,7 +570,7 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link to="/shop?category=electronics" className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card2.png')", backgroundColor: '#1A1A2E' }}>
+            <Link to={catLink('electronics')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card2.png')", backgroundColor: '#1A1A2E' }}>
               <div className="relative p-4 sm:p-5 z-10 w-[55%]">
                 <h3 className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">LATEST GADGETS</h3>
                 <p className="text-[#FFB700] text-[10px] lg:text-[11px] font-bold mb-0.5">UP TO 45% OFF</p>
@@ -551,7 +581,7 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link to="/shop?category=beauty" className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card3.png')", backgroundColor: '#F5D5C8' }}>
+            <Link to={catLink('beauty')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card3.png')", backgroundColor: '#F5D5C8' }}>
               <div className="relative p-4 sm:p-5 z-10 w-[55%]">
                 <h3 className="text-[#8B2252] font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">BEAUTY AND</h3>
                 <p className="text-[#8B2252] font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">PERSONAL CARE</p>
@@ -568,7 +598,7 @@ export default function Home() {
 
       <section className="py-6 sm:py-8 bg-gray-50" aria-labelledby="beauty-heading">
         <div className="max-w-[1280px] mx-auto px-2 sm:px-10">
-          <SectionHeader title="Beauty and Cosmetics" to="/shop?category=beauty" />
+          <SectionHeader title="Beauty and Cosmetics" to={catLink('beauty')} />
           <h2 id="beauty-heading" className="sr-only">Beauty and Cosmetics</h2>
           {beautyProducts.length > 0
             ? <ProductRow products={beautyProducts} label="Beauty and cosmetics products" />
@@ -579,7 +609,7 @@ export default function Home() {
 
       <section className="py-6 sm:py-8 bg-white" aria-labelledby="electronics-heading">
         <div className="max-w-[1280px] mx-auto px-2 sm:px-10">
-          <SectionHeader title="Electronic Appliances" to="/shop?category=electronics" />
+          <SectionHeader title="Electronic Appliances" to={catLink('electronics')} />
           <h2 id="electronics-heading" className="sr-only">Electronic Appliances</h2>
           {electronicsProducts.length > 0
             ? <ProductRow products={electronicsProducts} label="Electronic appliances" />
