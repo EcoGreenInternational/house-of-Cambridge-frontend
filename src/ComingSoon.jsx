@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-const getLaunchDate = () => {
-  const now = new Date();
-  const launchDate = new Date(now.getFullYear(), 8, 12, 0, 0, 0);
-  if (launchDate <= now) launchDate.setFullYear(now.getFullYear() + 1);
-  return launchDate;
+export const getLaunchDate = () => {
+  return new Date(2026, 9, 17, 6, 0, 0);
 };
 
 const getCountdown = (launchDate) => {
@@ -14,6 +11,7 @@ const getCountdown = (launchDate) => {
   return {
     days: Math.floor(totalSeconds / 86400),
     hours: Math.floor((totalSeconds % 86400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
     seconds: totalSeconds % 60,
   };
 };
@@ -360,7 +358,7 @@ const ComingSoon = () => {
         </div>
 
         {/* Launch Countdown */}
-        {/* <div className="hoc-countdown" aria-label="Countdown to launch">
+        <div className="hoc-countdown" aria-label="Countdown to launch">
           <div className="hoc-countdown-unit">
             <span className="hoc-countdown-value">{countdown.days}</span>
             <span className="hoc-countdown-label">Days</span>
@@ -370,10 +368,14 @@ const ComingSoon = () => {
             <span className="hoc-countdown-label">Hours</span>
           </div>
           <div className="hoc-countdown-unit">
+            <span className="hoc-countdown-value">{String(countdown.minutes).padStart(2, '0')}</span>
+            <span className="hoc-countdown-label">Minutes</span>
+          </div>
+          <div className="hoc-countdown-unit">
             <span className="hoc-countdown-value">{String(countdown.seconds).padStart(2, '0')}</span>
             <span className="hoc-countdown-label">Seconds</span>
           </div>
-        </div> */}
+        </div>
 
 
         {/* Contact Section */}

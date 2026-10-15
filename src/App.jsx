@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
@@ -6,7 +6,7 @@ import { loadUser } from './redux/slices/authSlice';
 import { fetchCart } from './redux/slices/cartSlice';
 import { fetchWishlist } from './redux/slices/userSlice';
 import ScrollToTop from './components/common/ScrollToTop';
-// import ComingSoon from './ComingSoon';
+import ComingSoon, { getLaunchDate } from './ComingSoon';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -72,6 +72,167 @@ function AdminRoute({ children }) {
   return children;
 }
 
+const launchCelebrationKey = 'house-of-cambridge-launch-celebration-seen';
+const celebrationColors = ['#FFB700', '#FF8C00', '#1A1A1A', '#F7D794', '#FFFFFF'];
+
+function hasSeenLaunchCelebration() {
+  try {
+    return localStorage.getItem(launchCelebrationKey) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function LaunchCelebration({ onDismiss }) {
+  const balls = Array.from({ length: 24 }, (_, index) => ({
+    left: `${(index * 37) % 101}%`,
+    delay: `${(index % 8) * 0.18}s`,
+    color: celebrationColors[index % celebrationColors.length],
+    size: `${18 + (index % 4) * 6}px`,
+  }));
+
+  return (
+    <div className="launch-celebration" role="status" aria-label="Website launch celebration">
+      <style>{`
+        .launch-celebration {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background: rgba(26, 26, 26, 0.42);
+          animation: launch-celebration-fade 7s ease forwards;
+          pointer-events: none;
+        }
+        .launch-celebration-content {
+          position: relative;
+          z-index: 1;
+          max-width: min(90vw, 520px);
+          padding: 36px 42px;
+          border: 2px solid #FFB700;
+          border-radius: 20px;
+          background: #fffaf1;
+          color: #1A1A1A;
+          text-align: center;
+          box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
+          animation: launch-celebration-pop 0.7s ease-out both;
+        }
+        .launch-celebration-content h2 {
+          margin: 0 0 10px;
+          color: #FF8C00;
+          font-size: clamp(28px, 6vw, 48px);
+          font-weight: 900;
+          letter-spacing: 1px;
+        }
+        .launch-celebration-content p {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 600;
+        }
+        .launch-celebration-dismiss {
+          margin-top: 22px;
+          padding: 10px 22px;
+          border: 0;
+          border-radius: 999px;
+          background: #1A1A1A;
+          color: #fff;
+          cursor: pointer;
+          font-weight: 700;
+          pointer-events: auto;
+        }
+        .launch-celebration-ball {
+          position: absolute;
+          top: -60px;
+          left: var(--ball-left);
+          width: var(--ball-size);
+          height: var(--ball-size);
+          border-radius: 50%;
+          background: var(--ball-color);
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+          animation: launch-celebration-fall 5s ease-in forwards;
+          animation-delay: var(--ball-delay);
+        }
+        @keyframes launch-celebration-fall {
+          to { transform: translateY(115vh) rotate(540deg); }
+        }
+        @keyframes launch-celebration-pop {
+          from { opacity: 0; transform: scale(0.75); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes launch-celebration-fade {
+          0%, 82% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `}</style>
+      {balls.map((ball, index) => (
+        <span
+          className="launch-celebration-ball"
+          key={index}
+          style={{
+            '--ball-left': ball.left,
+            '--ball-delay': ball.delay,
+            '--ball-color': ball.color,
+            '--ball-size': ball.size,
+          }}
+        />
+      ))}
+      <div className="launch-celebration-content">
+        <h2>We are live!</h2>
+        <p>Welcome to House of Cambridge. Let&apos;s celebrate!</p>
+        <button type="button" className="launch-celebration-dismiss" onClick={onDismiss}>
+          Start shopping
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LaunchGate() {
+  const [isLaunched, setIsLaunched] = useState(() => Date.now() >= getLaunchDate().getTime());
+  const [showCelebration, setShowCelebration] = useState(
+    () => Date.now() >= getLaunchDate().getTime() && !hasSeenLaunchCelebration(),
+  );
+
+  useEffect(() => {
+    if (isLaunched) return undefined;
+
+    const launchDelay = Math.max(0, getLaunchDate().getTime() - Date.now());
+    const timer = window.setTimeout(() => {
+      setIsLaunched(true);
+      if (!hasSeenLaunchCelebration()) setShowCelebration(true);
+    }, launchDelay);
+
+    return () => window.clearTimeout(timer);
+  }, [isLaunched]);
+
+  useEffect(() => {
+    if (!isLaunched || !showCelebration) return undefined;
+
+    try {
+      localStorage.setItem(launchCelebrationKey, 'true');
+    } catch {
+      // The celebration still works for the current visit if storage is unavailable.
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowCelebration(false);
+    }, 7000);
+
+    return () => window.clearTimeout(timer);
+  }, [isLaunched, showCelebration]);
+
+  if (!isLaunched) return <ComingSoon />;
+
+  return (
+    <>
+      <Home />
+      {showCelebration && <LaunchCelebration onDismiss={() => setShowCelebration(false)} />}
+    </>
+  );
+}
+
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((s) => s.auth);
@@ -100,9 +261,8 @@ function App() {
         }}
       />
       <Routes>
-        {/* Temporarily disabled while the main home page is active. */}
-        {/* <Route path="/" element={<ComingSoon />} /> */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LaunchGate />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
