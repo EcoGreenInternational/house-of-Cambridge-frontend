@@ -1,11 +1,17 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAdminFlashSales, fetchAdminProducts, updateFlashSale } from '../../redux/slices/adminSlice.js';
+import {
+  fetchAdminFlashSales,
+  fetchAdminProducts,
+  updateFlashSale,
+  fetchFlashSaleSetting,
+  updateFlashSaleSetting,
+} from '../../redux/slices/adminSlice.js';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
 import { ToastContainer } from '../../components/ui/Toast.jsx';
 import useToast from '../../hooks/useToast.js';
 import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
-import { FiZap, FiPlus, FiEdit2, FiTrash2, FiClock, FiSearch, FiX } from 'react-icons/fi';
+import { FiZap, FiPlus, FiEdit2, FiTrash2, FiClock, FiSearch, FiX, FiUpload } from 'react-icons/fi';
 
 const EMPTY_FORM = { flashSalePrice: '', flashSaleEnds: '' };
 
@@ -35,7 +41,7 @@ const NOW_ISO = () => new Date().toISOString().slice(0, 16);
 
 export default function AdminFlashSales() {
   const dispatch = useDispatch();
-  const { flashSales = [], products = [], loading } = useSelector((s) => s.admin);
+  const { flashSales = [], products = [], loading, flashSaleVisible, flashSalePosterUrl } = useSelector((s) => s.admin);
   const { toasts, toast, removeToast } = useToast();
 
   const [drawerOpen,    setDrawerOpen]    = useState(false);
@@ -46,11 +52,59 @@ export default function AdminFlashSales() {
   const [picked,        setPicked]        = useState(null);
   const [removeTarget,  setRemoveTarget]  = useState(null);
   const [removing,      setRemoving]      = useState(false);
+  const [settingSaving, setSettingSaving] = useState(false);
+  const [posterFile, setPosterFile] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAdminFlashSales());
     dispatch(fetchAdminProducts({ limit: 200 }));
+    dispatch(fetchFlashSaleSetting());
   }, [dispatch]);
+
+  const handleVisibilityChange = async (event) => {
+    const visible = event.target.checked;
+    setSettingSaving(true);
+    try {
+      await dispatch(updateFlashSaleSetting({ flashSaleVisible: visible })).unwrap();
+      toast.success(visible ? 'Flash sale section enabled' : 'Flash sale section hidden');
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not update flash sale visibility');
+    } finally {
+      setSettingSaving(false);
+    }
+  };
+
+  const handlePosterChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Poster image must be 2 MB or smaller.');
+      return;
+    }
+    setPosterFile(file);
+  };
+
+  const handlePosterUpload = async () => {
+    if (!posterFile) return;
+    setSettingSaving(true);
+    try {
+      await dispatch(updateFlashSaleSetting({
+        flashSaleVisible: flashSaleVisible !== false,
+        poster: posterFile,
+      })).unwrap();
+      setPosterFile(null);
+      toast.success('Flash sale poster uploaded');
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not upload flash sale poster');
+    } finally {
+      setSettingSaving(false);
+    }
+  };
 
   const openAdd = useCallback(() => {
     setEditing(null);
@@ -135,13 +189,46 @@ export default function AdminFlashSales() {
             <h2 className="text-[20px] font-black text-[#1A1A1A]">Flash Sales</h2>
             <p className="text-[13px] text-[#60717B]">Manage limited-time flash offers</p>
           </div>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FFB700] rounded-[8px] text-[13px] font-bold text-[#1A1A1A] hover:bg-amber-400 transition-colors"
-          >
-            <FiPlus size={15} aria-hidden="true" /> Add Flash Sale
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-[13px] font-semibold text-[#1A1A1A] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={flashSaleVisible !== false}
+                onChange={handleVisibilityChange}
+                disabled={settingSaving}
+                className="h-4 w-4 accent-[#FFB700]"
+              />
+              Show flash sale on user view
+            </label>
+            <label className="flex items-center gap-2 px-3 py-2 border border-[#E9E9E9] rounded-[8px] text-[12px] font-semibold cursor-pointer hover:border-[#FFB700]">
+              <FiUpload size={14} aria-hidden="true" />
+              Choose poster
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handlePosterChange} className="sr-only" />
+            </label>
+            {posterFile && (
+              <button
+                type="button"
+                onClick={handlePosterUpload}
+                disabled={settingSaving}
+                className="px-3 py-2 bg-[#1A1A1A] text-white rounded-[8px] text-[12px] font-semibold disabled:opacity-50"
+              >
+                {settingSaving ? 'Uploading…' : 'Upload poster'}
+              </button>
+            )}
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 px-4 py-2 bg-[#FFB700] rounded-[8px] text-[13px] font-bold text-[#1A1A1A] hover:bg-amber-400 transition-colors"
+            >
+              <FiPlus size={15} aria-hidden="true" /> Add Flash Sale
+            </button>
+          </div>
         </div>
+        {flashSalePosterUrl && (
+          <div className="flex items-center gap-3 bg-white border border-[#E9E9E9] rounded-[10px] p-3">
+            <img src={flashSalePosterUrl} alt="Current flash sale poster" className="w-28 h-16 object-cover rounded-[6px]" />
+            <p className="text-[12px] text-[#60717B]">This poster appears in the flash-sale area when the checkbox is unticked.</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-4">
           {[

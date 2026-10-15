@@ -15,6 +15,8 @@ const EMPTY_FORM = {
   invoiceType: 'manual',
   assignedPeople: '',
   dueDate: '',
+  paymentMethod: 'cash',
+  note: '',
   approvedByName: '',
   approvedByDate: '',
   approvedBySignature: '',
@@ -341,6 +343,8 @@ export default function AdminInvoices() {
       invoiceType: invoice.invoiceType,
       assignedPeople: invoice.assignedPeople || '',
       dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : '',
+      paymentMethod: invoice.paymentMethod || 'cash',
+      note: invoice.note || '',
       approvedByName: invoice.approvedByName || invoice.approvedBy?.name || '',
       approvedByDate: invoice.approvedByDate
         ? new Date(invoice.approvedByDate).toISOString().split('T')[0]
@@ -522,6 +526,38 @@ export default function AdminInvoices() {
                   <label className="text-[13px] font-semibold text-[#1A1A1A] block mb-1">Due Date</label>
                   <input type="date" value={form.dueDate} onChange={(e) => setForm(f => ({...f, dueDate: e.target.value}))} className={INPUT_CLS} required />
                 </div>
+                <div>
+                  <label className="text-[13px] font-semibold text-[#1A1A1A] block mb-1">Payment Method</label>
+                  <select value={form.paymentMethod} onChange={(e) => setForm(f => ({...f, paymentMethod: e.target.value}))} className={INPUT_CLS}>
+                    <option value="online">Online</option>
+                    <option value="credit">Credit</option>
+                    <option value="cash">Cash</option>
+                    <option value="COD">COD</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Note Field */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[13px] font-semibold text-[#1A1A1A]">Note <span className="text-[11px] font-normal text-[#60717B]">(optional)</span></label>
+                  {form.note && (
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, note: '' }))}
+                      className="text-[11px] text-red-500 hover:text-red-700 hover:underline transition-colors"
+                    >
+                      Clear Note
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  rows={2}
+                  value={form.note}
+                  onChange={(e) => setForm(f => ({ ...f, note: e.target.value }))}
+                  placeholder="Add any additional notes for this invoice..."
+                  className={`${INPUT_CLS} resize-none`}
+                />
               </div>
 
               <div>

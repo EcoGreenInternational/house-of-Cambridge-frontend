@@ -6,7 +6,13 @@ import { createOrder } from '../../redux/slices/orderSlice.js';
 import { initiateKoko, getPayHereHash } from '../../redux/slices/paymentSlice.js';
 import { submitPayHereForm, PAYHERE_MERCHANT_ID } from '../../utils/payhere.js';
 import PayPalCheckout from '../../components/payment/PayPalCheckout.jsx';
-import { SHIPPING_METHODS, calcShipping, calcTotalWeightKg } from '../../utils/shipping.js';
+import {
+  SHIPPING_METHODS,
+  COD_MAX_PRODUCTS,
+  calcShipping,
+  calcTotalWeightKg,
+  getTotalItemQuantity,
+} from '../../utils/shipping.js';
 import Layout from '../../components/common/Layout.jsx';
 import Breadcrumb from '../../components/ui/Breadcrumb.jsx';
 import { PageSpinner } from '../../components/ui/Spinner.jsx';
@@ -75,6 +81,7 @@ export default function GuestCheckoutPage() {
   const items         = cart?.items || [];
   const subtotal      = useMemo(() => items.reduce((s, i) => s + i.price * i.quantity, 0), [items]);
   const totalWeightKg = useMemo(() => calcTotalWeightKg(items), [items]);
+  const totalItemQuantity = useMemo(() => getTotalItemQuantity(items), [items]);
   const shippingCost  = shippingMethod ? calcShipping(shippingMethod, totalWeightKg) : 0;
   const tax           = Math.round(subtotal * VAT_RATE);
   const total         = subtotal + shippingCost + tax;
@@ -91,6 +98,10 @@ export default function GuestCheckoutPage() {
 
   const handlePlaceOrder = useCallback(async () => {
     if (placing) return;
+    if (payTab === 'cod' && totalItemQuantity > COD_MAX_PRODUCTS) {
+      toast.error(`Cash on Delivery is limited to ${COD_MAX_PRODUCTS} products per order.`);
+      return;
+    }
     if (!agreeTerms)                       return toast.error('Please agree to the terms and conditions');
     if (!contact.email)                    return toast.error('Email is required');
     if (!addr.addressLine1 || !addr.city)  return toast.error('Please fill in shipping address');
@@ -169,7 +180,7 @@ export default function GuestCheckoutPage() {
     }
 
     setPlacing(false);
-  }, [placing, agreeTerms, contact, addr, shippingMethod, payTab, shippingCost, dispatch, navigate]);
+  }, [placing, totalItemQuantity, agreeTerms, contact, addr, shippingMethod, payTab, shippingCost, dispatch, navigate]);
 
   if (cartLoading && !cart) return <Layout><PageSpinner /></Layout>;
 
@@ -352,7 +363,7 @@ export default function GuestCheckoutPage() {
                 <div className="py-6 text-center">
                   <p className="text-4xl mb-3" aria-hidden="true">💵</p>
                   <p className="text-[13px] font-semibold text-[#1A1A1A] mb-1">Cash on Delivery</p>
-                  <p className="text-[12px] text-[#60717B]">Pay with cash when your order is delivered.</p>
+                  <p className="text-[12px] text-[#60717B]">Pay with cash when your order is delivered. Maximum {COD_MAX_PRODUCTS} products per order.</p>
                 </div>
               )}
 

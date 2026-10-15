@@ -92,6 +92,21 @@ export const updateFlashSale = createAsyncThunk('admin/updateFlashSale', async (
   catch (err) { return rejectWithValue(handle(err)); }
 });
 
+export const fetchFlashSaleSetting = createAsyncThunk('admin/fetchFlashSaleSetting', async (_, { rejectWithValue }) => {
+  try { return (await api.get('/admin/flash-sale-setting')).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const updateFlashSaleSetting = createAsyncThunk('admin/updateFlashSaleSetting', async ({ flashSaleVisible, poster }, { rejectWithValue }) => {
+  try {
+    const data = new FormData();
+    data.append('flashSaleVisible', String(flashSaleVisible));
+    if (poster) data.append('poster', poster);
+    return (await api.patch('/admin/flash-sale-setting', data)).data;
+  }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
 export const fetchAdminCategories = createAsyncThunk('admin/fetchCategories', async (_, { rejectWithValue }) => {
   try { return (await api.get('/admin/categories')).data; }
   catch (err) { return rejectWithValue(handle(err)); }
@@ -225,6 +240,8 @@ const adminSlice = createSlice({
     products: [],
     productsTotal: 0,
     flashSales: [],
+    flashSaleVisible: true,
+    flashSalePosterUrl: '',
     categories: [],
     brands: [],
     brandsTotal: 0,
@@ -353,6 +370,18 @@ const adminSlice = createSlice({
         if (pidx !== -1) state.products[pidx] = product;
       })
       .addCase(updateFlashSale.rejected, rejected)
+      .addCase(fetchFlashSaleSetting.fulfilled, (state, { payload }) => {
+        state.flashSaleVisible = payload.flashSaleVisible !== false && payload.flashSaleVisible !== 'false';
+        state.flashSalePosterUrl = payload.flashSalePosterUrl || '';
+      })
+      .addCase(fetchFlashSaleSetting.rejected, rejected)
+      .addCase(updateFlashSaleSetting.pending, pending)
+      .addCase(updateFlashSaleSetting.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.flashSaleVisible = payload.flashSaleVisible !== false && payload.flashSaleVisible !== 'false';
+        state.flashSalePosterUrl = payload.flashSalePosterUrl || '';
+      })
+      .addCase(updateFlashSaleSetting.rejected, rejected)
 
       .addCase(fetchAdminCategories.pending, pending)
       .addCase(fetchAdminCategories.fulfilled, (state, { payload }) => {

@@ -26,7 +26,7 @@ export default function Footer() {
               Stay Updated with Us
             </p>
             <h3 className="text-white font-black leading-tight mb-0.5 text-[20px] sm:text-[26px] md:text-[32px]">
-              Get <span className="text-[#FFB700]">20% Off</span> Discount Coupon
+              Get <span className="text-[#FFB700]">5% Off</span> Discount Coupon
             </h3>
             <p className="text-white font-bold text-[11px] sm:text-[13px] md:text-[14px]">
               by Subscribe our Newsletter

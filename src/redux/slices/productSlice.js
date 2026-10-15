@@ -85,6 +85,8 @@ const productSlice = createSlice({
     products: [],
     product: null,
     flashSale: [],
+    flashSaleVisible: true,
+    flashSalePosterUrl: '',
     featured: [],
     popular: [],
     homeNewArrivals: [],
@@ -133,6 +135,8 @@ const productSlice = createSlice({
       .addCase(fetchFlashSaleProducts.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(fetchFlashSaleProducts.fulfilled, (state, action) => {
         state.loading = false;
+        state.flashSaleVisible = action.payload.flashSaleVisible !== false && action.payload.flashSaleVisible !== 'false';
+        state.flashSalePosterUrl = action.payload.flashSalePosterUrl || '';
         state.flashSale = Array.isArray(action.payload.products) ? action.payload.products : [];
       })
       .addCase(fetchFlashSaleProducts.rejected, (state, action) => {

@@ -28,6 +28,15 @@ const POST_UNDER_1KG     = 300;
 const POST_PER_KG        = 50;
 
 const MAX_WEIGHT_KG      = 1000;
+export const COD_MAX_PRODUCTS = 3;
+
+export function getTotalItemQuantity(items) {
+  if (!Array.isArray(items)) return 0;
+  return items.reduce((sum, item) => {
+    const quantity = Number(item?.quantity);
+    return Number.isFinite(quantity) && quantity > 0 ? sum + quantity : sum;
+  }, 0);
+}
 
 export function calcShipping(method, weightKg) {
   if (!ALLOWED_METHODS.has(method)) return 0;

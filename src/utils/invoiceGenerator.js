@@ -117,6 +117,9 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   const dueDate     = order.dueDate ? fmtDate(order.dueDate) : fmtDate(Date.now() + 10 * 24 * 60 * 60 * 1000);
   const approvedBy = order.approvedBy && typeof order.approvedBy === 'object' ? order.approvedBy : {};
   const customerSignature = order.customerSignature && typeof order.customerSignature === 'object' ? order.customerSignature : {};
+  const rawPaymentMethod = order.paymentMethod || order.payment_method || order.payment?.method || '';
+  const paymentMethod = escapeHtml(rawPaymentMethod);
+  const noteText = escapeHtml(order.note || order.notes || '');
   const approvedName = escapeHtml(approvedBy.name || order.approvedByName || order.approverName || '');
   const approvedSignature = await trimImageDataUrl(
     safeImageDataUrl(approvedBy.signature || order.approvedBySignature || '')
@@ -371,8 +374,26 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   .approval-signature { display: block; height: 21px; width: auto; max-width: 93px; }
 
   /* CARDS INFO BLOCK */
-  .info-boxes-row { display: flex; gap: 15px; margin-top: 20px; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
-  .footer-info-card { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 8px 10px; background: #fff; break-inside: avoid; page-break-inside: avoid; overflow: visible; }
+  .info-boxes-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .footer-info-card {
+    min-width: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px 10px;
+    background: #fff;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    overflow: visible;
+  }
 
   .card-header-container { display: flex; align-items: center; gap: 0; margin-bottom: 8px; }
   .card-header-icon-badge {
@@ -416,6 +437,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         <div><span class="label">Invoice No</span><span class="dots">:</span>${orderNum}</div>
         <div><span class="label">Invoice Date</span><span class="dots">:</span>${invoiceDate}</div>
         <div><span class="label">Due Date</span><span class="dots">:</span>${dueDate}</div>
+        ${paymentMethod ? `<div><span class="label">Payment Method</span><span class="dots">:</span><span style="text-transform:uppercase;">${paymentMethod}</span></div>` : ''}
       </div>
     </div>
   </div>
@@ -552,6 +574,20 @@ export async function downloadInvoice(order, customerName, customerEmail) {
       </div>
     </div>
   </div>
+${noteText ? `
+<div class="note-block" style="
+  margin: 55px 0 12px 0;
+  padding: 10px 14px;
+  min-height: 60px;
+  border: 1.5px solid #F4B41A;
+  border-radius: 6px;
+  background: #fffbf0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+">
+  <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #000; margin-bottom: 4px;">NOTE:</div>
+  <div style="font-size: 11px; color: #333; line-height: 1.4; overflow-wrap: anywhere;">${noteText}</div>
+</div>` : ''}
   <!-- BOTTOM INFOCARDS -->
   <div class="info-boxes-row">
     <!-- T&C -->
@@ -582,7 +618,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         <span class="card-header-label">BANK ACCOUNT DETAILS</span>
       </div>
       <div class="card-body-text" style="gap: 5px;">
-        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span class="bank-value">House of Cambridge(pvt)LTD </span></div>
+        <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-dots">:</span><span class="bank-value">House of Cambridge(Pvt)Ltd. </span></div>
         <div class="bank-row"><span class="bank-label">Bank Name</span><span class="bank-dots">:</span><span class="bank-value">HNB (Hatton National Bank)</span></div>
         <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-dots">:</span><span class="bank-value">098010032357</span></div>
         <div class="bank-row"><span class="bank-label">Bank Code</span><span class="bank-dots">:</span><span class="bank-value">7083</span></div>
@@ -605,6 +641,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   container.innerHTML = html;
   document.body.appendChild(container);
   const pageEl = container.querySelector('.page');
+
   html2pdf()
     .set({
       margin:      [15, 10, 22, 10],
@@ -615,12 +652,12 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         useCORS:         true,
         logging:         false,
         backgroundColor: '#ffffff',
-        windowWidth:     840,
+        windowWidth: 840,
       },
       jsPDF:     { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy'],
-        avoid: ['.bottom-pricing-container', '.financial-totals-block', '.signatures-row', '.footer-info-card', '.info-boxes-row', '.offices-row', '.details-grid', 'tr']
+        mode: ['css', 'legacy'],
+        avoid: ['.bottom-pricing-container', '.financial-totals-block', '.signatures-row', '.footer-info-card', '.info-boxes-row', '.offices-row', '.details-grid', '.note-block', 'tr']
       }
     })
     .from(pageEl)

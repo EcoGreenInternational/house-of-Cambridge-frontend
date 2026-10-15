@@ -7,7 +7,13 @@ import { fetchAddresses } from '../../redux/slices/userSlice.js';
 import { initiateKoko, getPayHereHash } from '../../redux/slices/paymentSlice.js';
 import { submitPayHereForm, PAYHERE_MERCHANT_ID } from '../../utils/payhere.js';
 import PayPalCheckout from '../../components/payment/PayPalCheckout.jsx';
-import { SHIPPING_METHODS, calcShipping, calcTotalWeightKg } from '../../utils/shipping.js';
+import {
+  SHIPPING_METHODS,
+  COD_MAX_PRODUCTS,
+  calcShipping,
+  calcTotalWeightKg,
+  getTotalItemQuantity,
+} from '../../utils/shipping.js';
 import Layout from '../../components/common/Layout.jsx';
 import Breadcrumb from '../../components/ui/Breadcrumb.jsx';
 import { PageSpinner } from '../../components/ui/Spinner.jsx';
@@ -120,6 +126,7 @@ export default function CheckoutPage() {
   const subtotal      = useMemo(() => items.reduce((s, i) => s + i.price * i.quantity, 0), [items]);
   const discount      = cart?.discount ?? 0;
   const totalWeightKg = useMemo(() => calcTotalWeightKg(items), [items]);
+  const totalItemQuantity = useMemo(() => getTotalItemQuantity(items), [items]);
   const shippingCost  = shippingMethod ? calcShipping(shippingMethod, totalWeightKg) : 0;
   const loyaltyDiscount = loyaltyApplied;
   const tax           = Math.round((subtotal - discount - loyaltyDiscount) * VAT_RATE);
@@ -169,6 +176,10 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = useCallback(async () => {
     if (placing) return;
+    if (payTab === 'cod' && totalItemQuantity > COD_MAX_PRODUCTS) {
+      toast.error(`Cash on Delivery is limited to ${COD_MAX_PRODUCTS} products per order.`);
+      return;
+    }
     if (!shippingMethod) { toast.error('Please select a shipping method'); setStep(2); return; }
     if (!shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.addressLine1) {
       toast.error('Please fill in all address fields'); setStep(2); return;
@@ -235,7 +246,7 @@ export default function CheckoutPage() {
     }
 
     setPlacing(false);
-  }, [placing, shippingMethod, shippingAddress, payTab, loyaltyApplied, orderNotes, shippingCost, dispatch, navigate, user]);
+  }, [placing, totalItemQuantity, shippingMethod, shippingAddress, payTab, loyaltyApplied, orderNotes, shippingCost, dispatch, navigate, user]);
 
   if (cartLoading && !cart) return <Layout><PageSpinner /></Layout>;
 
@@ -635,7 +646,7 @@ export default function CheckoutPage() {
                     <div className="py-6 text-center">
                       <p className="text-4xl mb-3" aria-hidden="true">💵</p>
                       <p className="text-[13px] font-semibold text-[#1A1A1A] mb-1">Cash on Delivery</p>
-                      <p className="text-[12px] text-[#60717B] max-w-[280px] mx-auto">Pay with cash when your order is delivered. No prepayment required.</p>
+                      <p className="text-[12px] text-[#60717B] max-w-[280px] mx-auto">Pay with cash when your order is delivered. Maximum {COD_MAX_PRODUCTS} products per order.</p>
                     </div>
                   )}
 
