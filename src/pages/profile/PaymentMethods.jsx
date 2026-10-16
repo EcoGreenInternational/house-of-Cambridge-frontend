@@ -11,11 +11,7 @@ const PAY_TABS = [
   { id: 'cod',    label: 'Cash on Delivery'     },
 ];
 
-const MOCK_CARDS = [
-  { id: 'c1', brand: 'visa',       last4: '4512', expiry: '09/26', name: 'J. Perera', isDefault: true  },
-  { id: 'c2', brand: 'mastercard', last4: '8823', expiry: '03/25', name: 'J. Perera', isDefault: false },
-  { id: 'c3', brand: 'paypal',     email: 'janith@gmail.com',                          isDefault: false },
-];
+
 
 const BLANK_CARD = { number: '', name: '', expiry: '', cvv: '', saveCard: true, billingDefault: false };
 
