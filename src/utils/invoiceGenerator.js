@@ -88,6 +88,13 @@ function fmtDate(d) {
     day: '2-digit', month: 'long', year: 'numeric',
   });
 }
+function fmtDateTime(d) {
+  return new Date(d || Date.now()).toLocaleString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
 function fmtOrderNum(order) {
   if (order.invoiceNo) return escapeHtml(order.invoiceNo);
   if (order.orderNumber) {
@@ -113,7 +120,8 @@ export async function downloadInvoice(order, customerName, customerEmail) {
   const total      = safeNum(order.totalAmountDue ?? order.total ?? (subtotal - discount + shipping + tax));
   const addr       = order.shippingAddress || order.clientDetails || {};
   const orderNum = fmtOrderNum(order);
-  const invoiceDate = fmtDate(order.createdAt || order.invoiceDate);
+  const invoiceDate = fmtDate(order.invoiceDate || order.createdAt);
+  const generatedTime = fmtDateTime(order.invoiceDate || order.createdAt);
   const dueDate     = order.dueDate ? fmtDate(order.dueDate) : fmtDate(Date.now() + 10 * 24 * 60 * 60 * 1000);
   const approvedBy = order.approvedBy && typeof order.approvedBy === 'object' ? order.approvedBy : {};
   const customerSignature = order.customerSignature && typeof order.customerSignature === 'object' ? order.customerSignature : {};
@@ -438,6 +446,7 @@ export async function downloadInvoice(order, customerName, customerEmail) {
         <div><span class="label">Invoice Date</span><span class="dots">:</span>${invoiceDate}</div>
         <div><span class="label">Due Date</span><span class="dots">:</span>${dueDate}</div>
         ${paymentMethod ? `<div><span class="label">Payment Method</span><span class="dots">:</span><span style="text-transform:uppercase;">${paymentMethod}</span></div>` : ''}
+        <div><span class="label">Generated Time</span><span class="dots">:</span>${escapeHtml(generatedTime)}</div>
       </div>
     </div>
   </div>

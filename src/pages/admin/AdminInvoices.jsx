@@ -11,6 +11,20 @@ import { FiSearch, FiPlus, FiX, FiEdit2, FiTrash2, FiPackage, FiEdit3, FiUpload 
 
 const INPUT_CLS = 'w-full px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]';
 
+const formatInvoiceDateTime = (invoice) => {
+  const value = invoice?.invoiceDate || invoice?.createdAt;
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return date.toLocaleString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
 const EMPTY_FORM = {
   invoiceType: 'manual',
   assignedPeople: '',
@@ -463,6 +477,7 @@ export default function AdminInvoices() {
                   <th className="px-4 py-3 text-left font-semibold text-[#60717B]">Type</th>
                   <th className="px-4 py-3 text-left font-semibold text-[#60717B]">Client Entity</th>
                   <th className="px-4 py-3 text-left font-semibold text-[#60717B]">Assigned Associate</th>
+                  <th className="px-4 py-3 text-left font-semibold text-[#60717B]">Generated</th>
                   <th className="px-4 py-3 text-right font-semibold text-[#60717B]">Total Amount</th>
                   <th className="px-4 py-3 text-left font-semibold text-[#60717B]">Actions</th>
                 </tr>
@@ -474,6 +489,7 @@ export default function AdminInvoices() {
                     <td className="px-4 py-3 capitalize text-[#60717B]">{inv.invoiceType}</td>
                     <td className="px-4 py-3 font-medium text-[#1A1A1A]">{inv.clientDetails?.clientName}</td>
                     <td className="px-4 py-3 text-[#60717B]">{inv.assignedPeople || '—'}</td>
+                    <td className="px-4 py-3 text-[#60717B] whitespace-nowrap">{formatInvoiceDateTime(inv)}</td>
                     <td className="px-4 py-3 text-right font-bold text-[#1A1A1A]">Rs. {inv.totalAmountDue?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -485,7 +501,7 @@ export default function AdminInvoices() {
                 ))}
                 {loading && invoices.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="text-center py-12 text-[#60717B]">
+                    <td colSpan="7" className="text-center py-12 text-[#60717B]">
                       <div className="flex items-center justify-center gap-2">
                         <span className="w-4 h-4 border-2 border-[#FFB700] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                         Loading invoices...
@@ -495,7 +511,7 @@ export default function AdminInvoices() {
                 )}
                 {!loading && invoices.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="py-12 text-center text-[#60717B]">No invoices found.</td>
+                    <td colSpan="7" className="py-12 text-center text-[#60717B]">No invoices found.</td>
                   </tr>
                 )}
               </tbody>
@@ -562,7 +578,7 @@ export default function AdminInvoices() {
 
               <div>
                 <label className="text-[13px] font-semibold text-[#1A1A1A] block mb-1">Assigned Executive</label>
-                <input type="text" value={form.assignedPeople} onChange={(e) => setForm(f => ({...f, assignedPeople: e.target.value}))} placeholder="e.g. John Doe" className={INPUT_CLS} required />
+                <input type="text" value={form.assignedPeople} onChange={(e) => setForm(f => ({...f, assignedPeople: e.target.value}))} placeholder="e.g. John Doe" className={INPUT_CLS} required={form.invoiceType === 'manual'} />
               </div>
 
               <div className="p-4 bg-gray-50 border border-[#E9E9E9] rounded-[8px] space-y-3">

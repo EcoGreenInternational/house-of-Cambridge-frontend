@@ -28,6 +28,36 @@ const formatWeight = (weightGrams) => {
     : `${weightGrams.toLocaleString()} g`;
 };
 
+const getAvailableStock = (item) => {
+  const product = item?.product;
+  const selectedVariant = item?.selectedVariant;
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+
+  if (selectedVariant && variants.length > 0) {
+    const variant = variants.find((candidate) => {
+      if (candidate.isActive === false) return false;
+      if (selectedVariant.sku && candidate.sku === selectedVariant.sku) return true;
+      if (selectedVariant.name && candidate.name === selectedVariant.name) return true;
+
+      const selectedAttributes = selectedVariant.attributes;
+      const candidateAttributes = candidate.attributes;
+      if (
+        !selectedAttributes ||
+        !candidateAttributes ||
+        Object.keys(selectedAttributes).length === 0
+      ) return false;
+
+      return Object.keys(selectedAttributes).every(
+        (key) => String(candidateAttributes[key]) === String(selectedAttributes[key]),
+      );
+    });
+
+    if (variant) return Math.max(0, Number(variant.stock) || 0);
+  }
+
+  return Math.max(0, Number(product?.stock) || 0);
+};
+
 export default function CartPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -65,10 +95,31 @@ export default function CartPage() {
   
   const handleQty = useCallback((item, qty) => {
     const productId = item?.product?._id || item?.product;
+    const availableStock = getAvailableStock(item);
+
+    if (qty > availableStock) {
+      toast.error(`Sorry, not enough in stock. Only ${availableStock} available.`);
+      return;
+    }
+
     if (qty <= 0) {
       dispatch(removeFromCart({ productId, itemId: item?._id, variantName: item?.selectedVariant?.name }));
     } else {
-      dispatch(updateCartItem({ productId, quantity: qty, itemId: item?._id, variantName: item?.selectedVariant?.name }));
+      dispatch(updateCartItem({
+        productId,
+        quantity: qty,
+        itemId: item?._id,
+        variantName: item?.selectedVariant?.name,
+      })).then((action) => {
+        if (action.meta.requestStatus === 'rejected') {
+          const errorMessage = typeof action.payload === 'string' ? action.payload : '';
+          toast.error(
+            /stock|available|quantity/i.test(errorMessage)
+              ? `Sorry, not enough in stock. Only ${availableStock} available.`
+              : errorMessage || 'Unable to update the cart. Please try again.',
+          );
+        }
+      });
     }
   }, [dispatch]);
 
@@ -194,6 +245,7 @@ export default function CartPage() {
                     <tbody className="divide-y divide-[#F0F0F0]">
                       {items.map((item) => {
                         const p      = item.product;
+                        const availableStock = getAvailableStock(item);
                         const itemWeightGrams = Number(item.selectedVariant?.weight ?? p?.weight ?? 0) * item.quantity;
                         const itemImg = item.selectedVariant?.image || p?.images?.[0]?.url || 'https://placehold.co/80?text=P';
                         const rowKey = item._id || `${p?._id}-${item.selectedVariant?.name || ''}`;
