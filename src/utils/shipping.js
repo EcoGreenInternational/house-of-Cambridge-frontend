@@ -19,12 +19,12 @@ export const SHIPPING_METHODS = [
   },
 ];
 
-const COURIER_BASE       = 350;
-const COURIER_UNDER_1KG  = 200;
-const COURIER_PER_KG     = 50;
+const COURIER_BASE       = 450;
+const COURIER_UNDER_1KG  = 450;
+const COURIER_PER_KG     = 100;
 
-const POST_BASE          = 450;
-const POST_UNDER_1KG     = 300;
+const POST_BASE          = 400;
+const POST_UNDER_1KG     = 400;
 const POST_PER_KG        = 50;
 
 const MAX_WEIGHT_KG      = 1000;
