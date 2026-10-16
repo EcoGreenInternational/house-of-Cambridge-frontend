@@ -134,20 +134,9 @@ export default function OrderHistory() {
 
   function getActions(o) {
     const orderId      = o._id;
-    const orderNumber  = o.orderNumber;
     const isBeingCancelled = cancelling === orderId;
 
     const btnBase = 'text-[11px] font-semibold px-2 py-1 rounded transition-colors';
-
-    const viewBtn = (
-      <Link
-        key="view"
-        to={`/orders/${orderId}`}
-        className={`${btnBase} text-[#60717B] hover:text-[#1A1A1A] border border-[#E9E9E9] hover:border-[#C5C5C5]`}
-      >
-        View
-      </Link>
-    );
 
     const trackBtn = (
       <Link
@@ -156,6 +145,16 @@ export default function OrderHistory() {
         className={`${btnBase} text-[#FFB700] border border-[#FFB700] hover:bg-amber-50`}
       >
         Track
+      </Link>
+    );
+
+    const viewBtn = (
+      <Link
+        key="view"
+        to={`/orders/${orderId}`}
+        className={`${btnBase} text-[#60717B] border border-[#E9E9E9] hover:border-[#FFB700]`}
+      >
+        View
       </Link>
     );
 
