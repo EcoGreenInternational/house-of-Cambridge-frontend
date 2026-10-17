@@ -3,6 +3,7 @@ import ProfileLayout from '../../components/profile/ProfileLayout';
 import { FiCreditCard, FiShield, FiCheck, FiTrash2, FiStar } from 'react-icons/fi';
 import { FaCcVisa, FaCcMastercard, FaPaypal } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { getSavedPaymentMethods, savePaymentMethods } from '../../utils/savedPaymentMethods';
 
 const PAY_TABS = [
   { id: 'card',   label: 'Credit / Debit Card' },
@@ -57,7 +58,7 @@ const inputCls = 'w-full border border-[#C5C5C5] rounded-[6px] px-3 py-2.5 text-
 const labelCls = 'block text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-1.5';
 
 export default function PaymentMethods() {
-  const [cards, setCards]       = useState(MOCK_CARDS);
+  const [cards, setCards]       = useState(getSavedPaymentMethods);
   const [addTab, setAddTab]     = useState('card');
   const [form, setForm]         = useState(BLANK_CARD);
   const [showForm, setShowForm] = useState(false);
@@ -68,13 +69,21 @@ export default function PaymentMethods() {
   const confirmDelete = useCallback((id) => setDeleteTarget(id), []);
 
   const handleDelete = useCallback(() => {
-    setCards((prev) => prev.filter((c) => c.id !== deleteTarget));
+    setCards((prev) => {
+      const next = prev.filter((c) => c.id !== deleteTarget);
+      savePaymentMethods(next);
+      return next;
+    });
     toast.success('Payment method removed');
     setDeleteTarget(null);
   }, [deleteTarget]);
 
   const handleSetDefault = useCallback((id) => {
-    setCards((prev) => prev.map((c) => ({ ...c, isDefault: c.id === id })));
+    setCards((prev) => {
+      const next = prev.map((c) => ({ ...c, isDefault: c.id === id }));
+      savePaymentMethods(next);
+      return next;
+    });
     toast.success('Default payment method updated');
   }, []);
 
@@ -87,8 +96,9 @@ export default function PaymentMethods() {
     const last4  = digits.slice(-4);
     const brand  = detectBrand(digits);
 
-    setCards((prev) => [
-      ...prev.map((c) => form.billingDefault ? { ...c, isDefault: false } : c),
+    setCards((prev) => {
+      const next = [
+        ...prev.map((c) => form.billingDefault ? { ...c, isDefault: false } : c),
       {
         id:        `c${Date.now()}`,
         brand,
@@ -97,7 +107,10 @@ export default function PaymentMethods() {
         name:      form.name.trim(),
         isDefault: form.billingDefault,
       },
-    ]);
+      ];
+      savePaymentMethods(next);
+      return next;
+    });
     toast.success('Card saved!');
     setForm(BLANK_CARD);
     setShowForm(false);
@@ -149,8 +162,13 @@ export default function PaymentMethods() {
         <div className="px-5 py-3.5 border-b border-[#F0F0F0]">
           <h2 className="text-[13px] font-black text-[#1A1A1A]">Saved Payment Methods</h2>
         </div>
-        <ul className="divide-y divide-[#F5F5F5]">
-          {cards.map((c) => (
+        {cards.length === 0 ? (
+          <p className="px-5 py-8 text-center text-[12px] text-[#60717B]">
+            No saved payment methods yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-[#F5F5F5]">
+            {cards.map((c) => (
             <li
               key={c.id}
               className={`flex items-center gap-4 px-5 py-4 transition-colors ${c.isDefault ? 'bg-amber-50/40' : 'hover:bg-[#FAFAFA]'}`}
@@ -198,8 +216,9 @@ export default function PaymentMethods() {
                 </button>
               </div>
             </li>
-          ))}
-        </ul>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="bg-white border border-[#E9E9E9] rounded-[10px] overflow-hidden shadow-[2px_3px_8px_rgba(0,0,0,0.04)]">

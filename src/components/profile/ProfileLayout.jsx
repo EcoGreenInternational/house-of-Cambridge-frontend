@@ -24,6 +24,64 @@ const getLoyaltyTier = (points = 0) => {
   return { label: 'Bronze Member', bg: 'bg-[#F3E8D6]', text: 'text-[#7A5826]', border: 'border-[#E8D1B5]' };
 };
 
+function ProfileSidebar({ user, location, onNavigate, onLogout }) {
+  const tier = getLoyaltyTier(user?.loyaltyPoints ?? 0);
+
+  return (
+    <div className="bg-white rounded-[10px] overflow-hidden">
+      <div className="px-5 pt-5 pb-4 text-center border-b border-[#F0F0F0]">
+        {user?.avatar?.url ? (
+          <img
+            src={user.avatar.url}
+            alt={user?.name ?? 'User avatar'}
+            className="w-16 h-16 rounded-full object-cover mx-auto mb-2.5 border-2 border-[#FFB700]"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-[#D1D5DB] flex items-center justify-center mx-auto mb-2.5 text-[#4B5563]">
+            <Icon icon="mdi:account" width={32} />
+          </div>
+        )}
+        <p className="text-[14px] font-black text-[#1A1A1A] leading-tight">{user?.name ?? 'Amara Perera'}</p>
+        <p className="text-[11px] text-[#60717B] mt-0.5 truncate">{user?.email ?? 'amaraperera@gmail.com'}</p>
+        <span className={`inline-block mt-2 ${tier.bg} ${tier.text} ${tier.border} text-[10px] font-bold px-3 py-0.5 rounded-[4px] border`}>
+          ⭐ {tier.label}
+        </span>
+      </div>
+
+      <nav className="py-1">
+        {NAV.map((item) => {
+          const active = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              aria-current={active ? 'page' : undefined}
+              onClick={onNavigate}
+              className={`flex items-center gap-3 px-5 py-2.5 text-[13px] font-semibold transition-colors border-l-[3px] ${
+                active
+                  ? 'bg-[#EDEDED] text-[#1A1A1A] border-[#1A1A1A]'
+                  : 'border-transparent text-[#4B5563] hover:bg-gray-50 hover:text-[#1A1A1A]'
+              }`}
+            >
+              <Icon icon={item.icon} width={18} className="shrink-0" />
+              {item.label}
+            </Link>
+          );
+        })}
+
+        <div className="border-t border-[#F0F0F0] mt-1 pt-1">
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-5 py-2.5 text-[12px] font-semibold text-[#4B5563] hover:bg-gray-50 transition-colors"
+          >
+            <Icon icon="fluent-emoji-flat:left-arrow" width={16} /> Sign Out
+          </button>
+        </div>
+      </nav>
+    </div>
+  );
+}
+
 export default function ProfileLayout({ children }) {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -41,67 +99,6 @@ export default function ProfileLayout({ children }) {
   };
 
   const activeItem = NAV.find((n) => n.href === location.pathname) || { label: 'Dashboard' };
-
-  const SidebarContent = ({ onNavigate }) => {
-    const tier = getLoyaltyTier(u?.loyaltyPoints ?? 0);
-
-    return (
-      <div className="bg-white rounded-[10px] overflow-hidden">
-        <div className="px-5 pt-5 pb-4 text-center border-b border-[#F0F0F0]">
-          {u?.avatar?.url ? (
-            <img
-              src={u.avatar.url}
-              alt={u?.name ?? 'User avatar'}
-              className="w-16 h-16 rounded-full object-cover mx-auto mb-2.5 border-2 border-[#FFB700]"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-[#D1D5DB] flex items-center justify-center mx-auto mb-2.5 text-[#4B5563]">
-              <Icon icon="mdi:account" width={32} />
-            </div>
-          )}
-          <p className="text-[14px] font-black text-[#1A1A1A] leading-tight">{u?.name ?? 'Amara Perera'}</p>
-          <p className="text-[11px] text-[#60717B] mt-0.5 truncate">{u?.email ?? 'amaraperera@gmail.com'}</p>
-          
-          <span className={`inline-block mt-2 ${tier.bg} ${tier.text} ${tier.border} text-[10px] font-bold px-3 py-0.5 rounded-[4px] border`}>
-            ⭐ {tier.label}
-          </span>
-        </div>
-
-        {/* Navigation List */}
-        <nav className="py-1">
-          {NAV.map((item) => {
-            const active = location.pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                aria-current={active ? 'page' : undefined}
-                onClick={onNavigate}
-                className={`flex items-center gap-3 px-5 py-2.5 text-[13px] font-semibold transition-colors border-l-[3px] ${
-                  active
-                    ? 'bg-[#EDEDED] text-[#1A1A1A] border-[#1A1A1A]'
-                    : 'border-transparent text-[#4B5563] hover:bg-gray-50 hover:text-[#1A1A1A]'
-                }`}
-              >
-                <Icon icon={item.icon} width={18} className="shrink-0" />
-                {item.label}
-              </Link>
-            );
-          })}
-
-          {/* Sign Out */}
-          <div className="border-t border-[#F0F0F0] mt-1 pt-1">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-5 py-2.5 text-[12px] font-semibold text-[#4B5563] hover:bg-gray-50 transition-colors"
-            >
-              <Icon icon="fluent-emoji-flat:left-arrow" width={16} /> Sign Out
-            </button>
-          </div>
-        </nav>
-      </div>
-    );
-  };
 
   return (
     <Layout>
@@ -127,7 +124,7 @@ export default function ProfileLayout({ children }) {
           {/* Desktop Sticky Sidebar */}
           <aside className="hidden lg:block w-[230px] flex-shrink-0 sticky top-4" aria-label="Profile navigation">
             <div className="border border-[#E9E9E9] rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-              <SidebarContent />
+              <ProfileSidebar user={u} location={location} onLogout={handleLogout} />
             </div>
           </aside>
 
@@ -155,7 +152,12 @@ export default function ProfileLayout({ children }) {
                     <FiX size={18} aria-hidden="true" />
                   </button>
                 </div>
-                <SidebarContent onNavigate={() => setMobileNavOpen(false)} />
+                <ProfileSidebar
+                  user={u}
+                  location={location}
+                  onNavigate={() => setMobileNavOpen(false)}
+                  onLogout={handleLogout}
+                />
               </aside>
             </div>
           )}

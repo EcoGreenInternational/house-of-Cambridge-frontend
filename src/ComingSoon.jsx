@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 export const getLaunchDate = () => {
-  return new Date(2026, 9, 17, 6, 0, 0);
+  return new Date(2026, 9, 17, 17, 0, 0);
 };
 
 const getCountdown = (launchDate) => {

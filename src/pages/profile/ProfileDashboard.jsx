@@ -177,9 +177,7 @@ export default function ProfileDashboard() {
                             STATUS_STYLES[o.orderStatus] || 'bg-[#22C55E] text-white'
                           }`}
                         >
-                          {o.orderStatus === 'processing' || o.orderStatus === 'pending'
-                            ? 'Processing'
-                            : 'Delivered'}
+                          {(o.orderStatus || 'processing').replace(/_/g, ' ')}
                         </span>
                       </td>
                     </tr>

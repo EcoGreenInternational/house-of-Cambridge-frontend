@@ -23,6 +23,7 @@ import {
   FiStar, FiChevronRight, FiPackage,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { getSavedPaymentMethods } from '../../utils/savedPaymentMethods';
 
 const VAT_RATE = Number(import.meta.env.VITE_VAT_RATE) || 0;
 
@@ -44,10 +45,6 @@ const STEPS = [
   { n: 2, label: 'Shipping',     icon: FiMapPin },
   { n: 3, label: 'Payment',      icon: FiCreditCard },
   { n: 4, label: 'Confirmation', icon: FiCheck },
-];
-
-const MOCK_SAVED_CARDS = [
-  { id: 'c1', brand: 'VISA', last4: '4512', expiry: '09/26', name: 'J. Perera' },
 ];
 
 const INPUT_CLS =
@@ -102,7 +99,8 @@ export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState(null);
   const [orderNotes,     setOrderNotes]     = useState('');
   const [payTab,         setPayTab]         = useState('card');
-  const [selectedCard,   setSelectedCard]   = useState('c1');
+  const [savedCards,     setSavedCards]     = useState(getSavedPaymentMethods);
+  const [selectedCard,   setSelectedCard]   = useState(null);
   const [useNewCard,     setUseNewCard]     = useState(false);
   const [cardInfo,       setCardInfo]       = useState({ number: '', name: '', expiry: '', cvv: '', save: false });
   const [billingSame,    setBillingSame]    = useState(true);
@@ -117,6 +115,18 @@ export default function CheckoutPage() {
     dispatch(fetchCart());
     if (isAuthenticated) dispatch(fetchAddresses());
   }, [dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSavedCards([]);
+      setSelectedCard(null);
+      return;
+    }
+
+    const cards = getSavedPaymentMethods();
+    setSavedCards(cards);
+    setSelectedCard(cards.find((card) => card.isDefault)?.id || cards[0]?.id || null);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!cartLoading && (!cart || cart.items?.length === 0)) navigate('/cart');
@@ -565,13 +575,13 @@ export default function CheckoutPage() {
 
                   {payTab === 'card' && (
                     <div>
-                      {isAuthenticated && MOCK_SAVED_CARDS.length > 0 && (
+                      {isAuthenticated && savedCards.length > 0 && (
                         <fieldset className="space-y-2 mb-4">
                           <legend className="sr-only">Saved cards</legend>
-                          {MOCK_SAVED_CARDS.map((c) => (
+                          {savedCards.map((c) => (
                             <label key={c.id} className={`flex items-center gap-3 p-3.5 border-2 rounded-[8px] cursor-pointer transition-colors ${selectedCard === c.id && !useNewCard ? 'border-[#FFB700] bg-amber-50' : 'border-[#E9E9E9] hover:border-[#C5C5C5]'}`}>
                               <input type="radio" name="savedCard" checked={selectedCard === c.id && !useNewCard} onChange={() => { setSelectedCard(c.id); setUseNewCard(false); }} className="accent-[#FFB700]" />
-                              <div className="w-10 h-6 bg-[#1A1A1A] rounded flex items-center justify-center flex-shrink-0" aria-hidden="true"><span className="text-white text-[9px] font-black">VISA</span></div>
+                              <div className="w-10 h-6 bg-[#1A1A1A] rounded flex items-center justify-center flex-shrink-0" aria-hidden="true"><span className="text-white text-[9px] font-black">{c.brand.toUpperCase()}</span></div>
                               <div className="flex-1">
                                 <p className="text-[13px] font-semibold text-[#1A1A1A]">●●●● ●●●● ●●●● {c.last4}</p>
                                 <p className="text-[11px] text-[#60717B]">{c.name} · Expires {c.expiry}</p>
@@ -580,14 +590,14 @@ export default function CheckoutPage() {
                           ))}
                         </fieldset>
                       )}
-                      {isAuthenticated && MOCK_SAVED_CARDS.length > 0 && (
+                      {isAuthenticated && savedCards.length > 0 && (
                         <div className="flex items-center gap-3 mb-4">
                           <div className="flex-1 h-px bg-[#E9E9E9]" aria-hidden="true" />
                           <button onClick={() => setUseNewCard(true)} className={`text-[12px] font-medium px-3 py-1 rounded-full border transition-colors ${useNewCard ? 'bg-[#FFB700] border-[#FFB700] text-black' : 'border-[#C5C5C5] text-[#60717B] hover:border-[#FFB700]'}`}>Or use a new card</button>
                           <div className="flex-1 h-px bg-[#E9E9E9]" aria-hidden="true" />
                         </div>
                       )}
-                      {(useNewCard || !isAuthenticated || MOCK_SAVED_CARDS.length === 0) && (
+                      {(useNewCard || !isAuthenticated || savedCards.length === 0) && (
                         <div className="grid grid-cols-2 gap-3">
                           <div className="col-span-2">
                             <label htmlFor="card-number" className="block text-[12px] font-medium text-[#60717B] mb-1">Card Number</label>

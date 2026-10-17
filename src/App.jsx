@@ -24,6 +24,7 @@ import PaymentDeniedPage from './pages/checkout/PaymentDetails';
 import OrderConfirmation from './pages/orders/OrderConfirmation';
 import OrderTracking from './pages/orders/OrderTracking';
 import OrderHistory from './pages/orders/OrderHistory';
+import OrderDetail from './pages/orders/OrderDetail';
 import ReturnRequest from './pages/orders/ReturnRequest';
 import ReturnStatus from './pages/orders/ReturnStatus';
 import ProfileDashboard from './pages/profile/ProfileDashboard';
@@ -281,6 +282,7 @@ function App() {
         <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
         <Route path="/track-order/:id" element={<OrderTracking />} />
         <Route path="/track-order" element={<OrderTracking />} />
+        <Route path="/orders/:orderId" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
         <Route path="/orders/:orderId/return" element={<ProtectedRoute><ReturnRequest /></ProtectedRoute>} />
         <Route path="/return-status/:orderId" element={<ProtectedRoute><ReturnStatus /></ProtectedRoute>} />
 
