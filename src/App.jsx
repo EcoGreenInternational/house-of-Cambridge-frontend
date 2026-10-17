@@ -65,6 +65,19 @@ function ProtectedRoute({ children }) {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
+// Signed-in customers use the member checkout; everyone else uses guest checkout
+function MemberCheckoutRoute({ children }) {
+  const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
+  if (!authChecked) return null;
+  return isAuthenticated ? children : <Navigate to="/guest-checkout" replace />;
+}
+
+function GuestCheckoutRoute({ children }) {
+  const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
+  if (!authChecked) return null;
+  return isAuthenticated ? <Navigate to="/checkout" replace /> : children;
+}
+
 function AdminRoute({ children }) {
   const { isAuthenticated, user, authChecked } = useSelector((s) => s.auth);
   if (!authChecked) return null;
@@ -275,8 +288,8 @@ function App() {
         <Route path="/flash-sale" element={<FlashSalePage />} />
 
         <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/guest-checkout" element={<GuestCheckoutPage />} />
+        <Route path="/checkout" element={<MemberCheckoutRoute><CheckoutPage /></MemberCheckoutRoute>} />
+        <Route path="/guest-checkout" element={<GuestCheckoutRoute><GuestCheckoutPage /></GuestCheckoutRoute>} />
         <Route path="/payment-processing" element={<PaymentProcessingPage />} />
         <Route path="/payment-denied" element={<PaymentDeniedPage />} />
         <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />

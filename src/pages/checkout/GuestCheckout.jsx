@@ -161,7 +161,13 @@ export default function GuestCheckoutPage() {
     }));
 
     if (action.meta.requestStatus !== 'fulfilled') {
-      toast.error(action.payload || 'Order creation failed');
+      if (/account already exists/i.test(action.payload || '')) {
+        setFormErrors((errs) => ({ ...errs, email: 'This email has an account. Please sign in to continue.' }));
+        toast.error(action.payload, { duration: 6000 });
+        navigate('/login', { state: { from: { pathname: '/checkout' } } });
+      } else {
+        toast.error(action.payload || 'Order creation failed');
+      }
       setPlacing(false);
       return;
     }
@@ -220,7 +226,7 @@ export default function GuestCheckoutPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-[10px] px-5 py-3.5 flex flex-wrap items-center gap-3 mb-6" role="note">
           <p className="text-[13px] text-[#1A1A1A] flex-1">Already have an account? Save time and earn loyalty points.</p>
           <div className="flex gap-2 flex-shrink-0">
-            <Link to="/login"    className="bg-[#1A1A1A] text-white text-[12px] font-bold px-4 py-2 rounded-[6px] hover:bg-gray-800 transition-colors">Sign In</Link>
+            <Link to="/login" state={{ from: { pathname: "/checkout" } }} className="bg-[#1A1A1A] text-white text-[12px] font-bold px-4 py-2 rounded-[6px] hover:bg-gray-800 transition-colors">Sign In</Link>
             <Link to="/register" className="border border-[#1A1A1A] text-[#1A1A1A] text-[12px] font-bold px-4 py-2 rounded-[6px] hover:bg-gray-50 transition-colors">Create Account</Link>
           </div>
         </div>
