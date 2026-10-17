@@ -6,6 +6,7 @@ import {
   updateFlashSale,
   fetchFlashSaleSetting,
   updateFlashSaleSetting,
+  deleteFlashSalePoster,
 } from '../../redux/slices/adminSlice.js';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
 import { ToastContainer } from '../../components/ui/Toast.jsx';
@@ -101,6 +102,18 @@ export default function AdminFlashSales() {
       toast.success('Flash sale poster uploaded');
     } catch (err) {
       toast.error(typeof err === 'string' ? err : 'Could not upload flash sale poster');
+    } finally {
+      setSettingSaving(false);
+    }
+  };
+
+  const handlePosterDelete = async () => {
+    setSettingSaving(true);
+    try {
+      await dispatch(deleteFlashSalePoster()).unwrap();
+      toast.success('Flash sale poster deleted');
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not delete flash sale poster');
     } finally {
       setSettingSaving(false);
     }
@@ -226,7 +239,16 @@ export default function AdminFlashSales() {
         {flashSalePosterUrl && (
           <div className="flex items-center gap-3 bg-white border border-[#E9E9E9] rounded-[10px] p-3">
             <img src={flashSalePosterUrl} alt="Current flash sale poster" className="w-28 h-16 object-cover rounded-[6px]" />
-            <p className="text-[12px] text-[#60717B]">This poster appears in the flash-sale area when the checkbox is unticked.</p>
+            <p className="flex-1 text-[12px] text-[#60717B]">This poster appears in the flash-sale area when the checkbox is unticked.</p>
+            <button
+              type="button"
+              onClick={handlePosterDelete}
+              disabled={settingSaving}
+              className="flex items-center gap-1.5 px-3 py-2 border border-red-200 text-red-600 rounded-[8px] text-[12px] font-semibold hover:bg-red-50 disabled:opacity-50"
+            >
+              <FiTrash2 size={14} aria-hidden="true" />
+              Delete poster
+            </button>
           </div>
         )}
 

@@ -107,6 +107,11 @@ export const updateFlashSaleSetting = createAsyncThunk('admin/updateFlashSaleSet
   catch (err) { return rejectWithValue(handle(err)); }
 });
 
+export const deleteFlashSalePoster = createAsyncThunk('admin/deleteFlashSalePoster', async (_, { rejectWithValue }) => {
+  try { return (await api.delete('/admin/flash-sale-setting/poster')).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
 export const fetchAdminCategories = createAsyncThunk('admin/fetchCategories', async (_, { rejectWithValue }) => {
   try { return (await api.get('/admin/categories')).data; }
   catch (err) { return rejectWithValue(handle(err)); }
@@ -382,6 +387,12 @@ const adminSlice = createSlice({
         state.flashSalePosterUrl = payload.flashSalePosterUrl || '';
       })
       .addCase(updateFlashSaleSetting.rejected, rejected)
+      .addCase(deleteFlashSalePoster.pending, pending)
+      .addCase(deleteFlashSalePoster.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.flashSalePosterUrl = payload.flashSalePosterUrl || '';
+      })
+      .addCase(deleteFlashSalePoster.rejected, rejected)
 
       .addCase(fetchAdminCategories.pending, pending)
       .addCase(fetchAdminCategories.fulfilled, (state, { payload }) => {

@@ -17,6 +17,7 @@ const BENEFITS = [
 
 const INPUT_CLS =
   'w-full px-3 py-2.5 bg-[#EEEEEE] border border-[#C5C5C5] rounded-[6px] text-[13px] text-[#1A1A1A] placeholder-gray-400 outline-none focus:border-[#FFB700] focus:bg-white transition-colors';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -48,8 +49,21 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const email = form.email.trim().toLowerCase();
+    if (!email) {
+      toast.error('Email Address is required');
+      return;
+    }
+    if (!EMAIL_RE.test(email)) {
+      toast.error('Enter a valid email address');
+      return;
+    }
+    if (!form.password) {
+      toast.error('Password is required');
+      return;
+    }
     try {
-      await dispatch(login(form)).unwrap();
+      await dispatch(login({ email, password: form.password })).unwrap();
     } catch (err) {
       toast.error(typeof err === 'string' ? err : err?.message || 'Login failed');
     }
@@ -165,11 +179,11 @@ export default function Login() {
 
           <div className="flex items-center gap-3 my-5" aria-hidden="true">
             <div className="flex-1 h-px bg-[#E9E9E9]" />
-            <span className="text-[12px] text-[#60717B]">or continue with</span>
+            {/* <span className="text-[12px] text-[#60717B]">or continue with</span> */}
             <div className="flex-1 h-px bg-[#E9E9E9]" />
           </div>
 
-          <div className="space-y-2.5">
+          {/* <div className="space-y-2.5">
             <button type="button" onClick={handleGoogleLogin} disabled={!!socialLoading} className="w-full flex items-center justify-center gap-2.5 border border-[#C5C5C5] bg-white rounded-[6px] py-2.5 text-[13px] font-medium text-[#1A1A1A] hover:bg-gray-50 transition-colors disabled:opacity-60">
               {socialLoading === 'google'
                 ? <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
@@ -177,7 +191,7 @@ export default function Login() {
               }
               Continue with Google
             </button>
-          </div>
+          </div> */}
 
           <p className="text-center text-[13px] text-[#60717B] mt-5">
             Don't have an account?{' '}

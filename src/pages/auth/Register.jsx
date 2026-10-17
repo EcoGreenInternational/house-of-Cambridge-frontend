@@ -11,6 +11,9 @@ const INPUT_CLS =
   'w-full px-3 py-2.5 bg-[#EEEEEE] border border-[#C5C5C5] rounded-[6px] text-[13px] text-[#1A1A1A] placeholder-gray-400 outline-none focus:border-[#FFB700] focus:bg-white transition-colors';
 const LABEL_CLS  = 'block text-[13px] font-medium text-[#60717B] mb-1.5';
 const SECTION_CLS = 'text-[11px] font-bold text-[#60717B] uppercase tracking-wider pb-1.5 border-b border-[#E9E9E9] mb-3 mt-5 first:mt-0';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_RE = /^[A-Za-z][A-Za-z '-]*$/;
+const PHONE_RE = /^0\d{9}$/;
 
 const NEXT_STEPS = [
   { n: '1', text: 'Complete your profile setup' },
@@ -72,15 +75,35 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.firstName.trim())         { toast.error('First Name is required'); return; }
-    if (!form.lastName.trim())          { toast.error('Last Name is required'); return; }
-    if (!form.email.trim())             { toast.error('Email Address is required'); return; }
+    const firstName = form.firstName.trim();
+    const lastName = form.lastName.trim();
+    const email = form.email.trim().toLowerCase();
+    const phone = form.phone.trim();
+
+    if (!firstName)                    { toast.error('First Name is required'); return; }
+    if (firstName.length < 2 || firstName.length > 50 || !NAME_RE.test(firstName)) {
+      toast.error('Enter a valid first name'); return;
+    }
+    if (!lastName)                     { toast.error('Last Name is required'); return; }
+    if (lastName.length < 2 || lastName.length > 50 || !NAME_RE.test(lastName)) {
+      toast.error('Enter a valid last name'); return;
+    }
+    if (!email)                        { toast.error('Email Address is required'); return; }
+    if (!EMAIL_RE.test(email))         { toast.error('Enter a valid email address'); return; }
+    if (!phone)                       { toast.error('Mobile number is required'); return; }
+    if (!PHONE_RE.test(phone))        { toast.error('Mobile number must contain exactly 10 digits and start with 0'); return; }
+    if (form.dob && new Date(`${form.dob}T00:00:00`) > new Date()) {
+      toast.error('Date of birth cannot be in the future'); return;
+    }
     if (form.password.length < 8)       { toast.error('Password must be at least 8 characters'); return; }
+    if (!/[A-Z]/.test(form.password) || !/[0-9]/.test(form.password)) {
+      toast.error('Password must include at least one uppercase letter and one number'); return;
+    }
     if (form.password !== form.confirm) { toast.error('Passwords do not match'); return; }
-    if (!form.terms)                    { toast.error('Please agree to terms and conditions'); return; }
+    if (!form.terms)                    { toast.error('Please agree to the terms and privacy policy'); return; }
     const name = `${form.firstName} ${form.lastName}`.trim();
     try {
-      const result = await dispatch(register({ name, email: form.email, password: form.password, phone: form.phone })).unwrap();
+      const result = await dispatch(register({ name, email, password: form.password, phone })).unwrap();
       toast.success(result.message ||'Account created successfully!');
       navigate('/login');
     } catch (err) {
@@ -162,8 +185,18 @@ export default function Register() {
             </div>
 
             <div>
-              <label htmlFor="reg-phone" className={LABEL_CLS}>Phone Number</label>
-              <input id="reg-phone" type="tel" value={form.phone} onChange={set('phone')} placeholder="+94 77 123 4567" autoComplete="tel" className={INPUT_CLS} />
+              <label htmlFor="reg-phone" className={LABEL_CLS}>Phone Number <span className="text-red-500" aria-hidden="true">*</span></label>
+              <input
+                id="reg-phone"
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                placeholder="0717734377"
+                inputMode="numeric"
+                maxLength={10}
+                autoComplete="tel"
+                className={INPUT_CLS}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -260,18 +293,18 @@ export default function Register() {
 
           <div className="flex items-center gap-3 my-4" aria-hidden="true">
             <div className="flex-1 h-px bg-[#E9E9E9]" />
-            <span className="text-[12px] text-[#60717B]">or sign up with</span>
+            {/* <span className="text-[12px] text-[#60717B]">or sign up with</span> */}
             <div className="flex-1 h-px bg-[#E9E9E9]" />
           </div>
 
-          <div className="space-y-2.5">
-            <button type="button" onClick={handleGoogleLogin} disabled={!!socialLoading} className="w-full flex items-center justify-center gap-2.5 border border-[#C5C5C5] bg-white rounded-[6px] py-2.5 text-[13px] font-medium text-[#1A1A1A] hover:bg-gray-50 transition-colors disabled:opacity-60">
+          {/* <div className="space-y-2.5"> */}
+            {/* <button type="button" onClick={handleGoogleLogin} disabled={!!socialLoading} className="w-full flex items-center justify-center gap-2.5 border border-[#C5C5C5] bg-white rounded-[6px] py-2.5 text-[13px] font-medium text-[#1A1A1A] hover:bg-gray-50 transition-colors disabled:opacity-60">
               {socialLoading === 'google'
                 ? <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                 : <GoogleIcon />
               }
               Continue with Google
-            </button>
+            </button> */}
            {/* <button type="button" onClick={handleFacebookLogin} disabled={!!socialLoading} className="w-full flex items-center justify-center gap-2.5 border border-[#C5C5C5] bg-white rounded-[6px] py-2.5 text-[13px] font-medium text-[#1A1A1A] hover:bg-gray-50 transition-colors disabled:opacity-60">
               {socialLoading === 'facebook'
                 ? <span className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
@@ -279,7 +312,7 @@ export default function Register() {
               }
               Continue with Facebook
             </button> */}
-          </div>
+          {/* </div> */}
 
           <p className="text-center text-[13px] text-[#60717B] mt-4">
             Already have an account?{' '}
