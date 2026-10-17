@@ -183,7 +183,7 @@ export default function OrderConfirmation() {
           )}
         </div>
 
-        {order && (
+        {/* {order && (
           <div className="flex flex-wrap items-center justify-center gap-4 mb-5" role="status" aria-live="polite">
             <div className="flex items-center gap-1.5 text-[12px] text-[#60717B]">
               <FiMail size={13} className="text-green-500" aria-hidden="true" />
@@ -198,7 +198,7 @@ export default function OrderConfirmation() {
               </div>
             )}
           </div>
-        )}
+        )} */}
 
    
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -390,7 +390,7 @@ export default function OrderConfirmation() {
                 </dd>
               </div>
               <div className="flex justify-between text-[13px]">
-                <dt className="text-[#60717B]">Tax (VAT 8%)</dt>
+                <dt className="text-[#60717B]">Tax (VAT %)</dt>
                 <dd className="font-medium text-[#1A1A1A]">Rs. {tax.toLocaleString()}</dd>
               </div>
               <div className="border-t-2 border-[#1A1A1A] pt-3 flex justify-between">
