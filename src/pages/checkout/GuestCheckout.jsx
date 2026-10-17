@@ -5,6 +5,9 @@ import { fetchCart, removeFromCart } from '../../redux/slices/cartSlice.js';
 import { createOrder } from '../../redux/slices/orderSlice.js';
 import { initiateKoko } from '../../redux/slices/paymentSlice.js';
 import { startPayHerePayment } from '../../utils/payhere.js';
+import {
+  validateCheckoutForm, toPhoneDigits, toPostalDigits, SRI_LANKA_PROVINCES,
+} from '../../utils/checkoutValidation.js';
 import PayPalCheckout from '../../components/payment/PayPalCheckout.jsx';
 import {
   SHIPPING_METHODS,
@@ -40,6 +43,9 @@ const TRUST_BADGES = [
 const INPUT_CLS =
   'w-full border border-[#C5C5C5] rounded-[6px] px-3 py-2.5 text-[13px] outline-none focus:border-[#FFB700] bg-[#FAFAFA]';
 
+const INPUT_ERR_CLS =
+  'w-full border border-red-500 rounded-[6px] px-3 py-2.5 text-[13px] outline-none focus:border-red-500 bg-red-50/40';
+
 const BLANK_CONTACT = { firstName: '', lastName: '', email: '', phone: '' };
 const BLANK_ADDR    = { addressLine1: '', addressLine2: '', city: '', postalCode: '', province: '' };
 
@@ -63,6 +69,7 @@ export default function GuestCheckoutPage() {
 
   const [contact,       setContact]       = useState(BLANK_CONTACT);
   const [addr,          setAddr]          = useState(BLANK_ADDR);
+  const [formErrors,    setFormErrors]    = useState({});
   const [shippingMethod,setShippingMethod]= useState(null);
   const [payTab,        setPayTab]        = useState('card');
   const [agreeTerms,    setAgreeTerms]    = useState(false);
@@ -85,8 +92,27 @@ export default function GuestCheckoutPage() {
   const tax           = Math.round(subtotal * VAT_RATE);
   const total         = subtotal + shippingCost + tax;
 
-  const setContactField = (key) => (e) => setContact((c) => ({ ...c, [key]: e.target.value }));
-  const setAddrField    = (key) => (e) => setAddr((a)    => ({ ...a, [key]: e.target.value }));
+  const clearError = (key) => {
+    if (formErrors[key]) setFormErrors((errs) => ({ ...errs, [key]: '' }));
+  };
+  const setContactField = (key) => (e) => {
+    const value = key === 'phone' ? toPhoneDigits(e.target.value) : e.target.value;
+    setContact((c) => ({ ...c, [key]: value }));
+    clearError(key);
+  };
+  const setAddrField = (key) => (e) => {
+    const value = key === 'postalCode' ? toPostalDigits(e.target.value) : e.target.value;
+    setAddr((a) => ({ ...a, [key]: value }));
+    clearError(key);
+  };
+  const fieldProps = (prefix, key) => ({
+    id:                 `${prefix}-${key}`,
+    className:          formErrors[key] ? INPUT_ERR_CLS : INPUT_CLS,
+    'aria-invalid':     !!formErrors[key],
+    'aria-describedby': formErrors[key] ? `${prefix}-${key}-error` : undefined,
+  });
+  const fieldError = (prefix, key) =>
+    formErrors[key] && <p id={`${prefix}-${key}-error`} className="text-[11px] text-red-600 mt-1">{formErrors[key]}</p>;
 
   const handleRemoveItem = useCallback((item) => {
     const productId = item?.product?._id || item?.product || item;
@@ -100,10 +126,17 @@ export default function GuestCheckoutPage() {
       toast.error(`Cash on Delivery is limited to ${COD_MAX_PRODUCTS} products per order.`);
       return;
     }
-    if (!agreeTerms)                       return toast.error('Please agree to the terms and conditions');
-    if (!contact.email)                    return toast.error('Email is required');
-    if (!addr.addressLine1 || !addr.city)  return toast.error('Please fill in shipping address');
-    if (!shippingMethod)                   return toast.error('Please select a delivery method');
+    const errors = validateCheckoutForm({ ...contact, ...addr }, { requireEmail: true });
+    setFormErrors(errors);
+    const firstError = Object.keys(errors)[0];
+    if (firstError) {
+      toast.error('Please fix the highlighted details');
+      const prefix = firstError in BLANK_CONTACT ? 'contact' : 'addr';
+      document.getElementById(`${prefix}-${firstError}`)?.focus();
+      return;
+    }
+    if (!shippingMethod) return toast.error('Please select a delivery method');
+    if (!agreeTerms)     return toast.error('Please agree to the terms and conditions');
 
     setPlacing(true);
 
@@ -200,23 +233,26 @@ export default function GuestCheckoutPage() {
               <SectionHeader n={1} title="Contact Information" />
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { key: 'firstName', label: 'First Name',      type: 'text',  col: '' },
-                  { key: 'lastName',  label: 'Last Name',        type: 'text',  col: '' },
+                  { key: 'firstName', label: 'First Name',      type: 'text',  col: '', autoComplete: 'given-name' },
+                  { key: 'lastName',  label: 'Last Name',        type: 'text',  col: '', autoComplete: 'family-name' },
                   { key: 'email',     label: 'Email Address',    type: 'email', col: '', autoComplete: 'email' },
-                  { key: 'phone',     label: 'Phone Number',     type: 'tel',   col: '', autoComplete: 'tel' },
-                ].map(({ key, label, type, col, autoComplete }) => (
+                  { key: 'phone',     label: 'Phone Number',     type: 'tel',   col: '', autoComplete: 'tel', placeholder: '0771234567', inputMode: 'numeric', maxLength: 10 },
+                ].map(({ key, label, type, col, autoComplete, placeholder, inputMode, maxLength }) => (
                   <div key={key} className={col}>
                     <label htmlFor={`contact-${key}`} className="block text-[12px] font-medium text-[#60717B] mb-1">
                       {label} <span className="text-red-500" aria-hidden="true">*</span>
                     </label>
                     <input
-                      id={`contact-${key}`}
+                      {...fieldProps('contact', key)}
                       type={type}
                       value={contact[key]}
                       onChange={setContactField(key)}
                       autoComplete={autoComplete}
-                      className={INPUT_CLS}
+                      placeholder={placeholder}
+                      inputMode={inputMode}
+                      maxLength={maxLength}
                     />
+                    {fieldError('contact', key)}
                   </div>
                 ))}
               </div>
@@ -231,15 +267,23 @@ export default function GuestCheckoutPage() {
                   { key: 'addressLine1', label: 'Address Line 1', col: 'col-span-2', required: true, placeholder: 'Street address, P.O. box' },
                   { key: 'addressLine2', label: 'Address Line 2', col: 'col-span-2', optional: true, placeholder: 'Apartment, suite, unit, floor' },
                   { key: 'city',         label: 'City',           col: '',           required: true },
-                  { key: 'postalCode',   label: 'Postal Code',    col: '' },
-                  { key: 'province',     label: 'Province',       col: '' },
-                ].map(({ key, label, col, required, optional, placeholder }) => (
+                  { key: 'postalCode',   label: 'Postal Code',    col: '',           required: true, placeholder: '10100', inputMode: 'numeric', maxLength: 5 },
+                  { key: 'province',     label: 'Province',       col: '',           required: true, select: SRI_LANKA_PROVINCES },
+                ].map(({ key, label, col, required, optional, placeholder, inputMode, maxLength, select }) => (
                   <div key={key} className={col}>
                     <label htmlFor={`addr-${key}`} className="block text-[12px] font-medium text-[#60717B] mb-1">
                       {label}{required && <span className="text-red-500 ml-0.5" aria-hidden="true">*</span>}
                       {optional && <span className="text-gray-400"> (Optional)</span>}
                     </label>
-                    <input id={`addr-${key}`} value={addr[key]} onChange={setAddrField(key)} placeholder={placeholder} className={INPUT_CLS} />
+                    {select ? (
+                      <select {...fieldProps('addr', key)} value={addr[key]} onChange={setAddrField(key)}>
+                        <option value="">Select province</option>
+                        {select.map((p) => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    ) : (
+                      <input {...fieldProps('addr', key)} value={addr[key]} onChange={setAddrField(key)} placeholder={placeholder} inputMode={inputMode} maxLength={maxLength} />
+                    )}
+                    {fieldError('addr', key)}
                   </div>
                 ))}
               </div>

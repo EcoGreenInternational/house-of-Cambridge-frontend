@@ -54,6 +54,7 @@ export default function OrderConfirmation() {
   const [retrying,  setRetrying]  = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0 });
     if (id && OBJECT_ID_RE.test(id)) dispatch(fetchOrder(id));
   }, [id, dispatch]);
 
@@ -200,6 +201,23 @@ export default function OrderConfirmation() {
         )}
 
    
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => downloadInvoice(order, customerName, customerEmail)}
+            disabled={!order || paymentFailed}
+            className="disabled:opacity-50 flex-1 flex items-center justify-center gap-2 border-2 border-[#1A1A1A] text-[#1A1A1A] font-bold text-[14px] py-3.5 rounded-[8px] hover:bg-gray-50 transition-colors"
+          >
+            <FiDownload size={16} aria-hidden="true" /> Download Invoice (PDF)
+          </button>
+          <Link
+            to="/shop"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#FFB700] text-black font-bold text-[14px] py-3.5 rounded-[8px] hover:bg-amber-500 transition-colors"
+          >
+            Continue Shopping <FiArrowRight size={14} aria-hidden="true" />
+          </Link>
+        </div>
+
         <div className="bg-amber-50 border border-amber-200 rounded-[10px] px-5 py-3.5 flex items-center gap-3 mb-6" role="note">
           <div className="w-8 h-8 bg-[#FFB700] rounded-full flex items-center justify-center flex-shrink-0" aria-hidden="true">
             <FiStar size={15} className="text-black" />
@@ -384,21 +402,6 @@ export default function OrderConfirmation() {
         )}
 
       
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            type="button"
-            onClick={() => downloadInvoice(order, customerName, customerEmail)}
-            className="flex-1 flex items-center justify-center gap-2 border-2 border-[#1A1A1A] text-[#1A1A1A] font-bold text-[14px] py-3.5 rounded-[8px] hover:bg-gray-50 transition-colors"
-          >
-            <FiDownload size={16} aria-hidden="true" /> Download Invoice (PDF)
-          </button>
-          <Link
-            to="/shop"
-            className="flex-1 flex items-center justify-center gap-2 bg-[#FFB700] text-black font-bold text-[14px] py-3.5 rounded-[8px] hover:bg-amber-500 transition-colors"
-          >
-            Continue Shopping <FiArrowRight size={14} aria-hidden="true" />
-          </Link>
-        </div>
 
     
         {order && (

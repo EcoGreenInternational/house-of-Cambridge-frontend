@@ -6,6 +6,9 @@ import { createOrder } from '../../redux/slices/orderSlice.js';
 import { fetchAddresses } from '../../redux/slices/userSlice.js';
 import { initiateKoko } from '../../redux/slices/paymentSlice.js';
 import { startPayHerePayment } from '../../utils/payhere.js';
+import {
+  validateCheckoutForm, validateSavedAddress, toPhoneDigits, toPostalDigits, SRI_LANKA_PROVINCES,
+} from '../../utils/checkoutValidation.js';
 import PayPalCheckout from '../../components/payment/PayPalCheckout.jsx';
 import {
   SHIPPING_METHODS,
@@ -48,6 +51,19 @@ const STEPS = [
 
 const INPUT_CLS =
   'w-full border border-[#C5C5C5] rounded-[6px] px-3 py-2.5 text-[13px] outline-none focus:border-[#FFB700] bg-[#FAFAFA]';
+const INPUT_ERR_CLS =
+  'w-full border border-red-500 rounded-[6px] px-3 py-2.5 text-[13px] outline-none focus:border-red-500 bg-red-50/40';
+
+const ADDRESS_FIELDS = [
+  { key: 'firstName',    label: 'First Name',     col: '',           required: true, autoComplete: 'given-name' },
+  { key: 'lastName',     label: 'Last Name',      col: '',           required: true, autoComplete: 'family-name' },
+  { key: 'addressLine1', label: 'Address Line 1', col: 'col-span-2', required: true, placeholder: 'Street address, P.O. box', autoComplete: 'address-line1' },
+  { key: 'addressLine2', label: 'Address Line 2', col: 'col-span-2', optional: true, placeholder: 'Apartment, suite, unit, floor', autoComplete: 'address-line2' },
+  { key: 'city',         label: 'City',           col: '',           required: true, autoComplete: 'address-level2' },
+  { key: 'postalCode',   label: 'Postal Code',    col: '',           required: true, placeholder: '10100', inputMode: 'numeric', maxLength: 5, autoComplete: 'postal-code' },
+  { key: 'province',     label: 'Province',       col: '',           required: true, select: SRI_LANKA_PROVINCES },
+  { key: 'phone',        label: 'Phone',          col: '',           required: true, type: 'tel', placeholder: '0771234567', inputMode: 'numeric', maxLength: 10, autoComplete: 'tel' },
+];
 
 const TRUST_BADGES = [
   { bg: 'bg-green-50', icon: FiShield,    color: 'text-green-600', label: 'SSL Secure'     },
@@ -95,6 +111,7 @@ export default function CheckoutPage() {
   const [step,           setStep]           = useState(1);
   const [selectedAddr,   setSelectedAddr]   = useState(null);
   const [newAddr,        setNewAddr]        = useState(BLANK_ADDR);
+  const [addrErrors,     setAddrErrors]     = useState({});
   const [shippingMethod, setShippingMethod] = useState(null);
   const [orderNotes,     setOrderNotes]     = useState('');
   const [payTab,         setPayTab]         = useState('card');
@@ -159,13 +176,40 @@ export default function CheckoutPage() {
     toast.success(`${pts} loyalty points applied!`);
   }, [loyaltyInput, availablePts, subtotal]);
 
-  const handleContinueToPayment = useCallback(() => {
-    if (!shippingMethod) { toast.error('Please select a shipping method'); return; }
-    if (!shippingAddress.fullName || !shippingAddress.addressLine1) {
-      toast.error('Please complete your shipping address'); return;
+  const usingNewAddr = !selectedAddr || !isAuthenticated || addresses.length === 0;
+
+  const setAddrField = (key) => (e) => {
+    let value = e.target.value;
+    if (key === 'phone')      value = toPhoneDigits(value);
+    if (key === 'postalCode') value = toPostalDigits(value);
+    setNewAddr((a) => ({ ...a, [key]: value }));
+    if (addrErrors[key]) setAddrErrors((errs) => ({ ...errs, [key]: '' }));
+  };
+
+  // Returns true when the shipping step is complete; otherwise shows what is wrong
+  const validateShipping = useCallback(() => {
+    if (usingNewAddr) {
+      const errors = validateCheckoutForm(newAddr);
+      setAddrErrors(errors);
+      if (Object.keys(errors).length) {
+        toast.error('Please fix the highlighted shipping details');
+        document.getElementById(`addr-${Object.keys(errors)[0]}`)?.focus();
+        return false;
+      }
+    } else {
+      const missing = validateSavedAddress(shippingAddress);
+      if (missing) {
+        toast.error(`The selected address needs ${missing}. Please choose another or enter a new address.`);
+        return false;
+      }
     }
-    setStep(3);
-  }, [shippingMethod, shippingAddress]);
+    if (!shippingMethod) { toast.error('Please select a shipping method'); return false; }
+    return true;
+  }, [usingNewAddr, newAddr, shippingAddress, shippingMethod]);
+
+  const handleContinueToPayment = useCallback(() => {
+    if (validateShipping()) setStep(3);
+  }, [validateShipping]);
 
   const handlePlaceOrder = useCallback(async () => {
     if (placing) return;
@@ -173,10 +217,7 @@ export default function CheckoutPage() {
       toast.error(`Cash on Delivery is limited to ${COD_MAX_PRODUCTS} products per order.`);
       return;
     }
-    if (!shippingMethod) { toast.error('Please select a shipping method'); setStep(2); return; }
-    if (!shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.addressLine1) {
-      toast.error('Please fill in all address fields'); setStep(2); return;
-    }
+    if (!validateShipping()) { setStep(2); return; }
     setPlacing(true);
 
     const action = await dispatch(createOrder({
@@ -219,7 +260,7 @@ export default function CheckoutPage() {
     }
 
     setPlacing(false);
-  }, [placing, totalItemQuantity, shippingMethod, shippingAddress, payTab, loyaltyApplied, orderNotes, shippingCost, dispatch, navigate, user]);
+  }, [placing, totalItemQuantity, validateShipping, shippingMethod, shippingAddress, payTab, loyaltyApplied, orderNotes, shippingCost, dispatch, navigate, user]);
 
   if (cartLoading && !cart) return <Layout><PageSpinner /></Layout>;
 
@@ -403,26 +444,37 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {(!selectedAddr || !isAuthenticated || addresses.length === 0) && (
+                {usingNewAddr && (
                   <fieldset className="grid grid-cols-2 gap-3 mb-5">
                     <legend className="sr-only">New address</legend>
-                    {[
-                      { key: 'firstName',   label: 'First Name',      col: '', required: true },
-                      { key: 'lastName',    label: 'Last Name',        col: '', required: true },
-                      { key: 'addressLine1',label: 'Address Line 1',   col: 'col-span-2', required: true, placeholder: 'Street address, P.O. box' },
-                      { key: 'addressLine2',label: 'Address Line 2',   col: 'col-span-2', optional: true, placeholder: 'Apartment, suite, unit, floor' },
-                      { key: 'city',        label: 'City',             col: '', required: true },
-                      { key: 'postalCode',  label: 'Postal Code',      col: '', required: true },
-                      { key: 'province',    label: 'Province',         col: '', required: true },
-                      { key: 'phone',       label: 'Phone',            col: '', required: true, type: 'tel' },
-                    ].map(({ key, label, col, required, optional, type, placeholder }) => (
-                      <div key={key} className={col}>
-                        <label htmlFor={`addr-${key}`} className="block text-[12px] font-medium text-[#60717B] mb-1">
-                          {label}{required && ' *'}{optional && <span className="text-gray-400"> (Optional)</span>}
-                        </label>
-                        <input id={`addr-${key}`} type={type || 'text'} value={newAddr[key]} onChange={(e) => setNewAddr({ ...newAddr, [key]: e.target.value })} placeholder={placeholder} className={INPUT_CLS} />
-                      </div>
-                    ))}
+                    {ADDRESS_FIELDS.map(({ key, label, col, required, optional, type, placeholder, inputMode, maxLength, autoComplete, select }) => {
+                      const error = addrErrors[key];
+                      const inputProps = {
+                        id:                 `addr-${key}`,
+                        value:              newAddr[key],
+                        onChange:           setAddrField(key),
+                        className:          error ? INPUT_ERR_CLS : INPUT_CLS,
+                        autoComplete,
+                        'aria-invalid':     !!error,
+                        'aria-describedby': error ? `addr-${key}-error` : undefined,
+                      };
+                      return (
+                        <div key={key} className={col}>
+                          <label htmlFor={`addr-${key}`} className="block text-[12px] font-medium text-[#60717B] mb-1">
+                            {label}{required && ' *'}{optional && <span className="text-gray-400"> (Optional)</span>}
+                          </label>
+                          {select ? (
+                            <select {...inputProps}>
+                              <option value="">Select province</option>
+                              {select.map((p) => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                          ) : (
+                            <input {...inputProps} type={type || 'text'} placeholder={placeholder} inputMode={inputMode} maxLength={maxLength} />
+                          )}
+                          {error && <p id={`addr-${key}-error`} className="text-[11px] text-red-600 mt-1">{error}</p>}
+                        </div>
+                      );
+                    })}
                     {isAuthenticated && (
                       <div className="col-span-2 flex items-center gap-2 pt-1">
                         <input type="checkbox" id="saveAddr" checked={newAddr.save} onChange={(e) => setNewAddr({ ...newAddr, save: e.target.checked })} className="accent-[#FFB700] w-4 h-4" />

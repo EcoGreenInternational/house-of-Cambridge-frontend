@@ -3312,3 +3312,15 @@ RETURN STATUS PAGE — RESPONSIVE
     font-size: 0.75rem;
   }
 }
+/* Tailwind v4 resets buttons to the default cursor; restore the hand on clickable controls */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="tab"],
+select:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
