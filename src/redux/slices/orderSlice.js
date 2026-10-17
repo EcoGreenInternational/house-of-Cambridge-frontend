@@ -29,6 +29,14 @@ export const fetchOrder = createAsyncThunk('orders/fetchOne', async (id, { rejec
   } catch (err) { return rejectWithValue(apiErr(err)); }
 });
 
+// Re-fetch without the page spinner, used while waiting for a payment callback
+export const refreshOrder = createAsyncThunk('orders/refreshOne', async (id, { rejectWithValue }) => {
+  try {
+    const res = await api.get(`/orders/${id}`);
+    return res.data;
+  } catch (err) { return rejectWithValue(apiErr(err)); }
+});
+
 const orderSlice = createSlice({
   name: 'orders',
   initialState: { 
@@ -63,6 +71,9 @@ const orderSlice = createSlice({
       .addCase(fetchOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(refreshOrder.fulfilled, (state, action) => {
+        state.order = action.payload.order || action.payload;
       });
   },
 });

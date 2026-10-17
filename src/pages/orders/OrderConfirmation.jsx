@@ -1,12 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOrder } from '../../redux/slices/orderSlice';
+import { fetchOrder, refreshOrder } from '../../redux/slices/orderSlice';
+import { startPayHerePayment } from '../../utils/payhere';
+import toast from 'react-hot-toast';
 import Layout from '../../components/common/Layout';
 import { PageSpinner } from '../../components/ui/Spinner';
 import {
   FiCheck, FiArrowRight, FiDownload, FiMail, FiMessageSquare,
-  FiMapPin, FiCreditCard, FiStar, FiShoppingCart,
+  FiMapPin, FiCreditCard, FiStar, FiShoppingCart, FiClock, FiAlertTriangle,
 } from 'react-icons/fi';
 import { downloadInvoice } from '../../utils/invoiceGenerator';
 
@@ -20,6 +22,10 @@ const STEPS = [
 const LOYALTY_RATE = 50;
 
 const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
+
+// PayHere's server callback can land a few seconds after the customer is redirected back
+const PAYMENT_POLL_MS       = 3000;
+const PAYMENT_POLL_ATTEMPTS = 20;
 
 function safeNum(value, fallback = 0) {
   const n = Number(value);
@@ -44,11 +50,41 @@ export default function OrderConfirmation() {
   const { order, loading } = useSelector((s) => s.orders);
   const { user }           = useSelector((s) => s.auth);
 
+  const [pollCount, setPollCount] = useState(0);
+  const [retrying,  setRetrying]  = useState(false);
+
   useEffect(() => {
     if (id && OBJECT_ID_RE.test(id)) dispatch(fetchOrder(id));
   }, [id, dispatch]);
 
+  const awaitingCardPayment =
+    order?._id === id && order?.paymentMethod === 'card' && order?.paymentStatus === 'pending';
+
+  useEffect(() => {
+    if (!awaitingCardPayment || pollCount >= PAYMENT_POLL_ATTEMPTS) return undefined;
+    const timer = setTimeout(() => {
+      dispatch(refreshOrder(id));
+      setPollCount((c) => c + 1);
+    }, PAYMENT_POLL_MS);
+    return () => clearTimeout(timer);
+  }, [awaitingCardPayment, pollCount, id, dispatch]);
+
+  const handleRetryPayment = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await startPayHerePayment(id);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not start card payment');
+      setRetrying(false);
+    }
+  };
+
   if (loading) return <Layout><PageSpinner /></Layout>;
+
+  const paymentFailed  = order?.paymentMethod === 'card' && order?.paymentStatus === 'failed';
+  const paymentWaiting = awaitingCardPayment && pollCount < PAYMENT_POLL_ATTEMPTS;
+  const paymentUnknown = awaitingCardPayment && !paymentWaiting;
 
   const items         = Array.isArray(order?.items) ? order.items : [];
   const subtotal      = safeNum(order?.subtotal, items.reduce((s, i) => s + safeNum(i.price) * safeNum(i.quantity), 0));
@@ -93,14 +129,51 @@ export default function OrderConfirmation() {
 
   
         <div className="text-center mb-6">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4" aria-hidden="true">
-            <FiCheck size={34} className="text-green-500" strokeWidth={3} />
-          </div>
-          <h1 className="text-[28px] font-black text-[#1A1A1A] mb-2">Order Placed Successfully!</h1>
-          <p className="text-[14px] text-[#60717B] mb-3">
-            Thank you, <span className="font-semibold text-[#1A1A1A]">{firstName}</span>!
-            Your order has been confirmed and is being processed.
-          </p>
+          {paymentFailed ? (
+            <>
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4" aria-hidden="true">
+                <FiAlertTriangle size={34} className="text-red-500" />
+              </div>
+              <h1 className="text-[28px] font-black text-[#1A1A1A] mb-2">Payment Not Completed</h1>
+              <p className="text-[14px] text-[#60717B] mb-3">
+                Your order is saved, but the card payment did not go through.
+              </p>
+              <button
+                type="button"
+                onClick={handleRetryPayment}
+                disabled={retrying}
+                className="bg-[#FFB700] text-black font-bold text-[14px] px-6 py-3 rounded-[8px] hover:bg-amber-500 transition-colors disabled:opacity-60 mb-4"
+              >
+                {retrying ? 'Redirecting…' : 'Try Payment Again'}
+              </button>
+              <br />
+            </>
+          ) : paymentWaiting || paymentUnknown ? (
+            <>
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4" aria-hidden="true">
+                <FiClock size={34} className={`text-amber-500 ${paymentWaiting ? 'animate-pulse' : ''}`} />
+              </div>
+              <h1 className="text-[28px] font-black text-[#1A1A1A] mb-2" role="status" aria-live="polite">
+                {paymentWaiting ? 'Confirming Your Payment…' : 'Payment Still Processing'}
+              </h1>
+              <p className="text-[14px] text-[#60717B] mb-3">
+                {paymentWaiting
+                  ? 'Please wait a moment while we hear back from PayHere. Do not pay again.'
+                  : "We haven't received confirmation from PayHere yet. Check your orders page in a few minutes, or contact us if you were charged."}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4" aria-hidden="true">
+                <FiCheck size={34} className="text-green-500" strokeWidth={3} />
+              </div>
+              <h1 className="text-[28px] font-black text-[#1A1A1A] mb-2">Order Placed Successfully!</h1>
+              <p className="text-[14px] text-[#60717B] mb-3">
+                Thank you, <span className="font-semibold text-[#1A1A1A]">{firstName}</span>!
+                Your order has been confirmed and is being processed.
+              </p>
+            </>
+          )}
           {order && (
             <span className="inline-flex items-center gap-2 bg-[#1A1A1A] text-white text-[13px] font-bold px-4 py-2 rounded-full">
               <FiShoppingCart size={13} aria-hidden="true" />

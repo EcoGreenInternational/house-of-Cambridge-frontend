@@ -3,16 +3,6 @@ import api from '../api/axiosInstance';
 
 const apiErr = (err) => err.response?.data?.message || err.message;
 
-export const getPayHereHash = createAsyncThunk(
-  'payment/payhereHash',
-  async (data, { rejectWithValue }) => {
-    try {
-      const res = await api.post('/payments/payhere/hash', data);
-      return res.data;
-    } catch (err) { return rejectWithValue(apiErr(err)); }
-  }
-);
-
 export const createPayPalOrder = createAsyncThunk(
   'payment/paypalCreate',
   async (data, { rejectWithValue }) => {
@@ -53,7 +43,7 @@ const paymentSlice = createSlice({
     clearPaymentError: (state) => { state.error = null; },
   },
   extraReducers: (builder) => {
-    [getPayHereHash, createPayPalOrder, capturePayPalOrder, initiateKoko].forEach((thunk) => {
+    [createPayPalOrder, capturePayPalOrder, initiateKoko].forEach((thunk) => {
       builder
         .addCase(thunk.pending,    pending)
         .addCase(thunk.fulfilled,  (state) => { state.loading = false; })

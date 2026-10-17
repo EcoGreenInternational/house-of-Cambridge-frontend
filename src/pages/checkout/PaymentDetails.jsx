@@ -1,4 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { startPayHerePayment } from '../../utils/payhere';
 import { FiAlertTriangle } from 'react-icons/fi';
 
 const FAILURE_REASONS = [
@@ -10,6 +13,23 @@ const FAILURE_REASONS = [
 
 export default function PaymentDeniedPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [retrying, setRetrying] = useState(false);
+
+  // Cart is emptied once the order exists, so retry pays that same order instead of re-checking out
+  const orderId = /^[a-f\d]{24}$/i.test(searchParams.get('order') || '') ? searchParams.get('order') : null;
+
+  const handleTryAgain = async () => {
+    if (!orderId) { navigate('/checkout'); return; }
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await startPayHerePayment(orderId);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not start card payment');
+      setRetrying(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center px-4">
@@ -80,16 +100,17 @@ export default function PaymentDeniedPage() {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => navigate('/checkout')}
-              className="flex-1 bg-[#FFB700] text-black font-bold text-[14px] py-3.5 rounded-[8px] hover:bg-amber-500 transition-colors"
+              onClick={handleTryAgain}
+              disabled={retrying}
+              className="flex-1 bg-[#FFB700] text-black font-bold text-[14px] py-3.5 rounded-[8px] hover:bg-amber-500 transition-colors disabled:opacity-60"
             >
-              Try Again
+              {retrying ? 'Redirecting…' : 'Try Again'}
             </button>
             <Link
-              to="/cart"
+              to={orderId ? `/order-confirmation/${orderId}` : '/cart'}
               className="flex-1 border-2 border-[#1A1A1A] text-[#1A1A1A] font-bold text-[14px] py-3.5 rounded-[8px] hover:bg-gray-50 transition-colors text-center"
             >
-              Cancel
+              {orderId ? 'View Order' : 'Cancel'}
             </Link>
           </div>
 

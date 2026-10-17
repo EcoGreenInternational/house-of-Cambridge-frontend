@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCart, removeFromCart } from '../../redux/slices/cartSlice.js';
 import { createOrder } from '../../redux/slices/orderSlice.js';
-import { initiateKoko, getPayHereHash } from '../../redux/slices/paymentSlice.js';
-import { submitPayHereForm, PAYHERE_MERCHANT_ID } from '../../utils/payhere.js';
+import { initiateKoko } from '../../redux/slices/paymentSlice.js';
+import { startPayHerePayment } from '../../utils/payhere.js';
 import PayPalCheckout from '../../components/payment/PayPalCheckout.jsx';
 import {
   SHIPPING_METHODS,
@@ -18,7 +18,7 @@ import Breadcrumb from '../../components/ui/Breadcrumb.jsx';
 import { PageSpinner } from '../../components/ui/Spinner.jsx';
 import {
   FiCheck, FiTruck, FiRefreshCw, FiShield,
-  FiChevronRight, FiPackage, FiX,
+  FiChevronRight, FiPackage, FiX, FiLock,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -65,7 +65,6 @@ export default function GuestCheckoutPage() {
   const [addr,          setAddr]          = useState(BLANK_ADDR);
   const [shippingMethod,setShippingMethod]= useState(null);
   const [payTab,        setPayTab]        = useState('card');
-  const [cardInfo,      setCardInfo]      = useState({ number: '', name: '', expiry: '', cvv: '' });
   const [agreeTerms,    setAgreeTerms]    = useState(false);
   const [agreeEmail,    setAgreeEmail]    = useState(false);
   const [createAccount, setCreateAccount]= useState(false);
@@ -88,7 +87,6 @@ export default function GuestCheckoutPage() {
 
   const setContactField = (key) => (e) => setContact((c) => ({ ...c, [key]: e.target.value }));
   const setAddrField    = (key) => (e) => setAddr((a)    => ({ ...a, [key]: e.target.value }));
-  const setCardField    = (key) => (e) => setCardInfo((c) => ({ ...c, [key]: e.target.value }));
 
   const handleRemoveItem = useCallback((item) => {
     const productId = item?.product?._id || item?.product || item;
@@ -140,32 +138,12 @@ export default function GuestCheckoutPage() {
     if (payTab === 'cod') {
       navigate(`/order-confirmation/${order._id}`);
     } else if (payTab === 'card') {
-      navigate('/payment-processing');
       try {
-        const hashRes = await dispatch(getPayHereHash({
-          orderId: order._id, amount: order.total.toFixed(2), currency: 'LKR',
-        })).unwrap();
-        const a = order.shippingAddress;
-        submitPayHereForm({
-          merchant_id: PAYHERE_MERCHANT_ID,
-          return_url:  `${window.location.origin}/order-confirmation/${order._id}`,
-          cancel_url:  `${window.location.origin}/payment-denied`,
-          notify_url:  `${import.meta.env.VITE_API_URL}/payments/payhere/notify`,
-          order_id:    order.orderNumber,
-          items:       order.items.map((i) => i.name).join(', '),
-          currency:    'LKR',
-          amount:      order.total.toFixed(2),
-          first_name:  contact.firstName || a.fullName?.split(' ')[0]               || '',
-          last_name:   contact.lastName  || a.fullName?.split(' ').slice(1).join(' ') || '',
-          email:       contact.email     || '',
-          phone:       contact.phone     || a.phone                                  || '',
-          address:     a.addressLine1    || '',
-          city:        a.city            || '',
-          country:     'Sri Lanka',
-          hash:        hashRes.hash,
-        });
-      } catch {
-        navigate('/payment-denied');
+        await startPayHerePayment(order._id);
+        return; // browser is leaving for PayHere; keep the button disabled
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Could not start card payment. Please try again.');
+        navigate(`/payment-denied?order=${order._id}`);
       }
     } else if (payTab === 'koko') {
       navigate('/payment-processing');
@@ -319,29 +297,12 @@ export default function GuestCheckoutPage() {
               </div>
 
               {payTab === 'card' && (
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { key: 'number', label: 'Card Number',  col: 'col-span-2', placeholder: '1234 5678 9012 3456', maxLength: 19, inputMode: 'numeric', autoComplete: 'cc-number' },
-                    { key: 'name',   label: 'Name on Card', col: 'col-span-2', autoComplete: 'cc-name' },
-                    { key: 'expiry', label: 'Expiry Date',  col: '',           placeholder: 'MM/YY', maxLength: 5, autoComplete: 'cc-exp' },
-                    { key: 'cvv',    label: 'CVV',          col: '',           type: 'password', maxLength: 4, autoComplete: 'cc-csc' },
-                  ].map(({ key, label, col, placeholder, maxLength, type, inputMode, autoComplete }) => (
-                    <div key={key} className={col}>
-                      <label htmlFor={`card-${key}`} className="block text-[12px] font-medium text-[#60717B] mb-1">{label}</label>
-                      <input
-                        id={`card-${key}`}
-                        type={type || 'text'}
-                        value={cardInfo[key]}
-                        onChange={setCardField(key)}
-                        placeholder={placeholder}
-                        maxLength={maxLength}
-                        inputMode={inputMode}
-                        autoComplete={autoComplete}
-                        className={INPUT_CLS}
-                        aria-label={key === 'cvv' ? 'Card security code' : undefined}
-                      />
-                    </div>
-                  ))}
+                <div className="flex items-start gap-3 p-4 border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA]">
+                  <FiLock size={18} className="text-[#FFB700] mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <div>
+                    <p className="text-[13px] font-semibold text-[#1A1A1A] mb-1">Pay securely with PayHere</p>
+                    <p className="text-[12px] text-[#60717B]">After you place the order you'll be taken to PayHere to enter your card details (Visa, Mastercard, Amex). We never see or store your card number.</p>
+                  </div>
                 </div>
               )}
 

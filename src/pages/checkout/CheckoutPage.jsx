@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchCart, applyCoupon, removeFromCart } from '../../redux/slices/cartSlice.js';
 import { createOrder } from '../../redux/slices/orderSlice.js';
 import { fetchAddresses } from '../../redux/slices/userSlice.js';
-import { initiateKoko, getPayHereHash } from '../../redux/slices/paymentSlice.js';
-import { submitPayHereForm, PAYHERE_MERCHANT_ID } from '../../utils/payhere.js';
+import { initiateKoko } from '../../redux/slices/paymentSlice.js';
+import { startPayHerePayment } from '../../utils/payhere.js';
 import PayPalCheckout from '../../components/payment/PayPalCheckout.jsx';
 import {
   SHIPPING_METHODS,
@@ -20,10 +20,9 @@ import { PageSpinner } from '../../components/ui/Spinner.jsx';
 import {
   FiMapPin, FiCreditCard, FiCheck, FiShoppingCart,
   FiTag, FiX, FiTruck, FiRefreshCw, FiShield,
-  FiStar, FiChevronRight, FiPackage,
+  FiStar, FiChevronRight, FiPackage, FiLock,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { getSavedPaymentMethods } from '../../utils/savedPaymentMethods';
 
 const VAT_RATE = Number(import.meta.env.VITE_VAT_RATE) || 0;
 
@@ -99,10 +98,6 @@ export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState(null);
   const [orderNotes,     setOrderNotes]     = useState('');
   const [payTab,         setPayTab]         = useState('card');
-  const [savedCards,     setSavedCards]     = useState(getSavedPaymentMethods);
-  const [selectedCard,   setSelectedCard]   = useState(null);
-  const [useNewCard,     setUseNewCard]     = useState(false);
-  const [cardInfo,       setCardInfo]       = useState({ number: '', name: '', expiry: '', cvv: '', save: false });
   const [billingSame,    setBillingSame]    = useState(true);
   const [loyaltyInput,   setLoyaltyInput]  = useState('');
   const [loyaltyApplied, setLoyaltyApplied]= useState(0);
@@ -115,18 +110,6 @@ export default function CheckoutPage() {
     dispatch(fetchCart());
     if (isAuthenticated) dispatch(fetchAddresses());
   }, [dispatch, isAuthenticated]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setSavedCards([]);
-      setSelectedCard(null);
-      return;
-    }
-
-    const cards = getSavedPaymentMethods();
-    setSavedCards(cards);
-    setSelectedCard(cards.find((card) => card.isDefault)?.id || cards[0]?.id || null);
-  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!cartLoading && (!cart || cart.items?.length === 0)) navigate('/cart');
@@ -216,32 +199,12 @@ export default function CheckoutPage() {
     if (payTab === 'cod') {
       navigate(`/order-confirmation/${order._id}`);
     } else if (payTab === 'card') {
-      navigate('/payment-processing');
       try {
-        const hashRes = await dispatch(getPayHereHash({
-          orderId: order._id, amount: order.total.toFixed(2), currency: 'LKR',
-        })).unwrap();
-        const a = order.shippingAddress;
-        submitPayHereForm({
-          merchant_id: PAYHERE_MERCHANT_ID,
-          return_url:  `${window.location.origin}/order-confirmation/${order._id}`,
-          cancel_url:  `${window.location.origin}/payment-denied`,
-          notify_url:  `${import.meta.env.VITE_API_URL}/payments/payhere/notify`,
-          order_id:    order.orderNumber,
-          items:       order.items.map((i) => i.name).join(', '),
-          currency:    'LKR',
-          amount:      order.total.toFixed(2),
-          first_name:  a.fullName?.split(' ')[0]              || '',
-          last_name:   a.fullName?.split(' ').slice(1).join(' ') || '',
-          email:       order.guestEmail || user?.email         || '',
-          phone:       a.phone                                 || '',
-          address:     a.addressLine1                          || '',
-          city:        a.city                                  || '',
-          country:     'Sri Lanka',
-          hash:        hashRes.hash,
-        });
-      } catch {
-        navigate('/payment-denied');
+        await startPayHerePayment(order._id);
+        return; // browser is leaving for PayHere; keep the button disabled
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Could not start card payment. Please try again.');
+        navigate(`/payment-denied?order=${order._id}`);
       }
     } else if (payTab === 'koko') {
       navigate('/payment-processing');
@@ -575,54 +538,13 @@ export default function CheckoutPage() {
 
                   {payTab === 'card' && (
                     <div>
-                      {isAuthenticated && savedCards.length > 0 && (
-                        <fieldset className="space-y-2 mb-4">
-                          <legend className="sr-only">Saved cards</legend>
-                          {savedCards.map((c) => (
-                            <label key={c.id} className={`flex items-center gap-3 p-3.5 border-2 rounded-[8px] cursor-pointer transition-colors ${selectedCard === c.id && !useNewCard ? 'border-[#FFB700] bg-amber-50' : 'border-[#E9E9E9] hover:border-[#C5C5C5]'}`}>
-                              <input type="radio" name="savedCard" checked={selectedCard === c.id && !useNewCard} onChange={() => { setSelectedCard(c.id); setUseNewCard(false); }} className="accent-[#FFB700]" />
-                              <div className="w-10 h-6 bg-[#1A1A1A] rounded flex items-center justify-center flex-shrink-0" aria-hidden="true"><span className="text-white text-[9px] font-black">{c.brand.toUpperCase()}</span></div>
-                              <div className="flex-1">
-                                <p className="text-[13px] font-semibold text-[#1A1A1A]">●●●● ●●●● ●●●● {c.last4}</p>
-                                <p className="text-[11px] text-[#60717B]">{c.name} · Expires {c.expiry}</p>
-                              </div>
-                            </label>
-                          ))}
-                        </fieldset>
-                      )}
-                      {isAuthenticated && savedCards.length > 0 && (
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="flex-1 h-px bg-[#E9E9E9]" aria-hidden="true" />
-                          <button onClick={() => setUseNewCard(true)} className={`text-[12px] font-medium px-3 py-1 rounded-full border transition-colors ${useNewCard ? 'bg-[#FFB700] border-[#FFB700] text-black' : 'border-[#C5C5C5] text-[#60717B] hover:border-[#FFB700]'}`}>Or use a new card</button>
-                          <div className="flex-1 h-px bg-[#E9E9E9]" aria-hidden="true" />
+                      <div className="flex items-start gap-3 p-4 border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA]">
+                        <FiLock size={18} className="text-[#FFB700] mt-0.5 flex-shrink-0" aria-hidden="true" />
+                        <div>
+                          <p className="text-[13px] font-semibold text-[#1A1A1A] mb-1">Pay securely with PayHere</p>
+                          <p className="text-[12px] text-[#60717B]">After you place the order you'll be taken to PayHere to enter your card details (Visa, Mastercard, Amex). We never see or store your card number.</p>
                         </div>
-                      )}
-                      {(useNewCard || !isAuthenticated || savedCards.length === 0) && (
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="col-span-2">
-                            <label htmlFor="card-number" className="block text-[12px] font-medium text-[#60717B] mb-1">Card Number</label>
-                            <input id="card-number" value={cardInfo.number} onChange={(e) => setCardInfo({ ...cardInfo, number: e.target.value })} placeholder="1234 5678 9012 3456" className={INPUT_CLS} maxLength={19} inputMode="numeric" autoComplete="cc-number" />
-                          </div>
-                          <div className="col-span-2">
-                            <label htmlFor="card-name" className="block text-[12px] font-medium text-[#60717B] mb-1">Name on Card</label>
-                            <input id="card-name" value={cardInfo.name} onChange={(e) => setCardInfo({ ...cardInfo, name: e.target.value })} className={INPUT_CLS} autoComplete="cc-name" />
-                          </div>
-                          <div>
-                            <label htmlFor="card-expiry" className="block text-[12px] font-medium text-[#60717B] mb-1">Expiry Date</label>
-                            <input id="card-expiry" value={cardInfo.expiry} onChange={(e) => setCardInfo({ ...cardInfo, expiry: e.target.value })} placeholder="MM/YY" className={INPUT_CLS} maxLength={5} autoComplete="cc-exp" />
-                          </div>
-                          <div>
-                            <label htmlFor="card-cvv" className="block text-[12px] font-medium text-[#60717B] mb-1">CVV</label>
-                            <input id="card-cvv" type="password" value={cardInfo.cvv} onChange={(e) => setCardInfo({ ...cardInfo, cvv: e.target.value })} placeholder="●●●" className={INPUT_CLS} maxLength={4} autoComplete="cc-csc" aria-label="Card security code" />
-                          </div>
-                          {isAuthenticated && (
-                            <div className="col-span-2 flex items-center gap-2 pt-1">
-                              <input type="checkbox" id="saveCard" checked={cardInfo.save} onChange={(e) => setCardInfo({ ...cardInfo, save: e.target.checked })} className="accent-[#FFB700] w-4 h-4" />
-                              <label htmlFor="saveCard" className="text-[12px] text-[#60717B] cursor-pointer">Save this card for future payments</label>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      </div>
                       <div className="mt-4 pt-4 border-t border-[#F0F0F0]">
                         <p className="text-[13px] font-semibold text-[#1A1A1A] mb-2">Billing Address</p>
                         <div className="flex items-center gap-2">
