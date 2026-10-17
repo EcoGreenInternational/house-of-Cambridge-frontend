@@ -114,7 +114,7 @@ export default function AdminOrderDetail() {
     { label: 'Subtotal',  val: `Rs.${order.subtotal?.toLocaleString()}` },
     order.discount > 0 && { label: 'Discount', val: `-Rs.${order.discount?.toLocaleString()}`, cls: 'text-green-600' },
     { label: 'Shipping',  val: order.shippingCost > 0 ? `Rs.${order.shippingCost}` : 'Free', cls: order.shippingCost === 0 ? 'text-green-600' : '' },
-    { label: 'Tax (8%)',  val: `Rs.${order.tax?.toLocaleString()}` },
+    { label: 'Tax (%)',  val: `Rs.${order.tax?.toLocaleString()}` },
   ].filter(Boolean);
 
   return (

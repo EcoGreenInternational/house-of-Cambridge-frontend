@@ -322,7 +322,7 @@ export default function OrderTracking() {
                 <p className="text-[11px] font-black text-[#60717B] uppercase tracking-wider mb-3">Carrier Information</p>
                 <dl className="space-y-1.5 text-[12px]">
                   {[
-                    { label: 'Carrier',      value: 'HOC Express' },
+                    // { label: 'Carrier',      value: 'HOC Express' },
                     { label: 'Service',      value: `${(order.shippingMethod || 'Standard').replace(/_/g, ' ')} (3–5 days)` },
                     { label: 'Tracking No.', value: order.trackingNumber || 'Pending dispatch' },
                     { label: 'Ship Date',    value: order.shippedAt ? fmtDate(order.shippedAt) : `Est. ${addDays(1)}` },
@@ -339,11 +339,11 @@ export default function OrderTracking() {
                 <p className="text-[11px] font-black text-[#60717B] uppercase tracking-wider mb-3">Contact &amp; Support</p>
                 <p className="text-[12px] text-[#60717B] mb-3">Questions about your delivery?</p>
                 <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-[12px]">
+                  {/* <li className="flex items-center gap-2 text-[12px]">
                     <FiMessageSquare size={12} className="text-green-500" aria-hidden="true" />
                     <span className="text-[#60717B]">Live Chat:</span>
                     <span className="font-semibold text-green-600">Available now</span>
-                  </li>
+                  </li> */}
                   <li className="flex items-center gap-2 text-[12px]">
                     <FiMail size={12} className="text-[#60717B]" aria-hidden="true" />
                     <a href="mailto:support@houseofcambridge.lk" className="text-[#60717B] hover:underline">

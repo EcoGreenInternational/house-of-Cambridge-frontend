@@ -18,7 +18,7 @@ import {
   FiTrash2, FiMinus, FiPlus, FiTag, FiMapPin,
   FiX, FiChevronRight, FiStar, FiPackage,
 } from 'react-icons/fi';
-import { FaCcVisa, FaCcMastercard, FaCcPaypal, FaCcAmex } from 'react-icons/fa';
+import { FaCcVisa, FaCcMastercard } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const formatWeight = (weightGrams) => {
@@ -500,7 +500,7 @@ export default function CartPage() {
                     </div>
 
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-[#60717B]">VAT (8%)</span>
+                      <span className="text-[#60717B]">VAT (%)</span>
                       <span className="font-medium text-[#1A1A1A]">Rs. {vat.toLocaleString()}</span>
                     </div>
 
@@ -534,8 +534,8 @@ export default function CartPage() {
                   <div className="flex items-center justify-center gap-3" aria-label="Accepted payment methods">
                     <FaCcVisa       size={32} className="text-[#1A1A6E]" aria-label="Visa" />
                     <FaCcMastercard size={32} className="text-[#EB001B]" aria-label="Mastercard" />
-                    <FaCcPaypal     size={32} className="text-[#003087]" aria-label="PayPal" />
-                    <FaCcAmex       size={32} className="text-[#2E77BC]" aria-label="American Express" />
+                    {/* <FaCcPaypal     size={32} className="text-[#003087]" aria-label="PayPal" /> */}
+                    {/* <FaCcAmex       size={32} className="text-[#2E77BC]" aria-label="American Express" /> */}
                   </div>
                 </div>
 

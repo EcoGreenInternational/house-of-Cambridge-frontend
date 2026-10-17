@@ -37,9 +37,9 @@ const BLANK_ADDR = {
 
 const PAY_TABS = [
   { id: 'card',   label: 'Card' },
-  { id: 'paypal', label: 'PayPal' },
+  // { id: 'paypal', label: 'PayPal' },
   { id: 'cod',    label: 'Cash on Delivery' },
-  { id: 'koko',   label: 'KOKO' },
+  // { id: 'koko',   label: 'KOKO' },
 ];
 
 const STEPS = [
@@ -594,7 +594,7 @@ export default function CheckoutPage() {
                         <FiLock size={18} className="text-[#FFB700] mt-0.5 flex-shrink-0" aria-hidden="true" />
                         <div>
                           <p className="text-[13px] font-semibold text-[#1A1A1A] mb-1">Pay securely with PayHere</p>
-                          <p className="text-[12px] text-[#60717B]">After you place the order you'll be taken to PayHere to enter your card details (Visa, Mastercard, Amex). We never see or store your card number.</p>
+                          <p className="text-[12px] text-[#60717B]">After you place the order you'll be taken to PayHere to enter your card details (Visa, Mastercard). We never see or store your card number.</p>
                         </div>
                       </div>
                       <div className="mt-4 pt-4 border-t border-[#F0F0F0]">

@@ -7,8 +7,8 @@ import { getSavedPaymentMethods, savePaymentMethods } from '../../utils/savedPay
 
 const PAY_TABS = [
   { id: 'card',   label: 'Credit / Debit Card' },
-  { id: 'paypal', label: 'PayPal'               },
-  { id: 'koko',   label: 'KOKO'                 },
+  // { id: 'paypal', label: 'PayPal' }, // Temporarily disabled
+  // { id: 'koko',   label: 'KOKO' }, // Temporarily disabled
   { id: 'cod',    label: 'Cash on Delivery'     },
 ];
 
@@ -354,6 +354,7 @@ export default function PaymentMethods() {
               </form>
             )}
 
+            {/* PayPal temporarily disabled.
             {addTab === 'paypal' && (
               <div className="text-center py-8">
                 <FaPaypal size={40} className="text-blue-500 mx-auto mb-3" aria-hidden="true" />
@@ -369,7 +370,9 @@ export default function PaymentMethods() {
                 </button>
               </div>
             )}
+            */}
 
+            {/* KOKO temporarily disabled.
             {addTab === 'koko' && (
               <div className="text-center py-8">
                 <div className="w-14 h-14 bg-[#1A1A1A] rounded-full flex items-center justify-center mx-auto mb-3" aria-hidden="true">
@@ -385,6 +388,7 @@ export default function PaymentMethods() {
                 </button>
               </div>
             )}
+            */}
 
             {addTab === 'cod' && (
               <div className="flex items-start gap-3 bg-[#FAFAFA] border border-[#E9E9E9] rounded-[8px] p-4">
