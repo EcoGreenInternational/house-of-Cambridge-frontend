@@ -295,7 +295,7 @@ export default function EditProfile() {
                 autoComplete="tel"
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
-                placeholder="+94 77 123 4567"
+                placeholder="077 123 4567"
                 maxLength={FIELD_LIMITS.phone}
                 className={inputCls}
               />
@@ -325,7 +325,7 @@ export default function EditProfile() {
             </p>
           </div>
 
-          <div>
+          {/* <div>
             <label htmlFor="prof-language" className={labelCls}>Language Preference</label>
             <select
               id="prof-language"
@@ -335,7 +335,7 @@ export default function EditProfile() {
             >
               {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center justify-end gap-3">

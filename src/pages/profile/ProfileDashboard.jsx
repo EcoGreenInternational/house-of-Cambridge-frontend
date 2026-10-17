@@ -5,6 +5,7 @@ import { fetchProfile, fetchWishlist } from '../../redux/slices/userSlice';
 import { fetchMyOrders } from '../../redux/slices/orderSlice';
 import ProfileLayout from '../../components/profile/ProfileLayout';
 import { FiPackage, FiChevronLeft, FiChevronRight, FiShoppingCart, FiHeart } from 'react-icons/fi';
+import { getSavedPaymentMethods } from '../../utils/savedPaymentMethods';
 
 const MAX_SEARCH_LEN     = 60;
 const RECENT_ORDER_COUNT = 5;
@@ -28,6 +29,10 @@ function fmtDate(d) {
   return new Date(d || Date.now()).toLocaleDateString('en-GB', {
     day: 'numeric', month: 'short', year: 'numeric',
   });
+}
+
+function displayValue(value) {
+  return typeof value === 'string' ? value.trim() || 'N/A' : value || 'N/A';
 }
 
 export default function ProfileDashboard() {
@@ -69,6 +74,24 @@ export default function ProfileDashboard() {
   }, []);
 
   const defaultAddress = (u?.addresses || [])[0];
+  const address = defaultAddress
+    ? [
+        defaultAddress.addressLine1,
+        defaultAddress.addressLine2,
+        defaultAddress.city,
+        defaultAddress.postalCode,
+        defaultAddress.state,
+        defaultAddress.country,
+      ].filter(Boolean).join(', ')
+    : '';
+  const savedPaymentMethods = getSavedPaymentMethods();
+  const defaultPayment = savedPaymentMethods.find((method) => method.isDefault)
+    || savedPaymentMethods[0];
+  const payment = defaultPayment?.brand === 'paypal'
+    ? `PayPal${defaultPayment.email ? ` (${defaultPayment.email})` : ''}`
+    : defaultPayment?.brand && defaultPayment?.last4
+      ? `${defaultPayment.brand.toUpperCase()} **** ${defaultPayment.last4}`
+      : '';
 
   return (
     <ProfileLayout>
@@ -196,26 +219,24 @@ export default function ProfileDashboard() {
           <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 text-[11.5px]">
             <div>
               <p className="text-[#9CA3AF] text-[11px] mb-0.5 font-medium">Name</p>
-              <p className="font-semibold text-[#1A1A1A]">{u?.name || 'Amara Perera'}</p>
+              <p className="font-semibold text-[#1A1A1A]">{displayValue(u?.name)}</p>
             </div>
             <div>
               <p className="text-[#9CA3AF] text-[11px] mb-0.5 font-medium">Email</p>
-              <p className="font-semibold text-[#1A1A1A] truncate">{u?.email || 'amaraperera@gmail.com'}</p>
+              <p className="font-semibold text-[#1A1A1A] truncate">{displayValue(u?.email)}</p>
             </div>
             <div>
               <p className="text-[#9CA3AF] text-[11px] mb-0.5 font-medium">Delivery Address</p>
               <p className="font-medium text-[#1A1A1A] leading-snug">
-                {defaultAddress
-                  ? `${defaultAddress.addressLine1}, ${defaultAddress.city}`
-                  : '42/B, Galle Road Colombo 03, 00300 Sri Lanka.'}
+                {displayValue(address)}
               </p>
             </div>
             <div>
               <p className="text-[#9CA3AF] text-[11px] mb-0.5 font-medium">Phone</p>
-              <p className="font-semibold text-[#1A1A1A]">{u?.phone || '+94 77 2325 758'}</p>
+              <p className="font-semibold text-[#1A1A1A]">{displayValue(u?.phone)}</p>
               <div className="mt-2.5">
                 <p className="text-[#9CA3AF] text-[11px] mb-0.5 font-medium">Payment</p>
-                <p className="font-semibold text-[#1A1A1A]">VISA **** 4512</p>
+                <p className="font-semibold text-[#1A1A1A]">{displayValue(payment)}</p>
               </div>
             </div>
           </div>
