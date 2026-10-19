@@ -417,7 +417,7 @@ export default function Home() {
               <img
                 src={flashSalePosterUrl}
                 alt="Flash sale promotion"
-                className="w-full h-[320px] sm:h-[420px] object-cover rounded-[10px]"
+                className="w-full h-auto max-h-[420px] object-contain rounded-[10px]"
               />
             ) : flashSale.length > 0 ? (
               <div

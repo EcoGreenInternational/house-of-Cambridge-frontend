@@ -197,12 +197,12 @@ export default function AdminFlashSales() {
   return (
     <AdminLayout>
       <div className="space-y-5 max-w-[1100px]">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-[20px] font-black text-[#1A1A1A]">Flash Sales</h2>
             <p className="text-[13px] text-[#60717B]">Manage limited-time flash offers</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
             <label className="flex items-center gap-2 text-[13px] font-semibold text-[#1A1A1A] cursor-pointer">
               <input
                 type="checkbox"
@@ -213,7 +213,7 @@ export default function AdminFlashSales() {
               />
               Show flash sale on user view
             </label>
-            <label className="flex items-center gap-2 px-3 py-2 border border-[#E9E9E9] rounded-[8px] text-[12px] font-semibold cursor-pointer hover:border-[#FFB700]">
+            <label className="flex items-center justify-center gap-2 px-3 py-2 border border-[#E9E9E9] rounded-[8px] text-[12px] font-semibold cursor-pointer hover:border-[#FFB700]">
               <FiUpload size={14} aria-hidden="true" />
               Choose poster
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handlePosterChange} className="sr-only" />
@@ -230,21 +230,21 @@ export default function AdminFlashSales() {
             )}
             <button
               onClick={openAdd}
-              className="flex items-center gap-2 px-4 py-2 bg-[#FFB700] rounded-[8px] text-[13px] font-bold text-[#1A1A1A] hover:bg-amber-400 transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#FFB700] rounded-[8px] text-[13px] font-bold text-[#1A1A1A] hover:bg-amber-400 transition-colors"
             >
               <FiPlus size={15} aria-hidden="true" /> Add Flash Sale
             </button>
           </div>
         </div>
         {flashSalePosterUrl && (
-          <div className="flex items-center gap-3 bg-white border border-[#E9E9E9] rounded-[10px] p-3">
-            <img src={flashSalePosterUrl} alt="Current flash sale poster" className="w-28 h-16 object-cover rounded-[6px]" />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-[#E9E9E9] rounded-[10px] p-3">
+            <img src={flashSalePosterUrl} alt="Current flash sale poster" className="w-full sm:w-28 h-40 sm:h-16 object-cover rounded-[6px]" />
             <p className="flex-1 text-[12px] text-[#60717B]">This poster appears in the flash-sale area when the checkbox is unticked.</p>
             <button
               type="button"
               onClick={handlePosterDelete}
               disabled={settingSaving}
-              className="flex items-center gap-1.5 px-3 py-2 border border-red-200 text-red-600 rounded-[8px] text-[12px] font-semibold hover:bg-red-50 disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 border border-red-200 text-red-600 rounded-[8px] text-[12px] font-semibold hover:bg-red-50 disabled:opacity-50 sm:flex-shrink-0"
             >
               <FiTrash2 size={14} aria-hidden="true" />
               Delete poster
@@ -252,7 +252,7 @@ export default function AdminFlashSales() {
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'Active Offers',       value: activeCount,                        color: 'text-green-600' },
             { label: 'Expired',             value: expiredCount,                       color: 'text-red-500'   },
@@ -351,14 +351,14 @@ export default function AdminFlashSales() {
         <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={editing ? 'Edit Flash Sale' : 'Add Flash Sale'}>
           <div className="absolute inset-0 bg-black/40" onClick={closeDrawer} aria-hidden="true" />
           <div className="relative w-full max-w-[420px] bg-white h-full overflow-y-auto flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E9E9E9]">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#E9E9E9]">
               <h3 className="text-[15px] font-bold text-[#1A1A1A]">{editing ? 'Edit Flash Sale' : 'Add Flash Sale'}</h3>
               <button onClick={closeDrawer} aria-label="Close drawer" className="text-[#60717B] hover:text-[#1A1A1A] transition-colors">
                 <FiX size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="flex-1 flex flex-col gap-5 p-6">
+            <form onSubmit={handleSave} className="flex-1 flex flex-col gap-5 p-4 sm:p-6">
               {!editing && (
                 <div>
                   <label className="text-[12px] font-semibold text-[#1A1A1A] block mb-1.5">Select Product</label>
