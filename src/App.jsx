@@ -66,17 +66,18 @@ function ProtectedRoute({ children }) {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-// Signed-in customers use the member checkout; everyone else uses guest checkout
+// Only logged-in customers can access the checkout; guests are sent to login
 function MemberCheckoutRoute({ children }) {
   const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
   if (!authChecked) return null;
-  return isAuthenticated ? children : <Navigate to="/guest-checkout" replace />;
+  return isAuthenticated ? children : <Navigate to="/login" state={{ from: { pathname: '/checkout' } }} replace />;
 }
 
 function GuestCheckoutRoute({ children }) {
   const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
   if (!authChecked) return null;
-  return isAuthenticated ? <Navigate to="/checkout" replace /> : children;
+  // Guest checkout is disabled — redirect everyone appropriately
+  return isAuthenticated ? <Navigate to="/checkout" replace /> : <Navigate to="/login" state={{ from: { pathname: '/checkout' } }} replace />;
 }
 
 function AdminRoute({ children }) {
