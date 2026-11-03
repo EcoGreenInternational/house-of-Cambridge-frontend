@@ -6,6 +6,7 @@ import { logout } from "../../redux/slices/authSlice.js";
 import { fetchCategories } from "../../redux/slices/productSlice.js";
 import { fetchWishlist } from "../../redux/slices/userSlice.js";
 import { buildCategoryTree } from "../../utils/categoryTree.js";
+import api from "../../redux/api/axiosInstance.js";
 
 function useClickOutside(ref, handler) {
   useEffect(() => {
@@ -15,6 +16,15 @@ function useClickOutside(ref, handler) {
     document.addEventListener("mousedown", listener);
     return () => document.removeEventListener("mousedown", listener);
   }, [ref, handler]);
+}
+
+function normalizeKeyword(value) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.replace(/(?:['’]s?|s)$/i, ""))
+    .filter(Boolean)
+    .join(" ");
 }
 
 function AllCategoriesDropdown({ tree }) {
@@ -28,7 +38,7 @@ function AllCategoriesDropdown({ tree }) {
     onMouseLeave={() => setOpen(false)}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 bg-white text-black text-[13px] md:text-[14px] font-bold px-3 md:px-4 py-1.5 rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+        className="flex items-center gap-2 bg-white text-black text-[13px] md:text-[14px] font-bold px-3 md:px-4 py-1.5 rounded-md hover:bg-gray-50 hover:shadow-sm active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap"
         aria-expanded={open}
         aria-haspopup="true"
       >
@@ -88,7 +98,7 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
       onMouseLeave={() => setOpen(false)}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 px-2.5 md:px-3 py-1 rounded-md text-white text-[12px] md:text-[13px] font-bold transition-all hover:opacity-90 cursor-pointer whitespace-nowrap"
+        className="flex items-center gap-1 px-2.5 md:px-3 py-1 rounded-md text-white text-[12px] md:text-[13px] font-bold transition-all duration-200 hover:brightness-110 hover:shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
         style={{ background: badgeColor || "#ef4444" }}
         aria-expanded={open}
         aria-haspopup="true"
@@ -147,6 +157,269 @@ function NavBadgeDropdown({ label, tree, baseParam, loading, badgeColor }) {
   );
 }
 
+function SearchBar({ isMobile = false }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const containerRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Sync with /shop?keyword=... URL query parameter
+  useEffect(() => {
+    if (location.pathname === "/shop") {
+      const params = new URLSearchParams(location.search);
+      const kw = params.get("keyword") || params.get("search") || "";
+      setSearch(kw);
+    }
+  }, [location.pathname, location.search]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Debounced search for live suggestions preview
+  useEffect(() => {
+    const trimmed = normalizeKeyword(search);
+    if (trimmed.length < 2) {
+      setResults([]);
+      setTotal(0);
+      setLoading(false);
+      setOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get("/products", {
+          params: { keyword: trimmed, limit: 6 },
+          signal: controller.signal,
+        });
+        if (res.data?.success) {
+          setResults(res.data.products || []);
+          setTotal(res.data.total || 0);
+          setOpen(true);
+          setSelectedIndex(-1);
+        }
+      } catch (err) {
+        if (err.name !== "CanceledError" && err.name !== "AbortError") {
+          console.error("Search error:", err);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, 280);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [search]);
+
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = normalizeKeyword(search);
+    setOpen(false);
+    if (trimmed) {
+      navigate(`/shop?keyword=${encodeURIComponent(trimmed)}`);
+    } else {
+      navigate("/shop");
+    }
+    inputRef.current?.blur();
+  };
+
+  const handleSelectProduct = (product) => {
+    setOpen(false);
+    navigate(`/product/${product._id}`);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!open || results.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+    } else if (e.key === "Enter" && selectedIndex >= 0 && results[selectedIndex]) {
+      e.preventDefault();
+      handleSelectProduct(results[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  const handleClear = () => {
+    setSearch("");
+    setResults([]);
+    setOpen(false);
+    inputRef.current?.focus();
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative ${
+        isMobile
+          ? "flex md:hidden mt-2.5 w-full"
+          : "hidden md:flex flex-1 justify-center px-2 md:px-4"
+      }`}
+    >
+      <form
+        onSubmit={handleSubmit}
+        role="search"
+        className={`flex items-center w-full ${
+          isMobile ? "" : "max-w-[380px] lg:max-w-[480px]"
+        }`}
+      >
+        <div className="relative flex-1 flex items-center">
+          <input
+            ref={inputRef}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => {
+              if (search.trim().length >= 2 && results.length > 0) setOpen(true);
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Search for Products, Categories and More"
+            aria-label="Search"
+            autoComplete="off"
+            className="w-full bg-white text-[#1A1A1A] placeholder-gray-400 pl-3.5 pr-8 py-0 text-[13px] outline-none rounded-l h-9"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Clear search"
+              className="absolute right-2 text-gray-400 hover:text-gray-700 transition-colors p-1"
+            >
+              <Icon icon="mdi:close-circle" width={16} />
+            </button>
+          )}
+        </div>
+        <button
+          type="submit"
+          aria-label="Submit search"
+          className="bg-[#FFB700] w-[42px] h-9 rounded-r flex items-center justify-center hover:bg-amber-500 transition-colors flex-shrink-0"
+        >
+          {loading ? (
+            <Icon icon="mdi:loading" width={18} className="text-black animate-spin" />
+          ) : (
+            <Icon icon="mdi:magnify" width={18} className="text-black" />
+          )}
+        </button>
+      </form>
+
+      {/* Live Search Dropdown */}
+      {open && (
+        <div
+          className={`absolute top-full mt-1.5 bg-white border border-gray-200 rounded-lg shadow-2xl overflow-hidden z-[10000] text-left ${
+            isMobile
+              ? "left-0 right-0 max-h-[75vh]"
+              : "w-full max-w-[380px] lg:max-w-[480px] max-h-[460px]"
+          } flex flex-col`}
+        >
+          {/* Header */}
+          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+            <span>Products</span>
+            {total > 0 && <span>{total} found</span>}
+          </div>
+
+          {/* Results List */}
+          <div className="overflow-y-auto divide-y divide-gray-100 flex-1">
+            {results.length > 0 ? (
+              results.map((product, idx) => {
+                const img = product.images?.[0]?.url || "https://placehold.co/100x100?text=No+Image";
+                const price = product.discountPrice > 0 ? product.discountPrice : product.price;
+                const origPrice = product.discountPrice > 0 ? product.price : null;
+                const brand = product.brand?.name || "";
+                const category = product.category?.name || "";
+                const isSelected = selectedIndex === idx;
+
+                return (
+                  <button
+                    key={product._id}
+                    type="button"
+                    onClick={() => handleSelectProduct(product)}
+                    className={`w-full flex items-center gap-3 p-2.5 text-left transition-colors cursor-pointer ${
+                      isSelected ? "bg-amber-50" : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={product.name}
+                      className="w-11 h-11 rounded object-cover flex-shrink-0 bg-gray-100 border border-gray-200"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-gray-900 truncate">
+                        {product.name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500 truncate">
+                        {brand && <span className="font-semibold text-amber-600">{brand}</span>}
+                        {brand && category && <span>•</span>}
+                        {category && <span>{category}</span>}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className="text-[13px] font-bold text-[#1A1A1A]">
+                        Rs. {Number(price || 0).toLocaleString()}
+                      </span>
+                      {origPrice && (
+                        <div className="text-[11px] text-gray-400 line-through">
+                          Rs. {Number(origPrice).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            ) : !loading ? (
+              <div className="py-8 px-4 text-center">
+                <Icon icon="mdi:magnify-remove-outline" width={32} className="mx-auto text-gray-300 mb-2" />
+                <p className="text-[13px] font-medium text-gray-700">No products found for "{search}"</p>
+                <p className="text-[11px] text-gray-400 mt-1">Try keywords like "Johnson", "Shampoo", "Cream"</p>
+              </div>
+            ) : (
+              <div className="py-6 text-center text-gray-400 text-[12px] flex items-center justify-center gap-2">
+                <Icon icon="mdi:loading" width={16} className="animate-spin text-amber-500" />
+                Searching...
+              </div>
+            )}
+          </div>
+
+          {/* Footer - View All */}
+          {results.length > 0 && (
+            <div className="p-2 bg-gray-50 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="w-full py-1.5 px-3 bg-[#FFB700] hover:bg-amber-500 text-black text-[12px] font-bold rounded flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <span>View all {total} results for "{search}"</span>
+                <Icon icon="mdi:arrow-right" width={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -158,7 +431,6 @@ export default function Navbar() {
   const { cart } = useSelector((s) => s.cart);
   const { wishlist } = useSelector((s) => s.user);
 
-  const [search, setSearch] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileCatOpen, setMobileCatOpen] = useState(false);
   const [mobileExpandedCats, setMobileExpandedCats] = useState(new Set());
@@ -187,12 +459,6 @@ export default function Navbar() {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const trimmed = search.trim();
-    if (trimmed) navigate(`/shop?keyword=${encodeURIComponent(trimmed)}`);
   };
 
   const handleLogout = () => {
@@ -226,26 +492,7 @@ export default function Navbar() {
           </Link>
 
           {/* Search - visible on md+ */}
-          <form
-            onSubmit={handleSearch}
-            className="hidden md:flex flex-1 justify-center px-2 md:px-4"
-            role="search"
-          >
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search for Products, Categories and More"
-              aria-label="Search"
-              className="w-full max-w-[380px] lg:max-w-[480px] bg-white text-[#1A1A1A] placeholder-gray-400 px-4 py-0 text-[13px] outline-none rounded-l h-9"
-            />
-            <button
-              type="submit"
-              aria-label="Submit search"
-              className="bg-[#FFB700] w-[42px] h-9 rounded-r flex items-center justify-center hover:bg-amber-500 transition-colors"
-            >
-              <Icon icon="mdi:magnify" width={18} className="text-black" />
-            </button>
-          </form>
+          <SearchBar />
 
           {/* Desktop Right Icons */}
           <div className="hidden md:flex items-center justify-end gap-3 md:gap-4 lg:gap-6">
@@ -372,26 +619,7 @@ export default function Navbar() {
         </div>
 
         {/* Row 2: Search bar - mobile only */}
-        <form
-          onSubmit={handleSearch}
-          className="flex md:hidden mt-2.5"
-          role="search"
-        >
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search for Products, Categories and More"
-            aria-label="Search"
-            className="flex-1 bg-white text-[#1A1A1A] placeholder-gray-400 px-3 py-0 text-[13px] outline-none rounded-l h-9"
-          />
-          <button
-            type="submit"
-            aria-label="Submit search"
-            className="bg-[#FFB700] w-[40px] h-9 rounded-r flex items-center justify-center hover:bg-amber-500 transition-colors"
-          >
-            <Icon icon="mdi:magnify" width={16} className="text-black" />
-          </button>
-        </form>
+        <SearchBar isMobile />
       </div>
 
       {/* Yellow Navigation Bar (Desktop md+ view) */}

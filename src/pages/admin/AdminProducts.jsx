@@ -304,18 +304,13 @@ export default function AdminProducts() {
     const loadedAttributes = {};
     if (Array.isArray(p.specifications)) {
       p.specifications.forEach((spec) => {
-        if (spec.key && spec.value) {
-          const camelKey = spec.key
-            .replace(/[^a-zA-Z0-9\s]/g, '') // remove special chars like slashes
-            .split(' ')
-            .map((word, index) =>
-              index === 0
-                ? word.toLowerCase()
-                : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            )
-            .join('');
+        if (spec.key && spec.value !== undefined && spec.value !== null) {
+          const val = String(spec.value);
+          const rawKey = String(spec.key).trim();
+          const cleanKey = toSpecFieldName(rawKey);
 
-          loadedAttributes[camelKey] = spec.value;
+          if (rawKey) loadedAttributes[rawKey] = val;
+          if (cleanKey) loadedAttributes[cleanKey] = val;
         }
       });
     }
@@ -1012,7 +1007,7 @@ export default function AdminProducts() {
                         <input
                           type={field.type}
                           placeholder={field.placeholder}
-                          value={attributes[field.name] || ''}
+                          value={attributes[field.name] ?? attributes[field.label] ?? ''}
                           onChange={(e) => setAttributes((prev) => ({ ...prev, [field.name]: e.target.value }))}
                           className="w-full px-3 py-1.5 text-[12px] border border-[#E9E9E9] rounded-[6px] bg-white focus:outline-none focus:border-[#FFB700]"
                         />
@@ -1034,7 +1029,7 @@ export default function AdminProducts() {
                         <input
                           type={field.type}
                           placeholder={field.placeholder}
-                          value={attributes[field.name] || ''}
+                          value={attributes[field.name] ?? attributes[field.label] ?? ''}
                           onChange={(e) => setAttributes((prev) => ({ ...prev, [field.name]: e.target.value }))}
                           className="w-full px-3 py-1.5 text-[12px] border border-[#E9E9E9] rounded-[6px] bg-white focus:outline-none focus:border-[#FFB700]"
                         />

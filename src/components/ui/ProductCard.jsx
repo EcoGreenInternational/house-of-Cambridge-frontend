@@ -68,7 +68,7 @@ export default function ProductCard({ product }) {
   return (
     <Link
       to={`/product/${product._id}`}
-      className="group flex flex-col h-full w-full bg-white rounded-[10px] border border-[#E9E9E9] hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-all duration-200 overflow-hidden relative"
+      className="group/card flex flex-col h-full w-full bg-white rounded-[10px] border border-[#E9E9E9] hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-all duration-200 overflow-hidden relative"
     >
       {/* Image Section */}
       <div className="relative aspect-square overflow-hidden bg-gray-50 flex-shrink-0">
@@ -76,7 +76,7 @@ export default function ProductCard({ product }) {
           src={product.images?.[0]?.url || 'https://placehold.co/400x400?text=No+Image'}
           alt={product.name}
           loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
         />
 
         {logoSrc && (
@@ -109,6 +109,18 @@ export default function ProductCard({ product }) {
             <span className="text-white font-bold text-xs bg-black/70 px-3 py-1 rounded">Out of Stock</span>
           </div>
         )}
+
+        {/* Hover overlay with Buy Now button */}
+        {inStock && (
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] opacity-0 group-hover/card:opacity-100 transition-all duration-300 flex items-center justify-center z-10 pointer-events-none">
+            <button
+              onClick={handleBuyNow}
+              className="pointer-events-auto bg-[#FFB700] hover:bg-[#e6a600] text-black font-semibold text-[13px] px-6 py-2 rounded-lg shadow-md transform translate-y-2 group-hover/card:translate-y-0 transition-all duration-300 cursor-pointer active:scale-95"
+            >
+              Buy Now
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="p-3 flex flex-col flex-1 relative">
@@ -128,26 +140,15 @@ export default function ProductCard({ product }) {
           {product.name}
         </h3>
 
-        <div className="flex items-end justify-between mb-2.5 w-full">
-          <span className="text-[16.5px] font-bold text-[#171C26]">Rs. {price.toLocaleString()}</span>
-          {originalPrice && (
-            <span className="text-[14px] font-light text-gray-400 line-through">Rs. {originalPrice.toLocaleString()}</span>
-          )}
-        </div>
+        <div className="flex items-center justify-between w-full mt-auto">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-[16.5px] font-bold text-[#171C26]">Rs. {price.toLocaleString()}</span>
+            {originalPrice && (
+              <span className="text-[13px] font-light text-gray-400 line-through">Rs. {originalPrice.toLocaleString()}</span>
+            )}
+          </div>
 
-        <div className="flex items-center justify-between gap-2">
-          { inStock ? (
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 h-[26px] bg-[#FFB700] text-black text-[11px] font-semibold 
-                hover:bg-[#e6a600] active:scale-[0.98] transition-all duration-200 cursor-pointer rounded-[5.8px]"
-            >
-              Buy Now
-            </button>
-          ) : (
-            <div className="text-[11px] text-gray-400">Out of Stock</div>
-          )}
-          {inStock && (
+          {inStock ? (
             <button
               onClick={handleAddToCart}
               className="w-[27px] h-[27px] bg-[#FFB700] rounded-full flex items-center justify-center hover:bg-[#e6a600] transition-colors cursor-pointer shadow-sm flex-shrink-0"
@@ -155,6 +156,8 @@ export default function ProductCard({ product }) {
             >
               <Icon icon="mdi:cart" width={14} className="text-white" />
             </button>
+          ) : (
+            <div className="text-[11px] text-gray-400 flex-shrink-0">Out of Stock</div>
           )}
         </div>
       </div>

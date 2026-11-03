@@ -9,6 +9,7 @@ import Breadcrumb from '../../components/ui/Breadcrumb';
 import ProductCard from '../../components/ui/ProductCard';
 import { PageSpinner } from '../../components/ui/Spinner';
 import {
+  FiX,
   FiHeart, FiShield, FiTruck, FiRefreshCw,
   FiMinus, FiPlus, FiZoomIn, FiChevronLeft, FiChevronRight, FiCheck,
 } from 'react-icons/fi';
@@ -68,6 +69,7 @@ export default function ProductDetail() {
   const [review, setReview] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({});
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
   const scrollRef = useRef(null);
 
   const productStock = safeInteger(product?.stock ?? 0);
@@ -515,10 +517,13 @@ export default function ProductDetail() {
                 onError={(e) => { e.currentTarget.src = 'https://placehold.co/600?text=Product'; }}
               />
               <button
-                className="absolute top-3 right-3 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-sm transition-colors"
+                type="button"
+                onClick={() => setIsZoomOpen(true)}
+                className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 z-10 cursor-pointer"
                 aria-label="Zoom image"
+                title="Zoom image"
               >
-                <FiZoomIn size={15} className="text-[#60717B]" aria-hidden="true" />
+                <FiZoomIn size={16} className="text-[#1A1A1A]" aria-hidden="true" />
               </button>
               {currentStock === 0 && (
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center" aria-label="Out of stock">
@@ -876,12 +881,15 @@ export default function ProductDetail() {
 
           <div className="pt-6">
             {tab === 0 && (
-              <div
-                id="tabpanel-0"
-                role="tabpanel"
-                aria-labelledby="tab-0"
-                className="text-[14px] text-[#60717B] leading-relaxed max-w-[800px]"
-              >
+            <div
+              id="tabpanel-0"
+              role="tabpanel"
+              aria-labelledby="tab-0"
+              className="text-[14px] text-[#60717B] leading-relaxed max-w-[800px] select-none"
+              style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+              onCopy={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
+            >
                 {product.description
                   ? <p>{sanitizeText(product.description)}</p>
                   : <p className="text-gray-400">No description available.</p>}
@@ -1157,6 +1165,35 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
+      {/* Lightbox / Zoom Modal */}
+      {isZoomOpen && (
+        <div
+          className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setIsZoomOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setIsZoomOpen(false)}
+            className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors z-20 cursor-pointer"
+            aria-label="Close preview"
+          >
+            <FiX size={22} />
+          </button>
+          <div
+            className="relative max-w-4xl max-h-[90vh] bg-white rounded-xl p-4 shadow-2xl flex flex-col items-center justify-center overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedVariantImage || images[safeActiveImg]?.url || 'https://placehold.co/600?text=Product'}
+              alt={productName}
+              className="max-w-full max-h-[80vh] object-contain select-none"
+              draggable="false"
+              onContextMenu={(e) => e.preventDefault()}
+            />
+            <p className="text-xs text-gray-500 mt-2 font-medium">{productName}</p>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

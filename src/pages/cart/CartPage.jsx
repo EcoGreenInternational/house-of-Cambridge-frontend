@@ -519,10 +519,16 @@ export default function CartPage() {
                 </div>
 
                 <button
-                  onClick={() => navigate('/checkout')}
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      navigate('/checkout');
+                    } else {
+                      navigate('/login', { state: { from: { pathname: '/checkout' } } });
+                    }
+                  }}
                   className="w-full bg-[#FFB700] text-black font-bold text-[14px] py-3 rounded-[6px] hover:bg-amber-500 transition-colors mb-2"
                 >
-                  Proceed to Checkout
+                  {isAuthenticated ? 'Proceed to Checkout' : 'Sign In to Checkout'}
                 </button>
 
                 <p className="text-center text-[11px] text-[#60717B] mb-4 flex items-center justify-center gap-1">

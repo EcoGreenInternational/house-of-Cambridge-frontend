@@ -145,7 +145,7 @@ function ProductRow({ products, label }) {
   }, []);
 
   return (
-    <div className="relative group px-1 sm:px-0">
+    <div className="relative px-1 sm:px-0">
       {/* Left Navigation Arrow */}
       <button
         type="button"
@@ -525,7 +525,7 @@ export default function Home() {
                 src="/images/beauty.png"
                 alt=""
                 aria-hidden="true"
-                className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
+                className="absolute right-0 bottom-0 h-full w-[85%] object-contain object-right-bottom"
                 loading="lazy"
               />
             </Link>
@@ -618,7 +618,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-8 sm:py-12 bg-white border-t border-gray-100" aria-labelledby="brands-heading">
+      <section className="group/brands py-8 sm:py-12 bg-white border-t border-gray-100" aria-labelledby="brands-heading">
         <div className="text-center mb-4 sm:mb-8">
           <h2 id="brands-heading" className="text-lg sm:text-[28px] font-black">
             <span className="text-black">Our Best </span>
@@ -627,7 +627,7 @@ export default function Home() {
         </div>
         <div className="overflow-hidden relative" aria-hidden="true">
           <div
-            className="flex items-center gap-[24.58px] whitespace-nowrap"
+            className="flex items-center gap-[24.58px] whitespace-nowrap brand-marquee"
             style={{ animation: 'marquee 28s linear infinite' }}
           >
             {[...BRAND_LOGOS, ...BRAND_LOGOS].map((src, i) => (
@@ -647,6 +647,9 @@ export default function Home() {
         @keyframes marquee {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
+        }
+        .group\\/brands:hover .brand-marquee {
+          animation-play-state: paused !important;
         }
         @media (prefers-reduced-motion: reduce) {
           [style*="animation"] { animation: none !important; }

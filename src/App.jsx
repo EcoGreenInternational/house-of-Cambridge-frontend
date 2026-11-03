@@ -6,6 +6,7 @@ import { loadUser } from './redux/slices/authSlice';
 import { fetchCart } from './redux/slices/cartSlice';
 import { fetchWishlist } from './redux/slices/userSlice';
 import ScrollToTop from './components/common/ScrollToTop';
+import WhatsAppButton from './components/common/WhatsAppButton';
 import ComingSoon, { getLaunchDate } from './ComingSoon';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -65,17 +66,18 @@ function ProtectedRoute({ children }) {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-// Signed-in customers use the member checkout; everyone else uses guest checkout
+// Only logged-in customers can access the checkout; guests are sent to login
 function MemberCheckoutRoute({ children }) {
   const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
   if (!authChecked) return null;
-  return isAuthenticated ? children : <Navigate to="/guest-checkout" replace />;
+  return isAuthenticated ? children : <Navigate to="/login" state={{ from: { pathname: '/checkout' } }} replace />;
 }
 
 function GuestCheckoutRoute({ children }) {
   const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
   if (!authChecked) return null;
-  return isAuthenticated ? <Navigate to="/checkout" replace /> : children;
+  // Guest checkout is disabled — redirect everyone appropriately
+  return isAuthenticated ? <Navigate to="/checkout" replace /> : <Navigate to="/login" state={{ from: { pathname: '/checkout' } }} replace />;
 }
 
 function AdminRoute({ children }) {
@@ -336,6 +338,7 @@ function App() {
 
         <Route path="*" element={<Error404 />} />
       </Routes>
+      <WhatsAppButton />
     </BrowserRouter>
   );
 }
