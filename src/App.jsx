@@ -65,8 +65,6 @@ function ProtectedRoute({ children }) {
   if (!authChecked) return null;
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
-
-// Only logged-in customers can access the checkout; guests are sent to login
 function MemberCheckoutRoute({ children }) {
   const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
   if (!authChecked) return null;
@@ -76,7 +74,7 @@ function MemberCheckoutRoute({ children }) {
 function GuestCheckoutRoute({ children }) {
   const { isAuthenticated, authChecked } = useSelector((s) => s.auth);
   if (!authChecked) return null;
-  // Guest checkout is disabled — redirect everyone appropriately
+
   return isAuthenticated ? <Navigate to="/checkout" replace /> : <Navigate to="/login" state={{ from: { pathname: '/checkout' } }} replace />;
 }
 
