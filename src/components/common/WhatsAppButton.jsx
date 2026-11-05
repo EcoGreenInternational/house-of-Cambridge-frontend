@@ -4,13 +4,16 @@ import { useLocation } from 'react-router-dom';
 /**
  * Floating WhatsApp contact button.
  * Remains fixed at the bottom right across all public pages,
- * but hidden on admin dashboard routes.
+ * but hidden on admin dashboard and authentication routes.
  */
 export default function WhatsAppButton() {
   const location = useLocation();
 
-  // Hide WhatsApp button inside the admin dashboard
-  if (location.pathname.startsWith('/admin')) {
+  // Hide WhatsApp button inside the admin dashboard and auth pages
+  if (
+    location.pathname.startsWith('/admin') ||
+    ['/login', '/register'].includes(location.pathname)
+  ) {
     return null;
   }
 
