@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice.js';
+import { fetchApprovalStats } from '../../redux/slices/adminSlice.js';
 import {
   FiGrid, FiPackage, FiUsers, FiTag, FiPercent,
   FiMessageSquare, FiRepeat, FiLogOut, FiBell, FiMenu,
-  FiShoppingBag, FiZap, FiAward, FiFileText,
+  FiShoppingBag, FiZap, FiAward, FiFileText, FiCheckCircle,
 } from 'react-icons/fi';
 
-const NAV = [
+const BASE_NAV = [
   { icon: FiGrid,          label: 'Dashboard',   href: '/admin' },
   { icon: FiPackage,       label: 'Orders',      href: '/admin/orders' },
   { icon: FiShoppingBag,   label: 'Products',    href: '/admin/products' },
@@ -20,7 +21,7 @@ const NAV = [
   { icon: FiMessageSquare, label: 'Reviews',      href: '/admin/reviews' },
   { icon: FiRepeat,        label: 'Returns',      href: '/admin/returns' },
   { icon: FiBell,          label: 'Broadcast',   href: '/admin/broadcast' },
-  { icon: FiFileText,      label: 'Invoices',    href: '/admin/invoices' }, 
+  { icon: FiFileText,      label: 'Invoices',    href: '/admin/invoices' },
 ];
 
 function isNavActive(href, pathname) {
@@ -28,8 +29,20 @@ function isNavActive(href, pathname) {
   return pathname.startsWith(href);
 }
 
-function SidebarContent({ user, onNav, onLogout }) {
+function SidebarContent({ user, pendingApprovalsCount = 0, onNav, onLogout }) {
   const location = useLocation();
+  const isSuperAdmin = user?.role === 'superadmin';
+
+  const navItems = [...BASE_NAV];
+  if (isSuperAdmin) {
+    // Insert Approvals right after Products
+    navItems.splice(3, 0, {
+      icon: FiCheckCircle,
+      label: 'Approvals',
+      href: '/admin/approvals',
+      badge: pendingApprovalsCount,
+    });
+  }
 
   return (
     <aside className="w-[240px] min-h-screen bg-[#1A1A1A] flex flex-col flex-shrink-0">
@@ -41,7 +54,7 @@ function SidebarContent({ user, onNav, onLogout }) {
       </div>
 
       <nav className="flex-1 py-4 overflow-y-auto" aria-label="Admin navigation">
-        {NAV.map(({ icon: Icon, label, href }) => {
+        {navItems.map(({ icon: Icon, label, href, badge }) => {
           const active = isNavActive(href, location.pathname);
           return (
             <Link
@@ -49,14 +62,21 @@ function SidebarContent({ user, onNav, onLogout }) {
               to={href}
               onClick={onNav}
               aria-current={active ? 'page' : undefined}
-              className={`flex items-center gap-3 px-6 py-3 text-[13px] font-medium transition-all ${
+              className={`flex items-center justify-between px-6 py-3 text-[13px] font-medium transition-all ${
                 active
                   ? 'bg-[#FFB700]/15 text-[#FFB700] border-r-[3px] border-[#FFB700]'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Icon size={16} aria-hidden="true" />
-              {label}
+              <div className="flex items-center gap-3">
+                <Icon size={16} aria-hidden="true" />
+                <span>{label}</span>
+              </div>
+              {Number(badge) > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFB700] text-[#1A1A1A]">
+                  {badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -88,26 +108,47 @@ export default function AdminLayout({ children }) {
   const navigate  = useNavigate();
   const dispatch  = useDispatch();
   const { user }  = useSelector((s) => s.auth);
+  const { pendingApprovalsCount = 0 } = useSelector((s) => s.admin);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'superadmin') {
+      dispatch(fetchApprovalStats());
+    }
+  }, [dispatch, user?.role]);
 
   const handleLogout = async () => {
     await dispatch(logout());
     navigate('/login');
   };
 
-  const currentLabel = NAV.find((n) => isNavActive(n.href, location.pathname))?.label ?? 'Admin Panel';
+  const allNav = user?.role === 'superadmin'
+    ? [...BASE_NAV, { label: 'Approvals', href: '/admin/approvals' }]
+    : BASE_NAV;
+
+  const currentLabel = allNav.find((n) => isNavActive(n.href, location.pathname))?.label ?? 'Admin Panel';
 
   return (
     <div className="flex min-h-screen bg-[#F4F5F7]">
       <div className="hidden lg:flex">
-        <SidebarContent user={user} onNav={() => {}} onLogout={handleLogout} />
+        <SidebarContent
+          user={user}
+          pendingApprovalsCount={pendingApprovalsCount}
+          onNav={() => {}}
+          onLogout={handleLogout}
+        />
       </div>
 
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
           <div className="relative z-10">
-            <SidebarContent user={user} onNav={() => setSidebarOpen(false)} onLogout={handleLogout} />
+            <SidebarContent
+              user={user}
+              pendingApprovalsCount={pendingApprovalsCount}
+              onNav={() => setSidebarOpen(false)}
+              onLogout={handleLogout}
+            />
           </div>
         </div>
       )}

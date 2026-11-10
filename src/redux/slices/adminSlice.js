@@ -225,6 +225,64 @@ export const broadcastNotification = createAsyncThunk('admin/broadcast', async (
 
 
 
+export const fetchApprovals = createAsyncThunk('admin/fetchApprovals', async (params, { rejectWithValue }) => {
+  try { return (await api.get('/admin/approvals', { params })).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const fetchApprovalStats = createAsyncThunk('admin/fetchApprovalStats', async (_, { rejectWithValue }) => {
+  try { return (await api.get('/admin/approvals/stats')).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const approveProduct = createAsyncThunk('admin/approveProduct', async (id, { rejectWithValue }) => {
+  try { return (await api.put(`/admin/approvals/${encodeURIComponent(id)}/approve`)).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const rejectProduct = createAsyncThunk('admin/rejectProduct', async ({ id, note }, { rejectWithValue }) => {
+  try { return (await api.put(`/admin/approvals/${encodeURIComponent(id)}/reject`, { note })).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const bulkApproveProducts = createAsyncThunk('admin/bulkApproveProducts', async (ids, { rejectWithValue }) => {
+  try { return (await api.post('/admin/approvals/bulk-approve', { ids })).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+
+export const fetchGlobalDiscountStatus = createAsyncThunk('admin/fetchGlobalDiscountStatus', async (_, { rejectWithValue }) => {
+  try { return (await api.get('/admin/global-discount/status')).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const manageGlobalDiscount = createAsyncThunk('admin/manageGlobalDiscount', async (data, { rejectWithValue }) => {
+  try { return (await api.post('/admin/global-discount', data)).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const approveGlobalDiscountRequest = createAsyncThunk('admin/approveGlobalDiscountRequest', async (id, { rejectWithValue }) => {
+  try { return (await api.put(`/admin/global-discount/requests/${encodeURIComponent(id)}/approve`)).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const rejectGlobalDiscountRequest = createAsyncThunk('admin/rejectGlobalDiscountRequest', async ({ id, note }, { rejectWithValue }) => {
+  try { return (await api.put(`/admin/global-discount/requests/${encodeURIComponent(id)}/reject`, { note })).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+
+export const fetchCampaignSetting = createAsyncThunk('admin/fetchCampaignSetting', async (_, { rejectWithValue }) => {
+  try { return (await api.get('/admin/campaign')).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+export const updateCampaignSetting = createAsyncThunk('admin/updateCampaignSetting', async (data, { rejectWithValue }) => {
+  try { return (await api.put('/admin/campaign', data)).data; }
+  catch (err) { return rejectWithValue(handle(err)); }
+});
+
+
 const pending  = (state) => { state.loading = true;  state.error = null; };
 const rejected = (state, action) => { state.loading = false; state.error = action.payload; };
 
@@ -257,6 +315,11 @@ const adminSlice = createSlice({
     returns: [],
     returnsTotal: 0,
     selectedReturn: null,
+    approvals: [],
+    approvalsTotal: 0,
+    pendingApprovalsCount: 0,
+    globalDiscount: { activeDiscountPercent: 0, discountedProductsCount: 0, pendingRequests: [] },
+    campaign: null,
   },
   reducers: {
     clearAdminError: (state) => { state.error = null; },
@@ -529,7 +592,92 @@ const adminSlice = createSlice({
 
       .addCase(broadcastNotification.pending, pending)
       .addCase(broadcastNotification.fulfilled, (state) => { state.loading = false; })
-      .addCase(broadcastNotification.rejected, rejected);
+      .addCase(broadcastNotification.rejected, rejected)
+
+      .addCase(fetchApprovals.pending, pending)
+      .addCase(fetchApprovals.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        state.approvals = Array.isArray(payload.products) ? payload.products : [];
+        state.approvalsTotal = Number.isFinite(payload.total) ? payload.total : 0;
+        state.pendingApprovalsCount = Number.isFinite(payload.pendingCount) ? payload.pendingCount : state.pendingApprovalsCount;
+      })
+      .addCase(fetchApprovals.rejected, rejected)
+
+      .addCase(fetchApprovalStats.fulfilled, (state, { payload }) => {
+        state.pendingApprovalsCount = Number.isFinite(payload.pendingCount) ? payload.pendingCount : 0;
+      })
+
+      .addCase(approveProduct.pending, pending)
+      .addCase(approveProduct.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        if (payload.product) {
+          const idx = state.approvals.findIndex((p) => p._id === payload.product._id);
+          if (idx !== -1) state.approvals[idx] = payload.product;
+          state.pendingApprovalsCount = Math.max(0, state.pendingApprovalsCount - 1);
+        }
+      })
+      .addCase(approveProduct.rejected, rejected)
+
+      .addCase(rejectProduct.pending, pending)
+      .addCase(rejectProduct.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        if (payload.product) {
+          const idx = state.approvals.findIndex((p) => p._id === payload.product._id);
+          if (idx !== -1) state.approvals[idx] = payload.product;
+          state.pendingApprovalsCount = Math.max(0, state.pendingApprovalsCount - 1);
+        }
+      })
+      .addCase(rejectProduct.rejected, rejected)
+
+      .addCase(bulkApproveProducts.pending, pending)
+      .addCase(bulkApproveProducts.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(bulkApproveProducts.rejected, rejected)
+
+      .addCase(fetchGlobalDiscountStatus.fulfilled, (state, { payload }) => {
+        state.globalDiscount = {
+          activeDiscountPercent: payload.activeDiscountPercent ?? 0,
+          discountedProductsCount: payload.discountedProductsCount ?? 0,
+          pendingRequests: Array.isArray(payload.pendingRequests) ? payload.pendingRequests : [],
+        };
+      })
+      .addCase(manageGlobalDiscount.pending, pending)
+      .addCase(manageGlobalDiscount.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(manageGlobalDiscount.rejected, rejected)
+      .addCase(approveGlobalDiscountRequest.pending, pending)
+      .addCase(approveGlobalDiscountRequest.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        if (payload.request?._id) {
+          state.globalDiscount.pendingRequests = state.globalDiscount.pendingRequests.filter(
+            (r) => r._id !== payload.request._id
+          );
+        }
+      })
+      .addCase(approveGlobalDiscountRequest.rejected, rejected)
+      .addCase(rejectGlobalDiscountRequest.pending, pending)
+      .addCase(rejectGlobalDiscountRequest.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        if (payload.request?._id) {
+          state.globalDiscount.pendingRequests = state.globalDiscount.pendingRequests.filter(
+            (r) => r._id !== payload.request._id
+          );
+        }
+      })
+      .addCase(rejectGlobalDiscountRequest.rejected, rejected)
+
+      .addCase(fetchCampaignSetting.fulfilled, (state, { payload }) => {
+        state.campaign = payload.campaign ?? null;
+      })
+      .addCase(updateCampaignSetting.pending, pending)
+      .addCase(updateCampaignSetting.fulfilled, (state, { payload }) => {
+        state.loading = false;
+        if (payload.campaign) state.campaign = payload.campaign;
+      })
+      .addCase(updateCampaignSetting.rejected, rejected);
+
   },
 });
 

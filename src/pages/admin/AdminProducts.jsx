@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  fetchAdminProducts, fetchAdminCategories, fetchAdminBrands,
+  fetchAdminProducts, fetchAdminOrders, fetchAdminCategories, fetchAdminBrands,
   createAdminProduct, updateAdminProduct, deleteAdminProduct,
+  fetchGlobalDiscountStatus, manageGlobalDiscount,
+  fetchCampaignSetting, updateCampaignSetting,
 } from '../../redux/slices/adminSlice.js';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
 import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
@@ -11,10 +13,81 @@ import useToast from '../../hooks/useToast.js';
 import { CATEGORY_SPECIFICATIONS, categoryNameFrom } from '../../utils/categorySpecifications.js';
 import {
   FiSearch, FiPlus, FiEdit2, FiTrash2,
-  FiChevronLeft, FiChevronRight, FiX, FiImage,
+  FiChevronLeft, FiChevronRight, FiX, FiImage, FiDownload, FiPercent, FiCheck, FiZap,
 } from 'react-icons/fi';
 
 const PAGE_SIZE = 20;
+const REPORT_HEADERS = [
+  'Item ID', 'Item Name', 'Category', 'Unit Price (£)',
+  'Stock', 'Available Stock', 'Reorder Level', 'Expiry Date',
+  'Total Value (£)', 'Status',
+];
+
+const OPEN_STOCK_STATUSES = new Set(['pending', 'confirmed', 'processing']);
+
+const csvValue = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+const productStock = (product) => {
+  const variants = normalizeVariants(product.variants || []);
+  if (variants.length > 0) {
+    return variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0);
+  }
+  return Number(product.stock) || 0;
+};
+
+const formatReportDate = (value) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().slice(0, 10);
+};
+
+const buildOrderReservations = (orders) => {
+  const reservations = new Map();
+  orders.forEach((order) => {
+    const status = String(order.orderStatus || order.status || '').toLowerCase();
+    if (!OPEN_STOCK_STATUSES.has(status) || ['failed', 'refunded'].includes(String(order.paymentStatus || '').toLowerCase())) return;
+
+    (Array.isArray(order.items) ? order.items : []).forEach((item) => {
+      const product = item.product;
+      const productId = item.productId || (typeof product === 'object' ? product?._id || product?.id : product);
+      const quantity = Number(item.quantity);
+      if (!productId || !Number.isFinite(quantity) || quantity <= 0) return;
+      const key = String(productId);
+      reservations.set(key, (reservations.get(key) || 0) + quantity);
+    });
+  });
+  return reservations;
+};
+
+const buildInventoryCsv = (items, reservations) => {
+  const rows = items.map((product) => {
+    const quantity = productStock(product);
+    const availableQuantity = Math.max(0, quantity - (reservations.get(String(product._id)) || 0));
+    const reorderLevel = Number(product.reorderLevel);
+    const price = Number(product.price) || 0;
+    const threshold = Number.isFinite(reorderLevel) ? reorderLevel : null;
+    const status = availableQuantity <= 0
+      ? 'Out of Stock'
+      : threshold !== null && availableQuantity <= threshold
+        ? 'Reorder'
+        : 'In Stock';
+
+    return [
+      product.productCode || product.sku || product._id || '—',
+      product.name || '—',
+      product.category?.name || product.category || '—',
+      price.toFixed(2),
+      quantity,
+      availableQuantity,
+      threshold ?? '—',
+      formatReportDate(product.expiryDate || product.expiry),
+      (price * quantity).toFixed(2),
+      status,
+    ].map(csvValue).join(',');
+  });
+
+  return [REPORT_HEADERS.map(csvValue).join(','), ...rows].join('\r\n');
+};
 
 const EMPTY = {
   name: '', description: '', usageInstructions: [],
@@ -145,12 +218,78 @@ const normalizeVariants = (variants, parentCode = '') => {
 
 export default function AdminProducts() {
   const dispatch = useDispatch();
-  const { products, productsTotal, categories, brands = [], loading } = useSelector((s) => s.admin);
+  const { products, productsTotal, categories, brands = [], loading, globalDiscount = {}, campaign = null } = useSelector((s) => s.admin);
+  const { user } = useSelector((s) => s.auth);
   const { toasts, toast, removeToast } = useToast();
 
   const [search,         setSearch]         = useState('');
   const [catFilter,      setCatFilter]      = useState('');
   const [userViewFilter, setUserViewFilter] = useState('');
+  const [approvalFilter, setApprovalFilter] = useState('');
+
+  // Campaign & Global Discount modal state
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [discountSubmitting, setDiscountSubmitting] = useState(false);
+
+  const [campaignForm, setCampaignForm] = useState({
+    theme: '11_11',
+    campaignName: '11:11 Mega Sale',
+    badgeText: '11:11 MEGA SHOPPING FESTIVAL',
+    heading: '11 : 11',
+    subheading: 'BIGGEST SALE OF THE YEAR',
+    discountPercent: 5,
+    greetingText: 'Applied automatically on EVERY product across the entire store!',
+    ctaText: 'Claim 5% OFF & Shop Now',
+    isEnabled: true,
+    updateAllProductPrices: true,
+  });
+
+  const CAMPAIGN_PRESETS = {
+    christmas: {
+      theme: 'christmas',
+      campaignName: 'Christmas Special',
+      badgeText: '🎄 MERRY CHRISTMAS & HOLIDAY SALE 🎁',
+      heading: 'MERRY CHRISTMAS',
+      subheading: 'SEASON OF GIVING & JOY',
+      discountPercent: 5,
+      greetingText: 'Wishing you warmth, joy and festive cheer! Celebrate Christmas with an exclusive holiday discount on every product.',
+      ctaText: 'Shop Christmas Deals Now 🎁',
+      isEnabled: true,
+      updateAllProductPrices: true,
+    },
+    '11_11': {
+      theme: '11_11',
+      campaignName: '11:11 Mega Sale',
+      badgeText: '✦ 11:11 MEGA SHOPPING FESTIVAL ✦',
+      heading: '11 : 11',
+      subheading: 'BIGGEST SALE OF THE YEAR',
+      discountPercent: 5,
+      greetingText: 'Applied automatically on EVERY product across the entire store!',
+      ctaText: 'Claim 5% OFF & Shop Now',
+      isEnabled: true,
+      updateAllProductPrices: true,
+    },
+    new_year: {
+      theme: 'new_year',
+      campaignName: 'New Year Special',
+      badgeText: '✨ HAPPY NEW YEAR CELEBRATION ✨',
+      heading: 'WELCOME 2027',
+      subheading: 'NEW BEGINNINGS • SPECIAL OFFERS',
+      discountPercent: 10,
+      greetingText: 'Ring in the New Year with storewide festive savings on our entire collection!',
+      ctaText: 'Explore New Year Specials ✨',
+      isEnabled: true,
+      updateAllProductPrices: true,
+    },
+  };
+
+  const applyPreset = (presetKey) => {
+    const p = CAMPAIGN_PRESETS[presetKey];
+    if (p) {
+      setCampaignForm((prev) => ({ ...prev, ...p }));
+      toast.success(`Loaded "${p.campaignName}" preset!`);
+    }
+  };
   const [page,           setPage]           = useState(1);
   const [deleteTarget,   setDeleteTarget]   = useState(null);
   const [delLoading,     setDelLoading]     = useState(false);
@@ -159,6 +298,7 @@ export default function AdminProducts() {
   const [form,           setForm]           = useState(EMPTY);
   const [imageItems,     setImageItems]     = useState([]);
   const [saving,         setSaving]         = useState(false);
+  const [reportLoading,  setReportLoading]  = useState(false);
   const [instrInput,     setInstrInput]     = useState('');
   const fileRef = useRef(null);
 
@@ -205,19 +345,39 @@ export default function AdminProducts() {
   useEffect(() => {
     dispatch(fetchAdminCategories());
     dispatch(fetchAdminBrands());
+    dispatch(fetchGlobalDiscountStatus());
+    dispatch(fetchCampaignSetting());
   }, [dispatch]);
 
-  useEffect(() => { load(search, catFilter, userViewFilter, page); }, [page]);
+  useEffect(() => {
+    if (campaign) {
+      setCampaignForm((prev) => ({
+        ...prev,
+        theme: campaign.theme || prev.theme,
+        campaignName: campaign.campaignName || prev.campaignName,
+        badgeText: campaign.badgeText || prev.badgeText,
+        heading: campaign.heading || prev.heading,
+        subheading: campaign.subheading || prev.subheading,
+        discountPercent: campaign.discountPercent ?? prev.discountPercent,
+        greetingText: campaign.greetingText || prev.greetingText,
+        ctaText: campaign.ctaText || prev.ctaText,
+        isEnabled: campaign.isEnabled ?? prev.isEnabled,
+      }));
+    }
+  }, [campaign]);
 
-  const load = useCallback((s = search, c = catFilter, uv = userViewFilter, p = page) => {
+  useEffect(() => { load(search, catFilter, userViewFilter, approvalFilter, page); }, [page]);
+
+  const load = useCallback((s = search, c = catFilter, uv = userViewFilter, ap = approvalFilter, p = page) => {
     dispatch(fetchAdminProducts({
       search:         s || undefined,
       category:       c || undefined,
       showInUserView: uv || undefined,
+      approvalStatus: ap || undefined,
       page:           p,
       limit:          PAGE_SIZE,
     }));
-  }, [dispatch, search, catFilter, userViewFilter, page]);
+  }, [dispatch, search, catFilter, userViewFilter, approvalFilter, page]);
 
   const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -625,12 +785,13 @@ export default function AdminProducts() {
         .map((item) => item.file);
       newFiles.forEach((f) => fd.append('images', f));
 
+      const isSuperAdmin = user?.role === 'superadmin';
       if (editing) {
         await dispatch(updateAdminProduct({ id: editing._id, formData: fd })).unwrap();
-        toast.success('Product updated');
+        toast.success(isSuperAdmin ? 'Product updated and published' : 'Product updates submitted for Super Admin approval');
       } else {
         await dispatch(createAdminProduct(fd)).unwrap();
-        toast.success('Product created');
+        toast.success(isSuperAdmin ? 'Product created and published' : 'New product submitted for Super Admin approval');
       }
       closeForm();
       load(search, catFilter, page);
@@ -655,6 +816,133 @@ export default function AdminProducts() {
     }
   };
 
+  const isSuperAdmin = user?.role === 'superadmin';
+
+  const handleToggleCampaign = async () => {
+    if (!isSuperAdmin) return toast.error('Only super admins can activate or deactivate the campaign popup');
+
+    const nextEnabled = !campaignForm.isEnabled;
+    setDiscountSubmitting(true);
+    try {
+      const campaignUpdate = nextEnabled
+        ? {
+            ...campaignForm,
+            isEnabled: true,
+            discountPercent: Number(campaignForm.discountPercent),
+            updateAllProductPrices: false,
+          }
+        : { isEnabled: false };
+      const res = await dispatch(updateCampaignSetting(campaignUpdate)).unwrap();
+      setCampaignForm((prev) => ({ ...prev, isEnabled: nextEnabled }));
+      dispatch(fetchCampaignSetting());
+      toast.success(res.message || `Campaign popup ${nextEnabled ? 'activated' : 'deactivated'}`);
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not update campaign popup');
+    } finally {
+      setDiscountSubmitting(false);
+    }
+  };
+
+  const handleSaveCampaign = async () => {
+    const percent = Number(campaignForm.discountPercent);
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
+      return toast.error('Please enter a valid discount percentage between 0 and 100');
+    }
+
+    setDiscountSubmitting(true);
+    try {
+      const res = await dispatch(updateCampaignSetting({
+        ...campaignForm,
+        discountPercent: percent,
+      })).unwrap();
+
+      toast.success(res.message || 'Campaign & storewide discounts updated!');
+      setDiscountModalOpen(false);
+      dispatch(fetchGlobalDiscountStatus());
+      dispatch(fetchCampaignSetting());
+      load(search, catFilter, userViewFilter, approvalFilter, page);
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Action failed');
+    } finally {
+      setDiscountSubmitting(false);
+    }
+  };
+
+  const handleResetDiscount = async () => {
+    setDiscountSubmitting(true);
+    try {
+      const res = await dispatch(manageGlobalDiscount({
+        action: 'reset',
+        reason: 'Reset storewide discount',
+      })).unwrap();
+
+      toast.success(res.message || 'Global product discounts reset');
+      setCampaignForm((prev) => ({ ...prev, discountPercent: 0 }));
+      dispatch(fetchGlobalDiscountStatus());
+      dispatch(fetchCampaignSetting());
+      load(search, catFilter, userViewFilter, approvalFilter, page);
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Action failed');
+    } finally {
+      setDiscountSubmitting(false);
+    }
+  };
+
+  const downloadInventoryReport = async () => {
+    setReportLoading(true);
+    try {
+      const reportProducts = [];
+      let reportPage = 1;
+      let total = 0;
+
+      do {
+        const result = await dispatch(fetchAdminProducts({
+          search: search || undefined,
+          category: catFilter || undefined,
+          showInUserView: userViewFilter || undefined,
+          page: reportPage,
+          limit: PAGE_SIZE,
+        })).unwrap();
+        const pageProducts = Array.isArray(result.products) ? result.products : [];
+        reportProducts.push(...pageProducts);
+        total = Number.isFinite(result.total) ? result.total : reportProducts.length;
+        reportPage += 1;
+        if (pageProducts.length === 0) break;
+      } while (reportProducts.length < total);
+
+      const reportOrders = [];
+      let orderPage = 1;
+      let orderTotal = 0;
+      do {
+        const result = await dispatch(fetchAdminOrders({ page: orderPage, limit: PAGE_SIZE })).unwrap();
+        const pageOrders = Array.isArray(result.orders) ? result.orders : [];
+        reportOrders.push(...pageOrders);
+        orderTotal = Number.isFinite(result.total) ? result.total : Number(result.count) || reportOrders.length;
+        orderPage += 1;
+        if (pageOrders.length === 0) break;
+      } while (reportOrders.length < orderTotal);
+
+      const reservations = buildOrderReservations(reportOrders);
+      const blob = new Blob([`\uFEFF${buildInventoryCsv(reportProducts, reservations)}`], {
+        type: 'text/csv;charset=utf-8;',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `inventory-report-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      load(search, catFilter, userViewFilter, page);
+      toast.success(`Inventory report downloaded (${reportProducts.length} products)`);
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Could not download inventory report');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-5">
@@ -662,12 +950,36 @@ export default function AdminProducts() {
           <h2 className="text-[20px] font-black text-[#1A1A1A]">
             Products <span className="text-[#60717B] font-normal text-[16px]">({productsTotal ?? 0})</span>
           </h2>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FFB700] text-[#1A1A1A] font-semibold text-[13px] rounded-[8px] hover:bg-amber-400 transition-colors"
-          >
-            <FiPlus size={16} aria-hidden="true" /> Add Product
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDiscountModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-[13px] rounded-[8px] transition-all shadow-sm"
+              title="Configure 11:11 storewide product discount"
+            >
+              <FiPercent size={15} className="text-[#FF8C00]" />
+              <span>Campaign &amp; Global Discount</span>
+              {globalDiscount.activeDiscountPercent > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-[#FFB700] text-[#1A1A1A] text-[10px] font-black">
+                  {globalDiscount.activeDiscountPercent}% OFF ACTIVE
+                </span>
+              )}
+            </button>
+            <button
+              onClick={downloadInventoryReport}
+              disabled={reportLoading}
+              className="flex items-center gap-2 px-4 py-2 border border-[#E9E9E9] bg-white text-[#1A1A1A] font-semibold text-[13px] rounded-[8px] hover:bg-[#FAFAFA] transition-colors disabled:opacity-50"
+            >
+              <FiDownload size={16} aria-hidden="true" />
+              {reportLoading ? 'Preparing…' : 'Download Inventory'}
+            </button>
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-[#FFB700] text-[#1A1A1A] font-semibold text-[13px] rounded-[8px] hover:bg-amber-400 transition-colors"
+            >
+              <FiPlus size={16} aria-hidden="true" /> Add Product
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-[12px] border border-[#E9E9E9] p-4 flex flex-wrap gap-3">
@@ -695,13 +1007,24 @@ export default function AdminProducts() {
           </select>
           <select
             value={userViewFilter}
-            onChange={(e) => { setUserViewFilter(e.target.value); setPage(1); load(search, catFilter, e.target.value, 1); }}
+            onChange={(e) => { setUserViewFilter(e.target.value); setPage(1); load(search, catFilter, e.target.value, approvalFilter, 1); }}
             aria-label="Filter by User View visibility"
             className="px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
           >
             <option value="">All User View Status</option>
             <option value="true">Shown in User View</option>
             <option value="false">Hidden in User View</option>
+          </select>
+          <select
+            value={approvalFilter}
+            onChange={(e) => { setApprovalFilter(e.target.value); setPage(1); load(search, catFilter, userViewFilter, e.target.value, 1); }}
+            aria-label="Filter by Approval Status"
+            className="px-3 py-2 text-[13px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+          >
+            <option value="">All Approvals</option>
+            <option value="approved">Approved & Live</option>
+            <option value="pending">Pending Approval</option>
+            <option value="rejected">Rejected</option>
           </select>
         </div>
 
@@ -710,7 +1033,7 @@ export default function AdminProducts() {
             <table className="w-full text-[13px]">
               <thead className="bg-[#FAFAFA] border-b border-[#E9E9E9]">
                 <tr>
-                  {['Image', 'Name', 'SKU', 'Product Code', 'Category', 'Brand', 'Price', 'Weight', 'Stock', 'Status', 'User View', 'Actions'].map((h) => (
+                  {['Image', 'Name', 'SKU', 'Product Code', 'Category', 'Brand', 'Price', 'Weight', 'Stock', 'Status', 'User View', 'Approval', 'Actions'].map((h) => (
                     <th key={h} className="px-4 py-3 text-left font-semibold text-[#60717B] whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -718,7 +1041,7 @@ export default function AdminProducts() {
               <tbody>
                 {loading && !products.length ? (
                   <tr>
-                    <td colSpan={12} className="text-center py-12 text-[#60717B]">
+                    <td colSpan={13} className="text-center py-12 text-[#60717B]">
                       <div className="flex items-center justify-center gap-2">
                         <span className="w-4 h-4 border-2 border-[#FFB700] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
                         Loading…
@@ -726,7 +1049,7 @@ export default function AdminProducts() {
                     </td>
                   </tr>
                 ) : products.length === 0 ? (
-                  <tr><td colSpan={12} className="text-center py-12 text-[#60717B]">No products found</td></tr>
+                  <tr><td colSpan={13} className="text-center py-12 text-[#60717B]">No products found</td></tr>
                 ) : products.map((p) => {
                   const productVariants = normalizeVariants(p.variants || []);
                   const availableVariantIndexes = productVariants
@@ -832,6 +1155,21 @@ export default function AdminProducts() {
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${p.showInUserView !== false ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
                         {p.showInUserView !== false ? 'Shown' : 'Hidden'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.approvalStatus === 'pending' ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 whitespace-nowrap">
+                          Pending Approval
+                        </span>
+                      ) : p.approvalStatus === 'rejected' ? (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 whitespace-nowrap" title={p.approvalNote || 'Rejected'}>
+                          Rejected
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 whitespace-nowrap">
+                          Approved
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -1389,6 +1727,270 @@ export default function AdminProducts() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Campaign & Global Discount Manager Modal */}
+      {discountModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white rounded-[24px] max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-[#E9E9E9] overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#F0F0F0] flex items-center justify-between bg-gradient-to-r from-amber-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#FFB700] text-[#1A1A1A] flex items-center justify-center font-black">
+                  <FiPercent size={18} />
+                </div>
+                <div>
+                  <h3 className="font-black text-[16px] text-[#1A1A1A]">
+                    Celebration Popup &amp; Discount Manager
+                  </h3>
+                  <p className="text-[12px] text-[#60717B]">
+                    {isSuperAdmin
+                      ? 'Super Admin: Full Authority to Customize Theme, Texts & Storewide Discounts'
+                      : 'Staff Admin: Submit Campaign Changes for Super Admin Approval'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDiscountModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-zinc-100 text-zinc-500"
+              >
+                <FiX size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-5 text-[13px]">
+              {/* Quick Preset Buttons */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#60717B] uppercase tracking-wider mb-2">
+                  Quick Load Campaign Preset:
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('christmas')}
+                    className="px-3.5 py-1.5 rounded-[8px] bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-800 font-bold text-[12px] flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>🎄</span> Christmas Special
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('11_11')}
+                    className="px-3.5 py-1.5 rounded-[8px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[12px] flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>🎉</span> 11:11 Mega Sale
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('new_year')}
+                    className="px-3.5 py-1.5 rounded-[8px] bg-cyan-50 hover:bg-cyan-100 border border-cyan-300 text-cyan-900 font-bold text-[12px] flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>✨</span> New Year Special
+                  </button>
+                </div>
+              </div>
+
+              {/* Theme & Popup Enabled */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#FAFAFA] p-4 rounded-[14px] border border-[#E9E9E9]">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
+                    Visual Theme
+                  </label>
+                  <select
+                    value={campaignForm.theme}
+                    onChange={(e) => setCampaignForm((prev) => ({ ...prev, theme: e.target.value }))}
+                    className="w-full px-3 py-2 text-[13px] font-semibold border border-[#E9E9E9] rounded-[8px] bg-white focus:outline-none focus:border-[#FFB700]"
+                  >
+                    <option value="11_11">🎉 11:11 (Gold &amp; Black Theme)</option>
+                    <option value="christmas">🎄 Christmas (Festive Red, Green &amp; Snow ❄️)</option>
+                    <option value="new_year">✨ New Year (Midnight Navy &amp; Cyan)</option>
+                    <option value="default">✦ Classic Luxury (Brand Theme)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col justify-end gap-1.5">
+                  <span className="text-[11px] font-semibold text-[#60717B]">
+                    Visitor popup: {campaignForm.isEnabled ? 'Active' : 'Inactive'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleToggleCampaign}
+                    disabled={!isSuperAdmin || discountSubmitting}
+                    title={isSuperAdmin ? undefined : 'Only super admins can change the live popup'}
+                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-[8px] border text-[12px] font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      campaignForm.isEnabled
+                        ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <FiZap size={14} aria-hidden="true" />
+                    {campaignForm.isEnabled ? 'Deactivate Popup' : 'Activate Popup'}
+                  </button>
+                  {!isSuperAdmin && (
+                    <span className="text-[10px] text-[#60717B]">Super admin permission required</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Discount Percentage & Price Updates */}
+              <div className="p-4 rounded-[14px] bg-amber-500/10 border border-amber-300/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-950 uppercase tracking-wider">
+                      Storewide Discount Percentage (%)
+                    </label>
+                    <p className="text-[11px] text-amber-800">
+                      Calculates selling price for every product: Price = Base × (1 - Discount%)
+                    </p>
+                  </div>
+                  <div className="w-24 relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={campaignForm.discountPercent}
+                      onChange={(e) => setCampaignForm((prev) => ({ ...prev, discountPercent: e.target.value }))}
+                      className="w-full px-3 py-2 text-[15px] font-black border border-amber-300 rounded-[8px] bg-white text-center focus:outline-none focus:border-[#FFB700]"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 font-black text-amber-700">%</span>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={campaignForm.updateAllProductPrices}
+                    onChange={(e) => setCampaignForm((prev) => ({ ...prev, updateAllProductPrices: e.target.checked }))}
+                    className="w-4 h-4 accent-[#FFB700]"
+                  />
+                  <span className="text-[12px] font-bold text-amber-950">
+                    Apply this {campaignForm.discountPercent}% discount to ALL active products in the store right now
+                  </span>
+                </label>
+              </div>
+
+              {/* Customizable Texts */}
+              <div className="space-y-3">
+                <h4 className="text-[12px] font-black text-[#1A1A1A] uppercase tracking-wider">
+                  Customize Popup Greeting &amp; Texts:
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#60717B] mb-1">Campaign Name</label>
+                    <input
+                      type="text"
+                      value={campaignForm.campaignName}
+                      onChange={(e) => setCampaignForm((prev) => ({ ...prev, campaignName: e.target.value }))}
+                      placeholder="e.g. Christmas Special"
+                      className="w-full px-3 py-2 text-[12px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#60717B] mb-1">Badge / Tagline</label>
+                    <input
+                      type="text"
+                      value={campaignForm.badgeText}
+                      onChange={(prev) => setCampaignForm((p) => ({ ...p, badgeText: prev.target.value }))}
+                      placeholder="e.g. 🎄 MERRY CHRISTMAS &amp; HOLIDAY SALE"
+                      className="w-full px-3 py-2 text-[12px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#60717B] mb-1">Big Main Heading</label>
+                    <input
+                      type="text"
+                      value={campaignForm.heading}
+                      onChange={(e) => setCampaignForm((prev) => ({ ...prev, heading: e.target.value }))}
+                      placeholder="e.g. MERRY CHRISTMAS or 11 : 11"
+                      className="w-full px-3 py-2 text-[12px] font-bold border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#60717B] mb-1">Subheading</label>
+                    <input
+                      type="text"
+                      value={campaignForm.subheading}
+                      onChange={(e) => setCampaignForm((prev) => ({ ...prev, subheading: e.target.value }))}
+                      placeholder="e.g. SEASON OF GIVING &amp; JOY"
+                      className="w-full px-3 py-2 text-[12px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#60717B] mb-1">Visitor Greeting / Description</label>
+                  <textarea
+                    rows={2}
+                    value={campaignForm.greetingText}
+                    onChange={(e) => setCampaignForm((prev) => ({ ...prev, greetingText: e.target.value }))}
+                    placeholder="Wishing you warmth, joy and festive cheer! Celebrate Christmas with an exclusive holiday discount on every product."
+                    className="w-full p-2.5 text-[12px] border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#60717B] mb-1">Call-To-Action Button Text</label>
+                  <input
+                    type="text"
+                    value={campaignForm.ctaText}
+                    onChange={(e) => setCampaignForm((prev) => ({ ...prev, ctaText: e.target.value }))}
+                    placeholder="e.g. Shop Christmas Deals Now 🎁"
+                    className="w-full px-3 py-2 text-[12px] font-semibold border border-[#E9E9E9] rounded-[8px] bg-[#FAFAFA] focus:outline-none focus:border-[#FFB700]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="px-6 py-4 bg-[#FAFAFA] border-t border-[#E9E9E9] flex items-center justify-between gap-3">
+              {globalDiscount.activeDiscountPercent > 0 && (
+                <button
+                  type="button"
+                  onClick={handleResetDiscount}
+                  disabled={discountSubmitting}
+                  className="px-3.5 py-2.5 rounded-[8px] border border-rose-200 text-rose-600 hover:bg-rose-50 text-[12px] font-bold transition-colors cursor-pointer"
+                >
+                  Reset Discount
+                </button>
+              )}
+
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setDiscountModalOpen(false)}
+                  className="px-4 py-2.5 rounded-[8px] border border-[#E9E9E9] text-[13px] font-semibold text-[#60717B] hover:bg-white"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveCampaign}
+                  disabled={discountSubmitting}
+                  className="px-5 py-2.5 rounded-[8px] bg-gradient-to-r from-[#FFB700] to-[#FF8C00] text-[#1A1A1A] font-black text-[13px] hover:brightness-105 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+                >
+                  {discountSubmitting && (
+                    <span className="w-3.5 h-3.5 border-2 border-[#1A1A1A] border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {isSuperAdmin
+                    ? 'Save & Update Storewide'
+                    : 'Submit for Super Admin Approval'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

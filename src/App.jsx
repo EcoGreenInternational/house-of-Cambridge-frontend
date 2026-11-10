@@ -7,6 +7,7 @@ import { fetchCart } from './redux/slices/cartSlice';
 import { fetchWishlist } from './redux/slices/userSlice';
 import ScrollToTop from './components/common/ScrollToTop';
 import WhatsAppButton from './components/common/WhatsAppButton';
+import ElevenElevenPopup from './components/common/ElevenElevenPopup';
 import ComingSoon, { getLaunchDate } from './ComingSoon';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -58,6 +59,8 @@ import AdminBroadcast from './pages/admin/AdminBroadcast';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminFlashSales from './pages/admin/AdminFlash';
 import AdminInvoices from './pages/admin/AdminInvoices';
+import AdminApprovals from './pages/admin/AdminApprovals';
+import useGoogleAnalytics from './hooks/useGoogleAnalytics';
 
 
 function ProtectedRoute({ children }) {
@@ -83,6 +86,14 @@ function AdminRoute({ children }) {
   if (!authChecked) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!['admin', 'superadmin'].includes(user?.role)) return <Navigate to="/" replace />;
+  return children;
+}
+
+function SuperAdminRoute({ children }) {
+  const { isAuthenticated, user, authChecked } = useSelector((s) => s.auth);
+  if (!authChecked) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'superadmin') return <Navigate to="/admin" replace />;
   return children;
 }
 
@@ -251,6 +262,8 @@ function App() {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((s) => s.auth);
 
+  useGoogleAnalytics();
+
   useEffect(() => {
     const init = async () => {
       await dispatch(loadUser());
@@ -316,6 +329,7 @@ function App() {
         <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
         <Route path="/admin/orders/:id" element={<AdminRoute><AdminOrderDetail /></AdminRoute>} />
         <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+        <Route path="/admin/approvals" element={<SuperAdminRoute><AdminApprovals /></SuperAdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
         <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
         <Route path="/admin/brands" element={<AdminRoute><AdminBrands /></AdminRoute>} />
@@ -336,6 +350,7 @@ function App() {
 
         <Route path="*" element={<Error404 />} />
       </Routes>
+      <ElevenElevenPopup />
       <WhatsAppButton />
     </BrowserRouter>
   );
