@@ -16,9 +16,23 @@ export default function ProductCard({ product }) {
 
   const isWishlisted = wishlist.some((p) => (p._id || p) === product._id);
 
-  const price = product.discountPrice > 0 ? product.discountPrice : product.price;
-  const originalPrice = product.discountPrice > 0 ? product.price : null;
-  const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100) : 0;
+  const basePrice = Number(product.price) || 0;
+  const compareAtPrice = Number(product.comparePrice) || 0;
+  const flashSalePrice = Number(product.flashSalePrice) || 0;
+  const discountPrice = Number(product.discountPrice) || 0;
+  const price = flashSalePrice > 0
+    ? flashSalePrice
+    : discountPrice > 0
+      ? discountPrice
+      : basePrice;
+  const originalPrice = compareAtPrice > price
+    ? compareAtPrice
+    : price < basePrice
+      ? basePrice
+      : null;
+  const discountPct = originalPrice
+    ? Math.min(99, Math.max(0, Math.round((1 - price / originalPrice) * 100)))
+    : 0;
 
   const logoSrc = product.seller?.logo || product.shop?.logo || product.seller?.avatar?.url || product.shop?.avatar?.url || null;
   const sellerName = product.seller?.name || product.shop?.name || null;
