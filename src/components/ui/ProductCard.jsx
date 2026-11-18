@@ -111,12 +111,19 @@ export default function ProductCard({ product }) {
           />
         </button>
 
-        <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1 z-20">
-          {product.isFlashSale && <span className="bg-[#FFB700] text-[#5a3a00] text-[10px] font-bold px-2 py-0.5 rounded">Flash Sale</span>}
-          {discountPct > 0 && !product.isFlashSale && (
-            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">-{discountPct}%</span>
-          )}
-        </div>
+        {discountPct > 0 && !product.isFlashSale && (
+          <div
+            className={`absolute left-2 ${logoSrc ? 'top-12' : 'top-2'} z-20 w-11 h-11 rounded-full bg-[#E5534B] text-white text-[12px] font-bold flex items-center justify-center shadow-md`}
+          >
+            -{discountPct}%
+          </div>
+        )}
+
+        {product.isFlashSale && (
+          <div className="absolute bottom-2 right-2 z-20">
+            <span className="bg-[#FFB700] text-[#5a3a00] text-[10px] font-bold px-2 py-0.5 rounded">Flash Sale</span>
+          </div>
+        )}
 
         {!inStock && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
