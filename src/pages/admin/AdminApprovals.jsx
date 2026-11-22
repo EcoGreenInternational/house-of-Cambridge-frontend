@@ -6,9 +6,6 @@ import {
   rejectProduct,
   bulkApproveProducts,
   fetchApprovalStats,
-  fetchGlobalDiscountStatus,
-  approveGlobalDiscountRequest,
-  rejectGlobalDiscountRequest,
 } from '../../redux/slices/adminSlice.js';
 import AdminLayout from '../../components/admin/AdminLayout.jsx';
 import ConfirmModal from '../../components/ui/ConfirmModal.jsx';
@@ -63,7 +60,7 @@ const STATUS_BADGES = {
 
 export default function AdminApprovals() {
   const dispatch = useDispatch();
-  const { approvals = [], approvalsTotal = 0, pendingApprovalsCount = 0, loading, globalDiscount = {} } = useSelector(
+  const { approvals = [], approvalsTotal = 0, pendingApprovalsCount = 0, loading } = useSelector(
     (s) => s.admin
   );
   const { toasts, toast, removeToast } = useToast();
@@ -105,29 +102,7 @@ export default function AdminApprovals() {
 
   useEffect(() => {
     loadData(search, tab, page);
-    dispatch(fetchGlobalDiscountStatus());
-  }, [tab, page, loadData, dispatch]);
-
-  const handleApproveGlobalDiscount = async (requestId) => {
-    try {
-      const res = await dispatch(approveGlobalDiscountRequest(requestId)).unwrap();
-      toast.success(res.message || 'Global discount approved and applied!');
-      dispatch(fetchGlobalDiscountStatus());
-      loadData(search, tab, page);
-    } catch (err) {
-      toast.error(typeof err === 'string' ? err : 'Approval failed');
-    }
-  };
-
-  const handleRejectGlobalDiscount = async (requestId) => {
-    try {
-      const res = await dispatch(rejectGlobalDiscountRequest({ id: requestId })).unwrap();
-      toast.success(res.message || 'Global discount request rejected');
-      dispatch(fetchGlobalDiscountStatus());
-    } catch (err) {
-      toast.error(typeof err === 'string' ? err : 'Rejection failed');
-    }
-  };
+  }, [tab, page, loadData]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -230,72 +205,6 @@ export default function AdminApprovals() {
             </button>
           )}
         </div>
-
-        {/* Global Discount Requests Section */}
-        {globalDiscount.pendingRequests?.length > 0 && (
-          <div className="p-5 rounded-[16px] bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-2 border-amber-400 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-full bg-[#FFB700] text-[#1A1A1A] flex items-center justify-center font-black text-[14px]">
-                  %
-                </span>
-                <div>
-                  <h3 className="font-black text-[15px] text-[#1A1A1A]">
-                    Pending 11:11 Storewide Global Discount Request
-                  </h3>
-                  <p className="text-[12px] text-[#60717B]">
-                    Staff admin has requested a storewide discount. Super Admin approval is required.
-                  </p>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-white">
-                Requires Approval
-              </span>
-            </div>
-
-            {globalDiscount.pendingRequests.map((req) => (
-              <div
-                key={req._id}
-                className="p-4 rounded-[12px] bg-white border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-[15px] text-[#1A1A1A]">
-                      {req.action === 'reset'
-                        ? 'Remove / Reset Global Discount'
-                        : `Apply Flat ${req.discountPercent}% OFF to ALL Products`}
-                    </span>
-                    <span className="text-[11px] px-2 py-0.5 rounded font-mono bg-zinc-100 text-zinc-700">
-                      Requested by {req.requestedBy?.name || 'Staff Admin'}
-                    </span>
-                  </div>
-                  {req.reason && (
-                    <p className="text-[12px] text-[#60717B] mt-1">
-                      Reason: {req.reason}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleApproveGlobalDiscount(req._id)}
-                    className="px-4 py-2 rounded-[8px] bg-emerald-600 text-white font-bold text-[12px] hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
-                  >
-                    Approve &amp; Apply Now
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRejectGlobalDiscount(req._id)}
-                    className="px-3 py-2 rounded-[8px] border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold text-[12px] transition-colors cursor-pointer"
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Status Tabs and Search */}
         <div className="bg-white p-4 rounded-[12px] border border-[#E9E9E9] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
