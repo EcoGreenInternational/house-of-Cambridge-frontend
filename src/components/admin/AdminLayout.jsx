@@ -6,7 +6,7 @@ import { fetchApprovalStats } from '../../redux/slices/adminSlice.js';
 import {
   FiGrid, FiPackage, FiUsers, FiTag, FiPercent,
   FiMessageSquare, FiRepeat, FiLogOut, FiBell, FiMenu,
-  FiShoppingBag, FiZap, FiAward, FiFileText, FiCheckCircle,
+  FiShoppingBag, FiZap, FiAward, FiFileText, FiCheckCircle, FiImage,
 } from 'react-icons/fi';
 
 const BASE_NAV = [
@@ -14,6 +14,7 @@ const BASE_NAV = [
   { icon: FiPackage,       label: 'Orders',      href: '/admin/orders' },
   { icon: FiShoppingBag,   label: 'Products',    href: '/admin/products' },
   { icon: FiZap,           label: 'Flash Sales', href: '/admin/flash-sales' },
+  { icon: FiImage,         label: 'Banners',     href: '/admin/banners' },
   { icon: FiUsers,         label: 'Users',        href: '/admin/users' },
   { icon: FiTag,           label: 'Categories',  href: '/admin/categories' },
   { icon: FiAward,         label: 'Brands',       href: '/admin/brands' },

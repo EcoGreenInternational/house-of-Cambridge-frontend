@@ -1,0 +1,183 @@
+/* ============================================================
+   Christmas decorations (src/components/christmas)
+   ============================================================ */
+
+@keyframes hoc-xmas-twinkle {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+.hoc-xmas-twinkle { animation: hoc-xmas-twinkle 2.2s ease-in-out infinite; }
+.hoc-xmas-glow { filter: drop-shadow(0 0 3px currentColor); }
+
+/* ---- Snow ---- */
+.hoc-xmas-snow {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  pointer-events: none;
+}
+
+/* ---- Greeting bar + garland ---- */
+.hoc-xmas-top { position: relative; z-index: 30; }
+
+.hoc-xmas-greeting {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 46px;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.08) 0 2px, transparent 3px) 0 0 / 34px 34px,
+    linear-gradient(90deg, #6d0a14 0%, #a3111f 50%, #6d0a14 100%);
+  border-bottom: 2px solid #d4a63a;
+  color: #fff;
+  text-align: center;
+}
+.hoc-xmas-greeting-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  color: #fde7a6;
+}
+.hoc-xmas-greeting-close {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.hoc-xmas-greeting-close:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+
+.hoc-xmas-garland-anchor { position: relative; height: 0; }
+.hoc-xmas-garland {
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.25));
+}
+.hoc-xmas-garland svg { display: block; }
+
+/* ---- Hanging paper snowflakes ---- */
+.hoc-xmas-hanging {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+.hoc-xmas-hang {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  transform-origin: 50% 0;
+  animation: hoc-xmas-sway 5s ease-in-out infinite alternate;
+}
+@keyframes hoc-xmas-sway {
+  from { transform: translateX(-50%) rotate(-4deg); }
+  to   { transform: translateX(-50%) rotate(4deg); }
+}
+
+/* ---- Pine corners ---- */
+.hoc-xmas-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+.hoc-xmas-corner {
+  position: absolute;
+  top: 0;
+  max-width: 34%;
+  height: auto;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+}
+.hoc-xmas-corner-left { left: 0; }
+.hoc-xmas-corner-right { right: 0; }
+
+/* ---- Built-in Christmas background ---- */
+.hoc-xmas-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, #e0303a 0%, #a3111f 38%, #5c0610 78%, #33030a 100%);
+}
+.hoc-xmas-backdrop svg { position: absolute; inset: 0; filter: blur(1px); }
+
+/* ---- Footer scene ---- */
+.hoc-xmas-scene {
+  height: 190px;
+  line-height: 0;
+  overflow: hidden;
+}
+.hoc-xmas-scene svg { display: block; }
+
+/* ---- Buttons in Christmas style ---- */
+.hoc-btn-christmas {
+  position: relative;
+  background: linear-gradient(180deg, #e0303a, #a3111f);
+  color: #fff !important;
+  border: 2px solid #d4a63a;
+  box-shadow: 0 4px 14px rgba(163, 17, 31, 0.45);
+}
+.hoc-btn-christmas::before {
+  /* lumpy snow cap */
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: -6px;
+  height: 11px;
+  background:
+    radial-gradient(circle at 7px 7px, #fff 6.5px, transparent 7px) 0 0 / 13px 11px repeat-x;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+  pointer-events: none;
+}
+.hoc-btn-christmas:hover { filter: brightness(1.08); }
+
+/* ---- Snow on/off button ---- */
+.hoc-xmas-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 9997;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 166, 58, 0.8);
+  background: rgba(109, 10, 20, 0.92);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+.hoc-xmas-toggle span[aria-hidden='true'] { color: #cfe9ff; font-size: 15px; }
+
+@media (max-width: 640px) {
+  .hoc-xmas-greeting { padding: 7px 40px; }
+  .hoc-xmas-greeting-text { font-size: 12.5px; gap: 6px; }
+  .hoc-xmas-greeting-text svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .hoc-xmas-toggle-label { display: none; }
+  .hoc-xmas-toggle { padding: 9px 11px; }
+  .hoc-xmas-hide-mobile { display: none; }
+  .hoc-xmas-scene { height: 150px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoc-xmas-twinkle, .hoc-xmas-hang { animation: none; }
+}

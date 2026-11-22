@@ -13,24 +13,8 @@ import api from '../redux/api/axiosInstance';
 import ProductCard from '../components/ui/ProductCard';
 import FlashCard from '../components/ui/FlashCard';
 import Layout from '../components/common/Layout';
-
-const HERO_SLIDES = [
-  {
-    title:        'House Of Cambridge',
-    image:        '/images/hero-slide-1-7a4bbd.png',
-    mobileImage:  '/images/hero-slide-1-mobile.png',
-  },
-  {
-    title:        'Beauty Deals — Glow More, Save More!',
-    image:        '/images/hero-slide-2.png',
-    mobileImage:  '/images/hero-slide-2-mobile.png',
-  },
-  {
-    title:        'Self Care Starts Here',
-    image:        '/images/hero-slide-3-6a4322.png',
-    mobileImage:  '/images/hero-slide-3-mobile.png',
-  },
-];
+import HeroCarousel from '../components/home/HeroCarousel';
+import ManagedBanners from '../components/home/ManagedBanners';
 
 const STATIC_CATS = [
   { label: 'Beauty and\nCosmetics', bg: '#ABFFDF',              img: '/images/categories/cat-beauty-1627cd.png',          slug: 'beauty'           },
@@ -61,7 +45,6 @@ const FEATURES = [
 ];
 
 const SKELETON_COUNT  = 6;
-const HERO_INTERVAL   = 5000;
 const SCROLL_STEP     = 180;
 const MAX_FLASH_CARDS = 6;
 const MAX_CATEGORY_PRODUCTS = 8;
@@ -232,24 +215,8 @@ export default function Home() {
   const categoryList = useMemo(() => categories || [], [categories]);
   const catLink = useCallback((slug) => buildCategoryLink(categoryList, slug), [categoryList]);
 
-  const [slide, setSlide]                       = useState(0);
   const [beautyProducts, setBeautyProducts]     = useState([]);
   const [electronicsProducts, setElectronicsProducts] = useState([]);
-
-  const autoRef = useRef(null);
-
-  const startAuto = useCallback(() => {
-    clearInterval(autoRef.current);
-    autoRef.current = setInterval(
-      () => setSlide((p) => (p + 1) % HERO_SLIDES.length),
-      HERO_INTERVAL,
-    );
-  }, []);
-
-  const goSlide = useCallback((i) => {
-    setSlide(i);
-    startAuto();
-  }, [startAuto]);
 
   useEffect(() => {
     dispatch(fetchFlashSaleProducts());
@@ -257,11 +224,6 @@ export default function Home() {
     dispatch(fetchHomeNewArrivals());
     dispatch(fetchCategories());
   }, [dispatch]);
-
-  useEffect(() => {
-    startAuto();
-    return () => clearInterval(autoRef.current);
-  }, [startAuto]);
 
   useEffect(() => {
     if (!categories || categories.length === 0) return;
@@ -285,85 +247,10 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [categories?.length]);
 
-  const cur = HERO_SLIDES[slide];
-
   return (
     <Layout>
 
-      <section
-        className="relative overflow-hidden bg-gray-900"
-        aria-label="Promotional hero carousel"
-        aria-roledescription="carousel"
-      >
-        <div className="block md:hidden relative w-full">
-          <img
-            src={cur.mobileImage || cur.image}
-            alt={cur.title}
-            className="w-full h-auto object-cover"
-          />
-        </div>
-        <div
-          className="hidden md:block relative min-h-[437px] bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${cur.image})` }}
-          role="img"
-          aria-label={cur.title}
-        >
-          <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
-          <div className="relative max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16 w-full py-10 md:py-16 min-h-[300px] md:min-h-[437px] flex items-center">
-            <div className="max-w-lg">
-              <div className="flex items-start gap-3 mb-0.5">
-                <span className="w-1 h-[28px] md:h-[44px] bg-[#FFB700] rounded-full flex-shrink-0 mt-1" aria-hidden="true" />
-                <p className="text-white text-[22px] md:text-[36px] font-bold leading-[28px] md:leading-[44px]">
-                  {cur.title}
-                </p>
-              </div>
-              <Link
-                to="/shop"
-                className="ml-3 md:ml-4 inline-flex items-center justify-center bg-[#FFB700] text-black text-[13px] md:text-[15px] font-semibold w-[130px] md:w-[157px] h-8 md:h-9 rounded-full hover:bg-amber-500 transition-colors"
-              >
-                Shop Now
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => goSlide((slide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
-          aria-label="Previous slide"
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors z-10"
-        >
-          <Icon icon="mdi:chevron-left" width={20} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={() => goSlide((slide + 1) % HERO_SLIDES.length)}
-          aria-label="Next slide"
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition-colors z-10"
-        >
-          <Icon icon="mdi:chevron-right" width={20} aria-hidden="true" />
-        </button>
-
-        <div
-          className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10"
-          role="tablist"
-          aria-label="Slide indicators"
-        >
-          {HERO_SLIDES.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              role="tab"
-              aria-selected={i === slide}
-              aria-label={`Go to slide ${i + 1}: ${s.title}`}
-              onClick={() => goSlide(i)}
-              className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full transition-all ${
-                i === slide ? 'bg-black' : 'bg-white/60'
-              }`}
-            />
-          ))}
-        </div>
-      </section>
+      <HeroCarousel />
 
       <section className="bg-white border-b border-gray-100 py-2" aria-label="Service highlights">
         <div className="max-w-[1280px] mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -473,63 +360,70 @@ export default function Home() {
       <section className="bg-white py-4 sm:py-6" aria-labelledby="promo-banners-1-heading">
         <div className="max-w-[1280px] mx-auto px-4">
           <h2 id="promo-banners-1-heading" className="sr-only">Promotional offers</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #1a0533 0%, #4a148c 30%, #7c3aed 70%, #a855f7 100%)' }}>
-              <div className="relative p-4 sm:p-6 z-10 w-[50%]">
-                <h3 className="font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">
-                  <span className="text-[#FFB700]">BEST</span>
-                </h3>
-                <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">DEALS</h3>
-                <p className="text-white text-[11px] sm:text-[13px] mb-2 sm:mb-3">OF THE WEEK</p>
-                <span className="inline-block bg-black text-white text-[10px] sm:text-[11px] font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded hover:bg-gray-800 transition-colors">
-                  Shop Now
-                </span>
-              </div>
-              <img
-                src="/images/best deals.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
-                loading="lazy"
-              />
-            </Link>
+          <ManagedBanners
+            placement="promo"
+            heightClass="h-[160px] sm:h-[207px]"
+            radiusClass="rounded-[10px]"
+            fallback={(
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #1a0533 0%, #4a148c 30%, #7c3aed 70%, #a855f7 100%)' }}>
+                  <div className="relative p-4 sm:p-6 z-10 w-[50%]">
+                    <h3 className="font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">
+                      <span className="text-[#FFB700]">BEST</span>
+                    </h3>
+                    <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">DEALS</h3>
+                    <p className="text-white text-[11px] sm:text-[13px] mb-2 sm:mb-3">OF THE WEEK</p>
+                    <span className="inline-block bg-black text-white text-[10px] sm:text-[11px] font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded hover:bg-gray-800 transition-colors">
+                      Shop Now
+                    </span>
+                  </div>
+                  <img
+                    src="/images/best deals.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
+                    loading="lazy"
+                  />
+                </Link>
 
-            <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #7c2d12 0%, #b45309 30%, #f59e0b 60%, #fbbf24 100%)' }}>
-              <div className="relative p-4 sm:p-6 z-10 w-[50%]">
-                <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">SAVE MORE</h3>
-                <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">EVERYDAY</h3>
-                <p className="text-white/80 text-[11px] sm:text-[12px] mb-2 sm:mb-3">Great products at unbeatable prices</p>
-                <span className="inline-block bg-black text-white text-[10px] sm:text-[11px] font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded hover:bg-gray-800 transition-colors">
-                  Shop Now
-                </span>
-              </div>
-              <img
-                src="/images/save more.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
-                loading="lazy"
-              />
-            </Link>
+                <Link to="/shop" className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #7c2d12 0%, #b45309 30%, #f59e0b 60%, #fbbf24 100%)' }}>
+                  <div className="relative p-4 sm:p-6 z-10 w-[50%]">
+                    <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">SAVE MORE</h3>
+                    <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">EVERYDAY</h3>
+                    <p className="text-white/80 text-[11px] sm:text-[12px] mb-2 sm:mb-3">Great products at unbeatable prices</p>
+                    <span className="inline-block bg-black text-white text-[10px] sm:text-[11px] font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded hover:bg-gray-800 transition-colors">
+                      Shop Now
+                    </span>
+                  </div>
+                  <img
+                    src="/images/save more.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute right-0 bottom-0 h-full w-[55%] object-contain object-right-bottom"
+                    loading="lazy"
+                  />
+                </Link>
 
-            <Link to={catLink('beauty')} className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #831843 0%, #be185d 30%, #ec4899 60%, #f9a8d4 100%)' }}>
-              <div className="relative p-4 sm:p-6 z-10 w-[50%]">
-                <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">BEAUTY</h3>
-                <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">DEALS</h3>
-                <p className="text-white/80 text-[11px] sm:text-[12px] mb-2 sm:mb-3">Glow more, save more!</p>
-                <span className="inline-block bg-black text-white text-[10px] sm:text-[11px] font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded hover:bg-gray-800 transition-colors">
-                  Shop Now
-                </span>
+                <Link to={catLink('beauty')} className="rounded-[10px] overflow-hidden relative flex items-center w-full h-[160px] sm:h-[207px] shadow-sm" style={{ background: 'linear-gradient(135deg, #831843 0%, #be185d 30%, #ec4899 60%, #f9a8d4 100%)' }}>
+                  <div className="relative p-4 sm:p-6 z-10 w-[50%]">
+                    <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-0.5">BEAUTY</h3>
+                    <h3 className="text-white font-black text-[16px] sm:text-[22px] leading-tight mb-1">DEALS</h3>
+                    <p className="text-white/80 text-[11px] sm:text-[12px] mb-2 sm:mb-3">Glow more, save more!</p>
+                    <span className="inline-block bg-black text-white text-[10px] sm:text-[11px] font-bold px-3 sm:px-4 py-1 sm:py-1.5 rounded hover:bg-gray-800 transition-colors">
+                      Shop Now
+                    </span>
+                  </div>
+                  <img
+                    src="/images/beauty.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute right-0 bottom-0 h-full w-[85%] object-contain object-right-bottom"
+                    loading="lazy"
+                  />
+                </Link>
               </div>
-              <img
-                src="/images/beauty.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute right-0 bottom-0 h-full w-[85%] object-contain object-right-bottom"
-                loading="lazy"
-              />
-            </Link>
-          </div>
+            )}
+          />
         </div>
       </section>
 
@@ -558,41 +452,48 @@ export default function Home() {
       <section className="bg-white py-4 sm:py-6" aria-labelledby="sub-banners-heading">
         <div className="max-w-[1280px] mx-auto px-3 sm:px-10">
           <h2 id="sub-banners-heading" className="sr-only">Shop by department</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to={catLink('home-appliances')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card%201.png')", backgroundColor: '#1E2A3A' }}>
-              <div className="relative p-4 sm:p-5 z-10 w-[55%]">
-                <h3 className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">PREMIUM HOME</h3>
-                <p className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5 sm:mb-1">APPLIANCES</p>
-                <p className="text-white/70 text-[10px] lg:text-[11px] mb-1 sm:mb-2">For a smarter kitchen</p>
-                <span className="inline-block bg-[#FFB700] text-black text-[9px] lg:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded hover:bg-amber-500 transition-colors">
-                  Shop Now
-                </span>
-              </div>
-            </Link>
+          <ManagedBanners
+            placement="department"
+            heightClass="h-[110px] sm:h-[129px]"
+            radiusClass="rounded-[15px]"
+            fallback={(
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link to={catLink('home-appliances')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card%201.png')", backgroundColor: '#1E2A3A' }}>
+                  <div className="relative p-4 sm:p-5 z-10 w-[55%]">
+                    <h3 className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">PREMIUM HOME</h3>
+                    <p className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5 sm:mb-1">APPLIANCES</p>
+                    <p className="text-white/70 text-[10px] lg:text-[11px] mb-1 sm:mb-2">For a smarter kitchen</p>
+                    <span className="inline-block bg-[#FFB700] text-black text-[9px] lg:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded hover:bg-amber-500 transition-colors">
+                      Shop Now
+                    </span>
+                  </div>
+                </Link>
 
-            <Link to={catLink('electronics')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card2.png')", backgroundColor: '#1A1A2E' }}>
-              <div className="relative p-4 sm:p-5 z-10 w-[55%]">
-                <h3 className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">LATEST GADGETS</h3>
-                <p className="text-[#FFB700] text-[10px] lg:text-[11px] font-bold mb-0.5">UP TO 45% OFF</p>
-                <p className="text-white/60 text-[10px] lg:text-[11px] mb-1 sm:mb-2">Grab the best offers</p>
-                <span className="inline-block bg-[#FFB700] text-black text-[9px] lg:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded hover:bg-amber-500 transition-colors">
-                  Shop Now
-                </span>
-              </div>
-            </Link>
+                <Link to={catLink('electronics')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card2.png')", backgroundColor: '#1A1A2E' }}>
+                  <div className="relative p-4 sm:p-5 z-10 w-[55%]">
+                    <h3 className="text-white font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">LATEST GADGETS</h3>
+                    <p className="text-[#FFB700] text-[10px] lg:text-[11px] font-bold mb-0.5">UP TO 45% OFF</p>
+                    <p className="text-white/60 text-[10px] lg:text-[11px] mb-1 sm:mb-2">Grab the best offers</p>
+                    <span className="inline-block bg-[#FFB700] text-black text-[9px] lg:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded hover:bg-amber-500 transition-colors">
+                      Shop Now
+                    </span>
+                  </div>
+                </Link>
 
-            <Link to={catLink('beauty')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card3.png')", backgroundColor: '#F5D5C8' }}>
-              <div className="relative p-4 sm:p-5 z-10 w-[55%]">
-                <h3 className="text-[#8B2252] font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">BEAUTY AND</h3>
-                <p className="text-[#8B2252] font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">PERSONAL CARE</p>
-                <p className="text-[#8B2252]/80 text-[10px] lg:text-[11px] font-bold mb-0.5">UP TO 40% OFF</p>
-                <p className="text-[#8B2252]/60 text-[10px] lg:text-[11px] mb-1 sm:mb-2">Look good, feel great</p>
-                <span className="inline-block bg-[#FFB700] text-black text-[9px] lg:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded hover:bg-amber-500 transition-colors">
-                  Shop Now
-                </span>
+                <Link to={catLink('beauty')} className="rounded-[15px] overflow-hidden relative flex items-center w-full h-[110px] sm:h-[129px] shadow-sm bg-cover bg-center" style={{ backgroundImage: "url('/images/card3.png')", backgroundColor: '#F5D5C8' }}>
+                  <div className="relative p-4 sm:p-5 z-10 w-[55%]">
+                    <h3 className="text-[#8B2252] font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">BEAUTY AND</h3>
+                    <p className="text-[#8B2252] font-black text-[13px] lg:text-[16px] leading-tight mb-0.5">PERSONAL CARE</p>
+                    <p className="text-[#8B2252]/80 text-[10px] lg:text-[11px] font-bold mb-0.5">UP TO 40% OFF</p>
+                    <p className="text-[#8B2252]/60 text-[10px] lg:text-[11px] mb-1 sm:mb-2">Look good, feel great</p>
+                    <span className="inline-block bg-[#FFB700] text-black text-[9px] lg:text-[10px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded hover:bg-amber-500 transition-colors">
+                      Shop Now
+                    </span>
+                  </div>
+                </Link>
               </div>
-            </Link>
-          </div>
+            )}
+          />
         </div>
       </section>
 
