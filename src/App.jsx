@@ -57,6 +57,7 @@ import AdminReturns from './pages/admin/AdminReturns';
 import AdminBroadcast from './pages/admin/AdminBroadcast';
 import AdminOrderDetail from './pages/admin/AdminOrderDetail';
 import AdminFlashSales from './pages/admin/AdminFlash';
+import AdminBanners from './pages/admin/AdminBanners';
 import AdminInvoices from './pages/admin/AdminInvoices';
 import AdminApprovals from './pages/admin/AdminApprovals';
 import useGoogleAnalytics from './hooks/useGoogleAnalytics';
@@ -336,6 +337,7 @@ function App() {
         <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
         <Route path="/admin/returns" element={<AdminRoute><AdminReturns /></AdminRoute>} />
         <Route path="/admin/flash-sales" element={<AdminRoute><AdminFlashSales /></AdminRoute>} />
+        <Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
         <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
         <Route path="/admin/invoices" element={<AdminRoute><AdminInvoices /></AdminRoute>} />
 

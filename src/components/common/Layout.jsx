@@ -1,6 +1,7 @@
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
 import { Toaster } from 'react-hot-toast';
+import ChristmasDecorations, { ChristmasTop, ChristmasFooter } from '../christmas/ChristmasDecorations.jsx';
 
 export default function Layout({ children }) {
   return (
@@ -19,7 +20,12 @@ export default function Layout({ children }) {
         }}
       />
       <Navbar />
-      <main className="pt-[96px] md:pt-[108px]">{children}</main>
+      <ChristmasDecorations />
+      <main className="pt-[96px] md:pt-[108px]">
+        <ChristmasTop />
+        {children}
+      </main>
+      <ChristmasFooter />
       <Footer />
     </div>
   );
