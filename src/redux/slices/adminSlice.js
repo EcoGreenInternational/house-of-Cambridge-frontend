@@ -250,39 +250,6 @@ export const bulkApproveProducts = createAsyncThunk('admin/bulkApproveProducts',
   catch (err) { return rejectWithValue(handle(err)); }
 });
 
-
-export const fetchGlobalDiscountStatus = createAsyncThunk('admin/fetchGlobalDiscountStatus', async (_, { rejectWithValue }) => {
-  try { return (await api.get('/admin/global-discount/status')).data; }
-  catch (err) { return rejectWithValue(handle(err)); }
-});
-
-export const manageGlobalDiscount = createAsyncThunk('admin/manageGlobalDiscount', async (data, { rejectWithValue }) => {
-  try { return (await api.post('/admin/global-discount', data)).data; }
-  catch (err) { return rejectWithValue(handle(err)); }
-});
-
-export const approveGlobalDiscountRequest = createAsyncThunk('admin/approveGlobalDiscountRequest', async (id, { rejectWithValue }) => {
-  try { return (await api.put(`/admin/global-discount/requests/${encodeURIComponent(id)}/approve`)).data; }
-  catch (err) { return rejectWithValue(handle(err)); }
-});
-
-export const rejectGlobalDiscountRequest = createAsyncThunk('admin/rejectGlobalDiscountRequest', async ({ id, note }, { rejectWithValue }) => {
-  try { return (await api.put(`/admin/global-discount/requests/${encodeURIComponent(id)}/reject`, { note })).data; }
-  catch (err) { return rejectWithValue(handle(err)); }
-});
-
-
-export const fetchCampaignSetting = createAsyncThunk('admin/fetchCampaignSetting', async (_, { rejectWithValue }) => {
-  try { return (await api.get('/admin/campaign')).data; }
-  catch (err) { return rejectWithValue(handle(err)); }
-});
-
-export const updateCampaignSetting = createAsyncThunk('admin/updateCampaignSetting', async (data, { rejectWithValue }) => {
-  try { return (await api.put('/admin/campaign', data)).data; }
-  catch (err) { return rejectWithValue(handle(err)); }
-});
-
-
 const pending  = (state) => { state.loading = true;  state.error = null; };
 const rejected = (state, action) => { state.loading = false; state.error = action.payload; };
 
@@ -318,8 +285,6 @@ const adminSlice = createSlice({
     approvals: [],
     approvalsTotal: 0,
     pendingApprovalsCount: 0,
-    globalDiscount: { activeDiscountPercent: 0, discountedProductsCount: 0, pendingRequests: [] },
-    campaign: null,
   },
   reducers: {
     clearAdminError: (state) => { state.error = null; },
@@ -633,51 +598,7 @@ const adminSlice = createSlice({
       .addCase(bulkApproveProducts.fulfilled, (state) => {
         state.loading = false;
       })
-      .addCase(bulkApproveProducts.rejected, rejected)
-
-      .addCase(fetchGlobalDiscountStatus.fulfilled, (state, { payload }) => {
-        state.globalDiscount = {
-          activeDiscountPercent: payload.activeDiscountPercent ?? 0,
-          discountedProductsCount: payload.discountedProductsCount ?? 0,
-          pendingRequests: Array.isArray(payload.pendingRequests) ? payload.pendingRequests : [],
-        };
-      })
-      .addCase(manageGlobalDiscount.pending, pending)
-      .addCase(manageGlobalDiscount.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(manageGlobalDiscount.rejected, rejected)
-      .addCase(approveGlobalDiscountRequest.pending, pending)
-      .addCase(approveGlobalDiscountRequest.fulfilled, (state, { payload }) => {
-        state.loading = false;
-        if (payload.request?._id) {
-          state.globalDiscount.pendingRequests = state.globalDiscount.pendingRequests.filter(
-            (r) => r._id !== payload.request._id
-          );
-        }
-      })
-      .addCase(approveGlobalDiscountRequest.rejected, rejected)
-      .addCase(rejectGlobalDiscountRequest.pending, pending)
-      .addCase(rejectGlobalDiscountRequest.fulfilled, (state, { payload }) => {
-        state.loading = false;
-        if (payload.request?._id) {
-          state.globalDiscount.pendingRequests = state.globalDiscount.pendingRequests.filter(
-            (r) => r._id !== payload.request._id
-          );
-        }
-      })
-      .addCase(rejectGlobalDiscountRequest.rejected, rejected)
-
-      .addCase(fetchCampaignSetting.fulfilled, (state, { payload }) => {
-        state.campaign = payload.campaign ?? null;
-      })
-      .addCase(updateCampaignSetting.pending, pending)
-      .addCase(updateCampaignSetting.fulfilled, (state, { payload }) => {
-        state.loading = false;
-        if (payload.campaign) state.campaign = payload.campaign;
-      })
-      .addCase(updateCampaignSetting.rejected, rejected);
-
+      .addCase(bulkApproveProducts.rejected, rejected);
   },
 });
 

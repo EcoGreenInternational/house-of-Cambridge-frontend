@@ -7,7 +7,6 @@ import { fetchCart } from './redux/slices/cartSlice';
 import { fetchWishlist } from './redux/slices/userSlice';
 import ScrollToTop from './components/common/ScrollToTop';
 import WhatsAppButton from './components/common/WhatsAppButton';
-import ElevenElevenPopup from './components/common/ElevenElevenPopup';
 import ComingSoon, { getLaunchDate } from './ComingSoon';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -350,7 +349,6 @@ function App() {
 
         <Route path="*" element={<Error404 />} />
       </Routes>
-      <ElevenElevenPopup />
       <WhatsAppButton />
     </BrowserRouter>
   );
